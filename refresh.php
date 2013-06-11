@@ -222,8 +222,7 @@ for($j=0; $j < $nbStep; $j++){
 	file_put_contents('rss.xml', sanitize_output($shaarloRss));
 	
 	echo $page;
-// 	sleep($sleepBeetweenLoops);
-	return;
+	sleep($sleepBeetweenLoops);
 }
 
 
