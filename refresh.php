@@ -101,7 +101,6 @@ for($j=0; $j < $nbStep; $j++){
 						$assocShaarliIdUrl[md5($guid)] = $link;
 					}
 				}
-				var_export($assocShaarliIdUrl);
 				
 				$rssContents = array();
 				foreach($rssListArrayed as $rssKey => $arrayedRss){
@@ -151,9 +150,6 @@ for($j=0; $j < $nbStep; $j++){
 
 							$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
 							$rssContents[$uniqRssKey]['date'] = min($rssContents[$uniqRssKey]['date'], $rssTimestamp);
-							if($uniqRssKey == '341d527915ba96af0c844bfe4ee3d11c'){
-								var_export($rssContents[$uniqRssKey]);
-							}
 						}
 					}
 				}
