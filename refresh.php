@@ -98,10 +98,13 @@ for($j=0; $j < $nbStep; $j++){
 					foreach($arrayedRss as $rssItem){					
 						$guid = $rssItem['guid'];
 						$link = $rssItem['link'];
-						$assocShaarliIdUrl[md5($guid)] = $link;
+						if($link == 'http://'){
+							$assocShaarliIdUrl[md5($guid)] = $guid;
+						}else{
+							$assocShaarliIdUrl[md5($guid)] = $link;
+						}
 					}
 				}
-				
 				$rssContents = array();
 				foreach($rssListArrayed as $rssKey => $arrayedRss){
 					/*
@@ -120,6 +123,7 @@ for($j=0; $j < $nbStep; $j++){
 						 * Automatic recuperation of linked rss 
 						 */
 						$link = $rssItem['link'];
+						$guid = $rssItem['guid'];
 						$rssTimestamp = strtotime($rssItem['pubDate']);
 						
 						$actualTimestamp = time();
@@ -142,6 +146,10 @@ for($j=0; $j < $nbStep; $j++){
 							$link = $assocShaarliIdUrl[$uniqRssKey];
 							$uniqRssKey = md5($assocShaarliIdUrl[$uniqRssKey]);
 						}						
+						if($link == 'http://'){
+							$link = $guid;
+						}
+						
 						
 						if(!array_key_exists($uniqRssKey, $rssContents) 
 						){
