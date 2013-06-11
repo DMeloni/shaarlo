@@ -4,12 +4,30 @@ include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
 error_reporting(0);
-$cache = 'index.html';
+$cache = 'index';
 
-$nbStep = 6;
-$sleepBeetweenLoops = 600;
+$nbStep = 30;
+$sleepBeetweenLoops = 110;
+
+function sanitize_output($buffer)
+{
+    $search = array(
+        '/\>[^\S ]+/s', //strip whitespaces after tags, except space
+        '/[^\S ]+\</s', //strip whitespaces before tags, except space
+        '/(\s)+/s'  // shorten multiple whitespace sequences
+        );
+    $replace = array(
+        '>',
+        '<',
+        '\\1'
+        );
+    $buffer = preg_replace($search, $replace, $buffer);
+
+    return $buffer;
+}
 
 
+header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
 	$shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
 	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -19,21 +37,21 @@ for($j=0; $j < $nbStep; $j++){
 	    <description>Shaarli Aggregators</description>
 	    <language>fr-fr</language>
 	    <copyright>http://shaarli.fr/</copyright>';
-	ob_start(); // ouverture du tampon
+	ob_start();
 	?><!DOCTYPE html>
 		<html lang="fr">
 		    <head>
-		            <meta charset="utf-8">
 		            <title>Shaarlo</title>
+					<meta charset="utf-8">
 		            <meta name="description" content="">
 		            <meta name="author" content="">
 		            <link rel="shortcut icon" href="favicon.ico">
 		            <link rel="stylesheet" href="css/style.css" type="text/css"  media="screen">
-		            <link rel="alternate" type="application/rss+xml" href="http://shaarlo.fr/rss" title="RSS Feed" />
+		            <link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="RSS Feed" />
 		    </head>
 		    <body>
 			<div id="header">
-	            <h1 id="top"><a href="./index.html">Shaarlo : Shaarli's Aggregator</a></h1>
+	            <h1 id="top"><a href="./index.php">Shaarlo : Shaarli's Aggregator</a></h1>
 	        </div>	    
 		    <div id="content">
 				<?php
@@ -52,16 +70,41 @@ for($j=0; $j < $nbStep; $j++){
 					file_put_contents($rssListFile, json_encode($rssList));
 				}
 				
-				$rssContents = array();
+				/*
+				 * Save the XML to Array
+				 */
+				/*
+				 * Push the shaarli's id in tab
+				*/
+				$rssListArrayed = array();
+				$assocShaarliIdUrl = array();
 				foreach($rssList as $rssKey => $rssUrl){
-					$cacheFile = sprintf('cache/rss/%s', $rssKey);
 					$content = getRss($rssUrl);
 					$xmlContent = getSimpleXMLElement($content);
 					if($xmlContent === false){
 						continue;
 					}
-					$arrayedRss = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
-					
+					$rssListArrayed[$rssKey] = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
+				}				
+				
+				/*
+				 * Push the shaarli's id in tab
+				 */
+				$assocShaarliIdUrl = array();
+				foreach($rssListArrayed as $rssKey => $arrayedRss){
+					/*
+					 * Récupération des liens
+					*/
+					foreach($arrayedRss as $rssItem){					
+						$guid = $rssItem['guid'];
+						$link = $rssItem['link'];
+						$assocShaarliIdUrl[md5($guid)] = $link;
+					}
+				}
+				var_export($assocShaarliIdUrl);
+				
+				$rssContents = array();
+				foreach($rssListArrayed as $rssKey => $arrayedRss){
 					/*
 					 * Récupération des liens
 					 */
@@ -79,6 +122,7 @@ for($j=0; $j < $nbStep; $j++){
 						 */
 						$link = $rssItem['link'];
 						$rssTimestamp = strtotime($rssItem['pubDate']);
+						
 						$actualTimestamp = time();
 						$diffValue = round(($actualTimestamp - $rssTimestamp) / 60);
 						$diffUnity = 'minute(s)';
@@ -86,15 +130,30 @@ for($j=0; $j < $nbStep; $j++){
 							$diffValue = round($diffValue/ 60);
 							$diffUnity = 'heure(s)';
 						}
-	
+						if($diffValue <= 0){
+							$diffValue = 0;
+						}
+						
 						$uniqRssKey = md5($link);
-						$description = sprintf('<span class="shaaliste">%s</span>, il y a %s %s <br/> %s<br/>', $rssKey, $diffValue, $diffUnity, $rssItem['description']);
+						$description = sprintf('<b>%s</b>, il y a %s %s <br/> %s<br/>', $rssKey, $diffValue, $diffUnity, $rssItem['description']);
 						$title = $rssItem['title'];
-						if(!array_key_exists($uniqRssKey, $rssContents)){
+						
+						// Delete the Shaarli link and replace it by the 'real' link
+						if(array_key_exists($uniqRssKey, $assocShaarliIdUrl)){
+							$link = $assocShaarliIdUrl[$uniqRssKey];
+							$uniqRssKey = md5($assocShaarliIdUrl[$uniqRssKey]);
+						}						
+						
+						if(!array_key_exists($uniqRssKey, $rssContents) 
+						){
 							$rssContents[$uniqRssKey] = array('link' => $link, 'description' => array($rssTimestamp => $description), 'title' => $title, 'date' => $rssTimestamp);
 						}else{
+
 							$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
 							$rssContents[$uniqRssKey]['date'] = min($rssContents[$uniqRssKey]['date'], $rssTimestamp);
+							if($uniqRssKey == '341d527915ba96af0c844bfe4ee3d11c'){
+								var_export($rssContents[$uniqRssKey]);
+							}
 						}
 					}
 				}
@@ -109,7 +168,7 @@ for($j=0; $j < $nbStep; $j++){
 				if(count($dateToSort) === count($rssContents)){
 					array_multisort($dateToSort, SORT_DESC, $rssContents);
 				}
-				$limitRss = 40;
+				$limitRss = 100;
 				$i=0;
 				foreach($rssContents as $rssContent){
 					ksort($rssContent['description']);
@@ -132,7 +191,7 @@ for($j=0; $j < $nbStep; $j++){
 										<pubDate>%s</pubDate>
 										<description>%s</description>
 										</item>",
-							htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), implode('<br/>', $rssContent['description'])
+							htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>'
 							);
 				}
 		// 		// stop profiler
@@ -159,14 +218,16 @@ for($j=0; $j < $nbStep; $j++){
 	<?php 
 	$page = ob_get_contents(); // copie du contenu du tampon dans une chaîne
 	ob_end_clean(); // effacement du contenu du tampon et arrêt de son fonctionnement
+	$page = sanitize_output($page);
 	file_put_contents($cache, $page);
 	
 	$shaarloRss .= '</channel></rss>';
 	
-	file_put_contents('rss', utf8_decode($shaarloRss));
+	file_put_contents('rss.xml', sanitize_output($shaarloRss));
 	
 	echo $page;
-	sleep($sleepBeetweenLoops);
+// 	sleep($sleepBeetweenLoops);
+	return;
 }
 
 
