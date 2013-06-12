@@ -157,7 +157,7 @@ for($j=0; $j < $nbStep; $j++){
 						}else{
 
 							$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
-							$rssContents[$uniqRssKey]['date'] = min($rssContents[$uniqRssKey]['date'], $rssTimestamp);
+							$rssContents[$uniqRssKey]['date'] = max($rssContents[$uniqRssKey]['date'], $rssTimestamp);
 						}
 					}
 				}
