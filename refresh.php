@@ -233,7 +233,11 @@ for($j=0; $j < $nbStep; $j++){
 	// Save the potential Shaarlis list
 	file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis));
 
-	return;
+	if(isset($_GET['oneshoot'])){
+		header('Location: index.php');
+		return;
+	}
+
 	sleep($sleepBeetweenLoops);
 }
 

@@ -4,6 +4,7 @@ include 'fct/fct_rss.php';
 
 error_reporting(0);
 
+
 $rssFilePath = 'rss.xml';
 $date = date('Ymd');
 

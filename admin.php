@@ -256,7 +256,25 @@ ob_start();
 			<?php
 				}
 			?>
-
+			<?php 
+				$date = date('Ymd');
+				if(is_file('archive/rss_'.date('Ymd'). '.xml')){
+					$rssFilePath = 'archive/rss_'.date('Ymd') . '.xml';
+					$mtimeLastReload = filemtime($rssFilePath);
+				?>
+				<div class="article shaarli-youm-org">
+					<h2 class="article-title ">
+					<a title="Go to original place" href="">Info sur le dernier reload</a>
+					</h2>
+					<div class="article-content">
+						<span>Heure du dernier reload de la journée : <?php echo date('H\h i\m s\s', $mtimeLastReload);?></span>
+						<br/>
+						<a href="refresh.php?oneshoot=true">Forcer un reload</a>		
+					</div>	
+				</div>					
+				<?php 
+				}				
+			?>
 		</div>
 		<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments</p> </div>
 	</body>
