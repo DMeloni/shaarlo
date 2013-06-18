@@ -27,12 +27,15 @@ function sanitize_output($buffer)
 }
 
 
+
+
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
+	$actualDate = date('Ymd');
 	$shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
 	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 	  <channel>
-	    <title>Shaarlo</title>
+	    <title>Les discussions de Shaarli</title>
 	    <link>http://shaarli.fr/</link>
 	    <description>Shaarli Aggregators</description>
 	    <language>fr-fr</language>
@@ -45,13 +48,17 @@ for($j=0; $j < $nbStep; $j++){
 					<meta charset="utf-8">
 		            <meta name="description" content="">
 		            <meta name="author" content="">
+		            <meta name="viewport" content="width=device-width, user-scalable=yes" />
+		            <link rel="apple-touch-icon" href="favicon.png" />
+		            <meta name="apple-mobile-web-app-capable" content="yes" />
+       				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		            <link rel="shortcut icon" href="favicon.ico">
 		            <link rel="stylesheet" href="css/style.css" type="text/css"  media="screen">
-		            <link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="RSS Feed" />
+		            <link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="Shaarlo Feed" />
 		    </head>
 		    <body>
 			<div id="header">
-	            <h1 id="top"><a href="./index.php">Shaarlo : Shaarli's Aggregator</a></h1>
+	            <h1 id="top"><a href="./index.php">Les discussions de Shaarli (<?php echo date('d/m/Y');?>)</a></h1>
 	        </div>	    
 		    <div id="content">
 				<?php
@@ -62,14 +69,32 @@ for($j=0; $j < $nbStep; $j++){
 				 */
 				define('XPATH_RSS_ITEM', '/rss/channel/item');
 				$rssListFile = 'data/shaarli.txt';
-				
+				$potentialShaarlisListFile = 'data/potential_shaarli.txt';
+				$potentialShaarlis = array();
+				if(is_file($potentialShaarlisListFile)){
+					$potentialShaarlis = json_decode(file_get_contents($potentialShaarlisListFile), true);
+				}
+
 				if(is_file($rssListFile)){
 					$rssList = json_decode(file_get_contents($rssListFile), true);
 				}else{
-					$theFirstOne = array('http://sebsauvage.net/links/?do=rss');
+					$rssList = array('sebsauvage' => 'http://sebsauvage.net/links/?do=rss');
 					file_put_contents($rssListFile, json_encode($rssList));
 				}
 				
+
+				$disabledRssList = array();
+				$disabledRssListFile = 'data/disabled_shaarli.txt';							
+				if(is_file($disabledRssListFile)){
+					$disabledRssList = json_decode(file_get_contents($disabledRssListFile), true);
+				}
+
+				$deletedRssList = array();
+				$deletedRssListFile = 'data/deleted_shaarli.txt';							
+				if(is_file($deletedRssListFile)){
+					$deletedRssList = json_decode(file_get_contents($deletedRssListFile), true);
+				}
+
 				/*
 				 * Save the XML to Array
 				 */
@@ -124,6 +149,7 @@ for($j=0; $j < $nbStep; $j++){
 						 */
 						$link = $rssItem['link'];
 						$guid = $rssItem['guid'];
+						$category = $rssItem['category'];
 						$rssTimestamp = strtotime($rssItem['pubDate']);
 						
 						$actualTimestamp = time();
@@ -132,7 +158,12 @@ for($j=0; $j < $nbStep; $j++){
 						if($diffValue > 60){
 							$diffValue = round($diffValue/ 60);
 							$diffUnity = 'heure(s)';
+							if($diffValue > 24){
+								$diffValue = round($diffValue/ 24);
+								$diffUnity = 'jour(s)';
+							}	
 						}
+							
 						if($diffValue <= 0){
 							$diffValue = 0;
 						}
@@ -150,14 +181,41 @@ for($j=0; $j < $nbStep; $j++){
 							$link = $guid;
 						}
 						
-						
+						$urlMatches = array();
+						preg_match_all('#href=\"(.*?)\"#', $description, $urlMatches);
+						foreach($urlMatches[1] as $newsUrl){
+							$newsUrl = explode('?', $newsUrl);
+							if(isset($newsUrl[1]) && strlen($newsUrl[1]) === 6){
+								
+								if('index.php' === substr($newsUrl[0], -9)){
+									$newsUrl[0] = substr($newsUrl[0], 0, strlen($newsUrl[0]) - 9);
+								}
+
+								if('/' !== $newsUrl[0][strlen($newsUrl[0])-1]) {
+									$newsUrl[0] .= '/';
+								}
+								$potentialRssUrl = $newsUrl[0] . '?do=rss';
+								$potentialRssUrl = str_replace('https://', 'http://', $potentialRssUrl);
+								if(!in_array($potentialRssUrl, $potentialShaarlis) 
+									&& !in_array($potentialRssUrl, $rssList) 
+									&& !in_array($potentialRssUrl, $deletedRssList)									
+									&& !in_array($potentialRssUrl, $disabledRssList)){
+									$newRssFlux = is_valid_rss($potentialRssUrl);
+									if($newRssFlux !== false){
+										$potentialShaarlis[$newRssFlux] = $potentialRssUrl;
+									}
+								}
+							}
+						}
+
 						if(!array_key_exists($uniqRssKey, $rssContents) 
 						){
-							$rssContents[$uniqRssKey] = array('link' => $link, 'description' => array($rssTimestamp => $description), 'title' => $title, 'date' => $rssTimestamp);
+							$rssContents[$uniqRssKey] = array('toptopic' => false, 'link' => $link, 'description' => array($rssTimestamp => $description), 'title' => $title, 'date' => $rssTimestamp, 'category' => $category);
 						}else{
 
 							$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
 							$rssContents[$uniqRssKey]['date'] = max($rssContents[$uniqRssKey]['date'], $rssTimestamp);
+							$rssContents[$uniqRssKey]['toptopic'] = true;
 						}
 					}
 				}
@@ -175,14 +233,17 @@ for($j=0; $j < $nbStep; $j++){
 				$limitRss = 100;
 				$i=0;
 				foreach($rssContents as $rssContent){
-					ksort($rssContent['description']);
-					if($limitRss < $i){
+					if(date('Ymd', $rssContent['date']) !== $actualDate){
 						break;
 					}
+					
 					$i++;
+
+					ksort($rssContent['description']);
+					
 					?>
 					<div class="article shaarli-youm-org">
-						<h2 class="article-title">
+						<h2 class="article-title <?php if($rssContent['toptopic'] === true) echo "toptopic"; ?>">
 							<a title="Go to original place" href="<?php echo htmlspecialchars($rssContent['link']);?>"><?php echo htmlspecialchars($rssContent['title']);?></a>
 						</h2>
 						<div class="article-content"><?php echo implode('<br/>', $rssContent['description']);?></div>	
@@ -194,8 +255,9 @@ for($j=0; $j < $nbStep; $j++){
 										<link>%s</link>
 										<pubDate>%s</pubDate>
 										<description>%s</description>
+										<category>%s</category>
 										</item>",
-							htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>'
+							htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>', $rssContent['category']
 							);
 				}
 		// 		// stop profiler
@@ -228,8 +290,13 @@ for($j=0; $j < $nbStep; $j++){
 	$shaarloRss .= '</channel></rss>';
 	
 	file_put_contents('rss.xml', sanitize_output($shaarloRss));
+	file_put_contents(sprintf('archive/rss_%s.xml', $actualDate), sanitize_output($shaarloRss));
 	
+	// Save the potential Shaarlis list
+	file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis));
+
 	echo $page;
+	// return;
 	sleep($sleepBeetweenLoops);
 }
 

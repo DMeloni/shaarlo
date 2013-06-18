@@ -5,3 +5,4 @@ $rssFile = 'rss.xml';
 if(is_file($rssFile)){
 	echo file_get_contents($rssFile);
 }
+
