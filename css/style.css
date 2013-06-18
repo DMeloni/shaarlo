@@ -1,5 +1,5 @@
 html{font-family:"Lucida Grande", "Segoe UI", sans-serif;color:#111;background:#EEE;font-size:62.5%;}
-body{margin:0;padding:0;font-size:1.5em;line-height:1.5em;}
+body{margin:0;padding:0;font-size:14px;line-height:1.5em;}
 a{color:#669;}
 a:visited{color:#444;}
 a:hover{color:#000;}
@@ -12,7 +12,7 @@ h2{margin:0;}
 h1 a,
 h1 a:visited{color:#665;text-decoration:none;}
 h1 a:hover{color:#444;}
-#content{float:left;}
+#content{width: 100%;}
 #sidebar{width:300px;float:left;}
 #sidebar div{padding:1em 30px;}
 #sidebar h2{color:#665;}
@@ -20,9 +20,11 @@ h1 a:hover{color:#444;}
 .article{margin-bottom:2em;padding:30px;background:#FFF;border:1px solid #DDD;}
 .article-title,
 .article-title a{color:#111;text-decoration:none;}
+.toptopic a{color:#11C101;}
 .article-info{margin:0 0 1em 0;color:#999;}
 .article-content{font-family:Georgia, serif;}
 .article img{max-width:900px;}
 .article .collapsed{display:none;}
 .shaaliste{font-weight:bold;}
 #footer{clear:both;padding:0 30px;}
+@media (max-width: 600px) {html, body { width:100%;overflow:hidden;}h2{text-align:center;}h1{font-size:1em;text-align:center;}.article{margin-bottom:1em;}}
