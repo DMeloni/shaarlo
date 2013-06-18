@@ -68,11 +68,58 @@ function convertXmlToTableau($xml,$xpath){
 		$classArray = array();
 		foreach ($elt as $key => $el){
 			$value = (string)$el;
-			$classArray[$key] = $value;
+			if(empty($classArray[$key])){
+				$classArray[$key] = $value;
+			}else{
+				$classArray[$key] .= ',' . $value;
+			}
 		}
 		$tableau[] = $classArray ;
 	}
 	return $tableau;
+}
+
+function urlExists($url=NULL)  
+{  
+    if($url == NULL) return false;  
+    $ch = curl_init($url);  
+    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);  
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 50);  
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  
+    $data = curl_exec($ch);  
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);  
+    curl_close($ch);  
+    if($httpcode>=200 && $httpcode<300){  
+        return true;  
+    } else {  
+        return false;  
+    }  
+}
+
+/**
+* Return true if the rss is valid, else false 
+*/
+function is_valid_rss($url){
+	if(urlExists($url)){
+		return false;
+	}
+	$content = getRss($url);
+	$xmlContent = getSimpleXMLElement($content);
+	if($xmlContent !== false){
+		define('XPATH_RSS_ITEM', '/rss/channel/item');
+		$rssItems = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
+		$firstItem = reset($rssItems);
+		$link = $firstItem['link'];
+		$rssTimestamp = strtotime($firstItem['pubDate']);
+		if(filter_var($link, FILTER_VALIDATE_URL)  && $rssTimestamp > 0){
+
+			// Return the title
+			define('XPATH_RSS_TITLE', '/rss/channel/title');
+			$list = $xmlContent->xpath(XPATH_RSS_TITLE);
+			return (string)$list[0];
+		}
+	}
+	return false;	
 }
 
 
