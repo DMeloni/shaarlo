@@ -32,11 +32,9 @@ if(is_file($deletedRssListFile)){
 	$deletedRssList = json_decode(file_get_contents($deletedRssListFile), true);
 }
 
-
 /*
-* RSS Deletion
+* RSS "Disablation"
 */
-
 if(!empty($_POST) && $_POST['action'] == 'disable' && empty($_POST['supprimer'])){
 	foreach($_POST['rssKey'] as $key => $rssKey){
 		if(isset($rssList[$rssKey])){
@@ -51,15 +49,16 @@ if(!empty($_POST) && $_POST['action'] == 'disable' && empty($_POST['supprimer'])
 /*
 * RSS Deletion
 */
-
+$flippeddisabledRssList = array_flip($disabledRssList);
 if(!empty($_POST) && !empty($_POST['supprimer'])){
 	foreach($_POST['rssKey'] as $key => $rssKey){
-		if(isset($rssList[$rssKey])){
-			$deletedRssList[$rssKey] = $rssList[$rssKey];
-			unset($rssList[$rssKey]);
+		if(isset($flippeddisabledRssList[$rssKey])){
+			$label = $flippeddisabledRssList[$rssKey];
+			$deletedRssList[$label] = $rssKey;
+			unset($disabledRssList[$flippeddisabledRssList[$rssKey]]);
 		}
 	}
-	file_put_contents($rssListFile, json_encode($rssList));
+	file_put_contents($disabledRssListFile, json_encode($disabledRssList));
 	file_put_contents($deletedRssListFile, json_encode($deletedRssList));
 }	
 
@@ -68,7 +67,7 @@ if(!empty($_POST) && !empty($_POST['supprimer'])){
 * Add a new rss
 */
 $flippeddisabledRssList = array_flip($disabledRssList);
-if(!empty($_POST) && $_POST['action'] == 'add'){
+if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 
  	$assocUrlLabel = array_combine ($_POST['url'], $_POST['label']);
 
@@ -125,21 +124,28 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 	}
 }	
 
-
+ob_start();
 ?><!DOCTYPE html>
 <html lang="fr"> 
-	<head> 
+	<head>
 		<title>Shaarlo</title>
-		<meta charset="utf-8"> 
-		<meta name="description" content=""> 
-		<meta name="author" content=""> 
-		<link rel="shortcut icon" href="favicon.ico"> 
-		<link rel="stylesheet" href="css/style.css" type="text/css" media="screen"> 
-		<link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="Shaarlo Feed" /> 
-	</head> 
+		<meta charset="utf-8"/>
+		<meta name="description" content="" />
+		<meta name="author" content="" />
+		<meta name="viewport" content="width=device-width, user-scalable=yes" />
+		<link rel="apple-touch-icon" href="favicon.png" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<link rel="shortcut icon" href="favicon.ico" />
+		<link rel="stylesheet" href="css/style.css" type="text/css" media="screen"/>
+		<link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="Shaarlo Feed" />
+	</head>
 	<body>
 		<div id="header"> 
-			<h1 id="top"><a href="./index.php">Les discussions de Shaarli (17/06/2013)</a></h1> 
+			<a href="index.php">Accueil</a>
+			<a href="admin.php">Administration</a>
+			<a href="archive.php">Archive</a>
+			<h1 id="top"><a href="./admin.php">Administration</a></h1> 
 		</div> 
 		<div id="content">
 			<?php if (!empty($serverMsg)) { ?>
@@ -157,9 +163,11 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 					<form action="admin.php" method="POST">				
 							<label for="label">Titre du flux</label>
 							<input type="text" name="label[]"></input>
+							<br/>
 							<label for="url">Url du flux</label>
-							<input type="text" name="url[]"></input>				
+							<input type="text" name="url[]" ></input>				
 							<input type="hidden" name="action" value="add"></input>
+							<br/>
 							<input type="submit" value="Ajouter" class="bigbutton"/>					
 					</form>			
 				</div>	
@@ -173,14 +181,24 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 				</h2>
 				<div class="article-content">
 					<form action="admin.php" method="POST">	
+					<table style="width:90%;">
 					<?php 
-					foreach($potentialShaarlis as $rssKey => $rssUrl){?>							
-								<input type="checkbox" checked name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
-								<input type="text" style="width:20em;" name="label[]" value="<?php echo $rssKey;?>"></input>
-								<input type="text" style="width:30em;" name="url[]" value="<?php echo $rssUrl;?>"></input>				
-								<input type="hidden" name="action" value="add"></input>
-								<br/>
+					foreach($potentialShaarlis as $rssKey => $rssUrl){?>
+								<tr>
+									<td  style="width:2%;" rowspan="2">
+										<input style="float:left;" type="checkbox" checked name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
+									</td>
+								</tr>
+								<tr>
+									<td >
+										<input type="text" style="width:99%;" name="label[]" value="<?php echo $rssKey;?>"></input>
+										<br/>
+										<input type="text" style="width:99%;" name="url[]" readonly value="<?php echo $rssUrl;?>"></input>	</input>
+									</td>
+								</tr>														
 					<?php }?>	
+						</table>		
+						<input type="hidden" name="action" value="add"></input>
 						<input type="submit" value="Ajouter les selectionnés" class="bigbutton"/>					
 					</form>
 				</div>	
@@ -200,12 +218,11 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 				<?php
 						foreach($rssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo $rssKey; ?>" value="<?php echo $rssKey; ?>" />
-							<label for="<?php echo $rssKey; ?>"><?php echo $rssKey .' ('.$rssUrl. ')'; ?></label>
+							<label for="<?php echo $rssKey; ?>"><?php echo $rssKey;?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="disable"></input>
 							<input type="submit" value="Desactiver" class="bigbutton"/>
-							<input type="submit" name="supprimer" value="Supprimer à VIE" class="bigbutton"/>
 							</form>
 				</div>												
 			</div>		
@@ -219,7 +236,7 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 			?>			
 			<div class="article shaarli-youm-org">
 				<h2 class="article-title ">
-				<a title="Go to original place" href="">Flux désactifs</a>
+				<a title="Go to original place" href="">Flux neutralisés</a>
 				</h2>
 
 				<div class="article-content">
@@ -227,11 +244,12 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 				<?php
 						foreach($disabledRssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
-							<label for="<?php echo $rssUrl; ?>"><?php echo $rssKey .' ('.$rssUrl. ')'; ?></label>
+							<label for="<?php echo $rssUrl; ?>"><?php echo $rssKey;?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="add"></input>
 							<input type="submit" value="Rendre actif" class="bigbutton"/>
+							<input type="submit" name="supprimer" value="Supprimer à VIE" class="bigbutton"/>
 							</form>
 				</div>												
 			</div>		
@@ -242,4 +260,8 @@ if(!empty($_POST) && $_POST['action'] == 'add'){
 		</div>
 		<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments</p> </div>
 	</body>
-</html>
+</html><?php 
+$page = ob_get_contents();
+ob_end_clean(); 
+$page = sanitize_output($page);
+echo $page;
