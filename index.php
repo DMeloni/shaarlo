@@ -23,8 +23,8 @@ $expire = time() - 1000 ;
 
 if(!(file_exists($indexFile) && filemtime($indexFile) > $expire)) {
 	$index = parseXsl('xsl/index.xsl', $rssFile);
-// 	$index = sanitize_output($index);	
-// 	file_put_contents($indexFile, $index);
+	$index = sanitize_output($index);	
+	file_put_contents($indexFile, $index);
 }
-echo $index;
-// readfile($indexFile);
+// echo $index;
+readfile($indexFile);
