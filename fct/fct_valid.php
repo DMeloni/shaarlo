@@ -30,3 +30,30 @@ function unRequestMagicQuote(){
 		unset($process);
 	}
 }
+
+/**
+ * Check installation
+ * @return boolean
+ */
+function checkInstall(){
+	global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $ARCHIVE_FILE_NAME, $SHAARLIS_FILE_NAME;
+	if(!is_dir($DATA_DIR) 
+	|| !is_dir(sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME))
+	|| !is_dir(sprintf('%s/%s', $DATA_DIR, $CACHE_DIR_NAME))
+	){
+		return false;
+	}	
+	
+	$rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
+	if(!is_file($rssListFile)){
+		return false;
+	}
+
+	if(is_file($rssListFile)){
+		$rssList = json_decode(file_get_contents($rssListFile), true);
+		if(empty($rssList)){
+			return false;
+		}
+	}
+	return true;
+}

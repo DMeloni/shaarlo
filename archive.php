@@ -1,28 +1,38 @@
 <?php
+include 'config.php';
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
+include 'fct/fct_valid.php';
 error_reporting(0);
 header('Content-Type: text/html; charset=utf-8');
 
-$archiveFile = 'cache/archive.html';
+global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $ARCHIVE_FILE_NAME;
+
+// Autoredirect on boot.php
+if(!checkInstall()){
+	header('Location: boot.php');
+	return;
+}
+
+$archiveFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_FILE_NAME);
+
 $expire = time() - 1000 ;
 if(file_exists($archiveFile) && filemtime($archiveFile) > $expire) {
 	echo file_get_contents($archiveFile);
 }else{
-	
-	$archiveDir = 'archive/';
+
+	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
 	$rssFileList = array();
-	
+
 	// $actualTime = time() ;
 	// for($i = 0; $i < 8000; $i++){
 	// 	$actualTime = $actualTime - (24 * 3600); 
 	// // 	echo $archiveDir . 'rss_' . date('Ymd', $actualTime) . '.xml';
 	// 	file_put_contents($archiveDir . 'rss_' . date('Ymd', $actualTime) . '.xml', 'bonjour');
 	// }
-	
-	
+
 	if ($handle = opendir($archiveDir)) {
 		while (false !== ($file = readdir($handle))) {
 			if ($file != "." && $file != "..") {
