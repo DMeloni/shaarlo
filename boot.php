@@ -24,6 +24,11 @@ if(checkInstall() && is_file($indexFile)){
 /*
  * Rights validation
  */
+if(!is_dir($DATA_DIR)){
+	if(!mkdir($DATA_DIR)){
+		$serverMsg = "Le dossier $DATA_DIR ne peut pas être créé";
+	}
+}
 if(!is_writable($DATA_DIR)){
 	$serverMsg = "Le dossier $DATA_DIR est non writable";
 }else{
