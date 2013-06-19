@@ -1,30 +1,17 @@
 <!DOCTYPE html><?php 
-include 'fct/fct_xsl.php';
-include 'fct/fct_rss.php';
+include 'config.php';
+include 'fct/fct_valid.php';
 
 error_reporting(0);
 
+global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME;
+$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
 
-$rssFilePath = 'rss.xml';
-$date = date('Ymd');
-
-if(isset($_GET['date']) && is_file('archive/rss_'.$_GET['date'] . '.xml')){
-	$rssFilePath = 'archive/rss_'.$_GET['date'] . '.xml';
-	$date = $_GET['date'];
+// Autoredirect on boot.php
+if(!checkInstall() || !is_file($indexFile)){
+	header('Location: boot.php');
+	return;
 }
 
 header('Content-Type: text/html; charset=utf-8');
-
-$indexFile = 'cache/index_'.$date.'.html';
-
-$rssFile = file_get_contents($rssFilePath);
-
-$expire = time() - 1000 ;
-
-if(!(file_exists($indexFile) && filemtime($indexFile) > $expire)) {
-	$index = parseXsl('xsl/index.xsl', $rssFile);
-	$index = sanitize_output($index);	
-	file_put_contents($indexFile, $index);
-}
-// echo $index;
 readfile($indexFile);

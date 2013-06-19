@@ -1,4 +1,5 @@
 <?php
+include 'config.php';
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
@@ -7,28 +8,39 @@ include 'fct/fct_valid.php';
 error_reporting(0);
 header('Content-Type: text/html; charset=utf-8');
 
+unRequestMagicQuote();
+
 $serverMsg = '';
 
+global $DATA_DIR, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
+
+// Autoredirect on boot.php
+if(!checkInstall()){
+	header('Location: boot.php');
+	return;
+}
+
+
 $rssList = array();
-$rssListFile = 'data/shaarli.txt';									
+$rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);								
 if(is_file($rssListFile)){
 	$rssList = json_decode(file_get_contents($rssListFile), true);
 }
 
 $potentialShaarlis = array();
-$potentialShaarlisListFile = 'data/potential_shaarli.txt';
+$potentialShaarlisListFile = sprintf('%s/%s', $DATA_DIR, $POTENTIAL_SHAARLIS_FILE_NAME);
 if(is_file($potentialShaarlisListFile)){
 	$potentialShaarlis = json_decode(file_get_contents($potentialShaarlisListFile), true);
 }	
 
 $disabledRssList = array();
-$disabledRssListFile = 'data/disabled_shaarli.txt';							
+$disabledRssListFile = sprintf('%s/%s', $DATA_DIR, $DISABLED_SHAARLIS_FILE_NAME);						
 if(is_file($disabledRssListFile)){
 	$disabledRssList = json_decode(file_get_contents($disabledRssListFile), true);
 }
 
 $deletedRssList = array();
-$deletedRssListFile = 'data/deleted_shaarli.txt';							
+$deletedRssListFile = sprintf('%s/%s', $DATA_DIR, $DELETED_SHAARLIS_FILE_NAME);						
 if(is_file($deletedRssListFile)){
 	$deletedRssList = json_decode(file_get_contents($deletedRssListFile), true);
 }
@@ -261,9 +273,9 @@ ob_start();
 			?>
 			<?php 
 				$date = date('Ymd');
-				if(is_file('archive/rss_'.date('Ymd'). '.xml')){
-					$rssFilePath = 'archive/rss_'.date('Ymd') . '.xml';
-					$mtimeLastReload = filemtime($rssFilePath);
+				$currentRss = sprintf('%s/%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME, 'rss_'.date('Ymd'). '.xml');
+				if(is_file($currentRss)){
+					$mtimeLastReload = filemtime($currentRss);
 				?>
 				<div class="article shaarli-youm-org">
 					<h2 class="article-title ">

@@ -1,14 +1,17 @@
 <?php
+include 'config.php';
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
 include 'fct/fct_valid.php';
+include 'fct/fct_xsl.php';
 error_reporting(0);
 $cache = 'index';
 
 $nbStep = 30;
 $sleepBeetweenLoops = 110;
+global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
@@ -27,30 +30,30 @@ for($j=0; $j < $nbStep; $j++){
 	/**
 	 * Absolute path to Item 
 	 */
+	
 	define('XPATH_RSS_ITEM', '/rss/channel/item');
-	$rssListFile = 'data/shaarli.txt';
-	$potentialShaarlisListFile = 'data/potential_shaarli.txt';
+	$rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
+	
 	$potentialShaarlis = array();
+	$potentialShaarlisListFile = sprintf('%s/%s', $DATA_DIR, $POTENTIAL_SHAARLIS_FILE_NAME);
 	if(is_file($potentialShaarlisListFile)){
 		$potentialShaarlis = json_decode(file_get_contents($potentialShaarlisListFile), true);
 	}
 
-	if(is_file($rssListFile)){
-		$rssList = json_decode(file_get_contents($rssListFile), true);
-	}else{
-		$rssList = array('sebsauvage' => 'http://sebsauvage.net/links/?do=rss');
-		file_put_contents($rssListFile, json_encode($rssList));
+	if(!is_file($rssListFile)){
+		return;
 	}
 	
+	$rssList = json_decode(file_get_contents($rssListFile), true);
 
 	$disabledRssList = array();
-	$disabledRssListFile = 'data/disabled_shaarli.txt';							
+	$disabledRssListFile = sprintf('%s/%s', $DATA_DIR, $DISABLED_SHAARLIS_FILE_NAME);
 	if(is_file($disabledRssListFile)){
 		$disabledRssList = json_decode(file_get_contents($disabledRssListFile), true);
 	}
 
 	$deletedRssList = array();
-	$deletedRssListFile = 'data/deleted_shaarli.txt';							
+	$deletedRssListFile = sprintf('%s/%s', $DATA_DIR, $DELETED_SHAARLIS_FILE_NAME);
 	if(is_file($deletedRssListFile)){
 		$deletedRssList = json_decode(file_get_contents($deletedRssListFile), true);
 	}
@@ -225,15 +228,19 @@ for($j=0; $j < $nbStep; $j++){
 // 		// save the run under a namespace "xhprof_foo"
 // 		$run_id = $xhprof_runs->save_run($xhprof_data, "xhprof_foo");	
 // 		echo $run_id;	
-	
+
 	$shaarloRss .= '</channel></rss>';
 	
-	file_put_contents('rss.xml', sanitize_output($shaarloRss));
-	file_put_contents(sprintf('archive/rss_%s.xml', $actualDate), sanitize_output($shaarloRss));
-	
+	file_put_contents(sprintf('%s/%s/rss.xml', $DATA_DIR, $CACHE_DIR_NAME), sanitize_output($shaarloRss));
+	file_put_contents(sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $actualDate), sanitize_output($shaarloRss));
 	// Save the potential Shaarlis list
 	file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis));
 
+	$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
+	$index = parseXsl('xsl/index.xsl', $shaarloRss);
+	$index = sanitize_output($index);
+	file_put_contents($indexFile, $index);
+		
 	if(isset($_GET['oneshoot'])){
 		header('Location: index.php');
 		return;
