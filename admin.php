@@ -7,6 +7,8 @@ include 'fct/fct_valid.php';
 error_reporting(0);
 header('Content-Type: text/html; charset=utf-8');
 
+unRequestMagicQuote();
+
 $serverMsg = '';
 
 $rssList = array();
