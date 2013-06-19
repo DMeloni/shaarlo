@@ -162,12 +162,12 @@ ob_start();
 				</h2>
 				<div class="article-content">
 					<form action="admin.php" method="POST">				
-							<label for="label">Titre du flux</label>
-							<input type="text" name="label[]"></input>
+							<label for="new_title">Titre du flux</label>
+							<input type="text" id="new_title" name="label[]" />
 							<br/>
-							<label for="url">Url du flux</label>
-							<input type="text" name="url[]" ></input>				
-							<input type="hidden" name="action" value="add"></input>
+							<label for="new_url">Url du flux</label>
+							<input type="text" id="new_url" name="url[]" />				
+							<input type="hidden" name="action" value="add" />
 							<br/>
 							<input type="submit" value="Ajouter" class="bigbutton"/>					
 					</form>			
@@ -189,17 +189,19 @@ ob_start();
 									<td  style="width:2%;" rowspan="2">
 										<input style="float:left;" type="checkbox" checked name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
 									</td>
+									<td></td>
 								</tr>
 								<tr>
-									<td >
-										<input type="text" style="width:99%;" name="label[]" value="<?php echo $rssKey;?>"></input>
+									<td>
+										<input type="text" style="width:99%;" name="label[]" value="<?php echo $rssKey;?>" />
 										<br/>
-										<input type="text" style="width:99%;" name="url[]" readonly value="<?php echo $rssUrl;?>"></input>	</input>
+										<input type="text" style="width:99%;" name="url[]" readonly value="<?php echo $rssUrl;?>" />
 									</td>
-								</tr>														
+								</tr>
+																						
 					<?php }?>	
 						</table>		
-						<input type="hidden" name="action" value="add"></input>
+						<input type="hidden" name="action" value="add" />
 						<input type="submit" value="Ajouter les selectionnés" class="bigbutton"/>					
 					</form>
 				</div>	
@@ -218,11 +220,11 @@ ob_start();
 					<form action="admin.php" method="POST">				
 				<?php
 						foreach($rssList as $rssKey => $rssUrl){?>		
-							<input type="checkbox" name="rssKey[]" id="<?php echo $rssKey; ?>" value="<?php echo $rssKey; ?>" />
-							<label for="<?php echo $rssKey; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
+							<input type="checkbox" name="rssKey[]" id="<?php echo str_replace(' ', '-', $rssKey); ?>" value="<?php echo $rssKey; ?>" />
+							<label for="<?php echo str_replace(' ', '-', $rssKey); ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
 							<br/>
 						<?php }?>					
-							<input type="hidden" name="action" value="disable"></input>
+							<input type="hidden" name="action" value="disable" />
 							<input type="submit" value="Desactiver" class="bigbutton"/>
 							</form>
 				</div>												
@@ -248,7 +250,7 @@ ob_start();
 							<label for="<?php echo $rssUrl; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
 							<br/>
 						<?php }?>					
-							<input type="hidden" name="action" value="add"></input>
+							<input type="hidden" name="action" value="add" />
 							<input type="submit" value="Rendre actif" class="bigbutton"/>
 							<input type="submit" name="supprimer" value="Supprimer à VIE" class="bigbutton"/>
 							</form>
