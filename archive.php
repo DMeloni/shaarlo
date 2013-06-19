@@ -82,7 +82,13 @@ if(file_exists($archiveFile) && filemtime($archiveFile) > $expire) {
 											<tr>
 												<?php foreach($rowDays as $day){?>
 													<td><a href="index.php?date=<?php echo $year.$month.$day;?>" ><?php echo (int)$day;?></a></td>
-												<?php } ?>
+												<?php } 
+												for($j = 0; $j < (int)(7 - count($rowDays)) ; $j++){
+												?>
+													<td></td>
+												<?php 
+												}
+												?>
 											</tr>
 										<?php } ?>
 									</table>
