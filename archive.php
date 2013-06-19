@@ -96,7 +96,7 @@ if(file_exists($archiveFile) && filemtime($archiveFile) > $expire) {
 				}
 				?>			
 			</div>
-			<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments</p> </div>
+			<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>			
 		</body>
 	</html><?php 
 	$page = ob_get_contents();

@@ -3,6 +3,7 @@ include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
+include 'fct/fct_valid.php';
 error_reporting(0);
 header('Content-Type: text/html; charset=utf-8');
 
@@ -218,7 +219,7 @@ ob_start();
 				<?php
 						foreach($rssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo $rssKey; ?>" value="<?php echo $rssKey; ?>" />
-							<label for="<?php echo $rssKey; ?>"><?php echo $rssKey;?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
+							<label for="<?php echo $rssKey; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="disable"></input>
@@ -244,7 +245,7 @@ ob_start();
 				<?php
 						foreach($disabledRssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
-							<label for="<?php echo $rssUrl; ?>"><?php echo $rssKey;?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
+							<label for="<?php echo $rssUrl; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="add"></input>
@@ -276,7 +277,7 @@ ob_start();
 				}				
 			?>
 		</div>
-		<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments</p> </div>
+		<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
 	</body>
 </html><?php 
 $page = ob_get_contents();

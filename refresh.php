@@ -3,6 +3,7 @@ include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
+include 'fct/fct_valid.php';
 error_reporting(0);
 $cache = 'index';
 
@@ -128,7 +129,7 @@ for($j=0; $j < $nbStep; $j++){
 			}
 			
 			$uniqRssKey = md5($link);
-			$description = sprintf('<b>%s</b>, il y a %s %s <br/> %s<br/>', $rssKey, $diffValue, $diffUnity, str_replace('<br>', '<br/>', $rssItem['description']));
+			$description = sprintf('<b>%s</b>, il y a %s %s <br/> %s<br/>', unMagicQuote($rssKey), $diffValue, $diffUnity, str_replace('<br>', '<br/>', $rssItem['description']));
 			$title = $rssItem['title'];
 			
 			// Delete the Shaarli link and replace it by the 'real' link
