@@ -158,7 +158,7 @@ for($j=0; $j < $nbStep; $j++){
 						$newsUrl[0] .= '/';
 					}
 					$potentialRssUrl = $newsUrl[0] . '?do=rss';
-					$potentialRssUrl = str_replace('https://', 'http://', $potentialRssUrl);
+// 					$potentialRssUrl = str_replace('https://', 'http://', $potentialRssUrl);
 					if(!in_array($potentialRssUrl, $potentialShaarlis) 
 						&& !in_array($potentialRssUrl, $rssList) 
 						&& !in_array($potentialRssUrl, $deletedRssList)									
