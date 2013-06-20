@@ -52,6 +52,14 @@ if(!is_writable($DATA_DIR)){
 	}	
 }
 
+$mods = get_loaded_extensions();
+if (!in_array('xsl',$mods)){
+	$serverMsg = "Le module xsl est obligatoire";
+}
+if (!in_array('mbstring',$mods)){
+	$serverMsg = "Le module mbstring est obligatoire";
+}
+
 
 /*
 * Add a new rss
@@ -85,13 +93,13 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 					$url = $url[0] . '?do=rss';
 
 					// Valid Shaarli ? 
-					if(is_valid_rss($url)){
+					if(is_valid_rss($url) !== false){
 						$rssList[$label] = $url;
 						file_put_contents($rssListFile, json_encode($rssList));						
 						header("Location: refresh.php?oneshoot=true");
 						return;
 					}else{
-						$serverMsg = "Le flux est non valide";
+						$serverMsg = "Le flux est injoignable";
 					}
 				}else{
 						$serverMsg = "L'url est non valide";

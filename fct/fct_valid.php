@@ -55,5 +55,11 @@ function checkInstall(){
 			return false;
 		}
 	}
+	
+	$mods = apache_get_modules(); 
+	if (!in_array('mod_xslolo',$mods)){ 
+		return false;
+	}
+	
 	return true;
 }

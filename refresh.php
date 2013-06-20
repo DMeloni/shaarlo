@@ -11,7 +11,7 @@ $cache = 'index';
 
 $nbStep = 30;
 $sleepBeetweenLoops = 110;
-global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $COMMENT_SORTING;
+global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING;
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
@@ -26,7 +26,7 @@ for($j=0; $j < $nbStep; $j++){
 	    <language>fr-fr</language>
 	    <copyright>http://shaarli.fr/</copyright>';
 		// start profiling
-		// xhprof_enable();
+// 		xhprof_enable();
 	/**
 	 * Absolute path to Item 
 	 */
@@ -52,6 +52,13 @@ for($j=0; $j < $nbStep; $j++){
 		$disabledRssList = json_decode(file_get_contents($disabledRssListFile), true);
 	}
 
+	$noHttpsRssList = array();
+	$noHttpsRssListFile = sprintf('%s/%s', $DATA_DIR, $NO_HTTPS_SHAARLIS_FILE_NAME);
+	if(is_file($noHttpsRssListFile)){
+		$noHttpsRssList = json_decode(file_get_contents($noHttpsRssListFile), true);
+	}
+	
+	
 	$deletedRssList = array();
 	$deletedRssListFile = sprintf('%s/%s', $DATA_DIR, $DELETED_SHAARLIS_FILE_NAME);
 	if(is_file($deletedRssListFile)){
@@ -158,14 +165,52 @@ for($j=0; $j < $nbStep; $j++){
 						$newsUrl[0] .= '/';
 					}
 					$potentialRssUrl = $newsUrl[0] . '?do=rss';
-// 					$potentialRssUrl = str_replace('https://', 'http://', $potentialRssUrl);
-					if(!in_array($potentialRssUrl, $potentialShaarlis) 
-						&& !in_array($potentialRssUrl, $rssList) 
-						&& !in_array($potentialRssUrl, $deletedRssList)									
-						&& !in_array($potentialRssUrl, $disabledRssList)){
-						$newRssFlux = is_valid_rss($potentialRssUrl);
-						if($newRssFlux !== false){
-							$potentialShaarlis[$newRssFlux] = $potentialRssUrl;
+
+					if(substr($potentialRssUrl, 8) === 'https://'){
+						if(!in_array($potentialRssUrl, $potentialShaarlis)
+						&& !in_array($potentialRssUrl, $rssList)
+						&& !in_array($potentialRssUrl, $deletedRssList)
+						&& !in_array($potentialRssUrl, $disabledRssList)
+						&& !in_array($potentialRssUrl, $noHttpsRssList)
+						){
+							$newRssFlux = is_valid_rss($potentialRssUrl);
+							if($newRssFlux !== false){
+								echo "#E ajout de $potentialRssUrls dans potentiel \n";
+								$potentialShaarlis[$newRssFlux] = $potentialRssUrl;
+							}else{
+								echo "#E ajout de $potentialRssUrls dans Pas OK \n";
+								$noHttpsRssList[] = $potentialRssUrl;
+								file_put_contents($noHttpsRssListFile, json_encode($noHttpsRssList));
+							}
+						}
+					}else{
+						$potentialRssUrls = str_replace('http://', 'https://', $potentialRssUrl);
+						if(!in_array($potentialRssUrls, $potentialShaarlis)
+						&& !in_array($potentialRssUrls, $rssList)
+						&& !in_array($potentialRssUrls, $deletedRssList)
+						&& !in_array($potentialRssUrls, $disabledRssList)
+						&& !in_array($potentialRssUrls, $noHttpsRssList)
+						){
+							$newRssFlux = is_valid_rss($potentialRssUrls);
+							if($newRssFlux !== false){
+								echo "#F ajout de $potentialRssUrls dans Potentiel \n";
+								$potentialShaarlis[$newRssFlux] = $potentialRssUrls;
+							}else{
+								echo "#F ajout de $potentialRssUrls dans Pas OK \n";
+								$noHttpsRssList[] = $potentialRssUrls;
+								file_put_contents($noHttpsRssListFile, json_encode($noHttpsRssList));
+																
+								if(!in_array($potentialRssUrl, $potentialShaarlis)
+								&& !in_array($potentialRssUrl, $rssList)
+								&& !in_array($potentialRssUrl, $deletedRssList)
+								&& !in_array($potentialRssUrl, $disabledRssList)){
+									echo "#D test de $potentialRssUrl \n";
+									$newRssFlux = is_valid_rss($potentialRssUrl);
+									if($newRssFlux !== false){
+										$potentialShaarlis[$newRssFlux] = $potentialRssUrl;
+									}
+								}
+							}
 						}
 					}
 				}
@@ -249,7 +294,7 @@ for($j=0; $j < $nbStep; $j++){
 		header('Location: index.php');
 		return;
 	}
-
+// 	return;
 	sleep($sleepBeetweenLoops);
 }
 

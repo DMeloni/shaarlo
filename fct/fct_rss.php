@@ -79,28 +79,39 @@ function convertXmlToTableau($xml,$xpath){
 	return $tableau;
 }
 
-function urlExists($url=NULL)  
-{  
-    if($url == NULL) return false;  
-    $ch = curl_init($url);  
-    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);  
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 50);  
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  
-    $data = curl_exec($ch);  
-    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);  
-    curl_close($ch);  
-    if($httpcode>=200 && $httpcode<300){  
-        return true;  
-    } else {  
-        return false;  
-    }  
+function urlExists($url) {
+	if (function_exists('curl_init')){
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$data = curl_exec($ch);
+		$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+
+		if($httpcode>=200 && $httpcode<300){
+			return true;
+		} else {
+			return false;
+		}
+	}
+	if (function_exists ( 'get_headers')){
+		$file_headers = get_headers($url);
+		if($file_headers[0] == 'HTTP/1.1 404 Not Found') {
+			return false;
+		}
+		else {
+			return true;
+		}
+	} 
+	return false;
 }
 
 /**
 * Return true if the rss is valid, else false 
 */
 function is_valid_rss($url){
-	if(urlExists($url)){
+	if(!urlExists($url)){
 		return false;
 	}
 	$content = getRss($url);

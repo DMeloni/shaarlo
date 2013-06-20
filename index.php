@@ -36,9 +36,9 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 			$rssFileArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
 			foreach($rssFileArrayed as $item){
 				if((mb_stripos(strip_tags($item['description']),($searchTerm))!==false)
-				|| (mb_stripos(($item['link']),($searchTerm))!==false)
-				|| (mb_stripos(($item['title']),($searchTerm))!==false)
-				|| (mb_stripos(($item['category']),($searchTerm))!==false)
+				|| (mb_stripos($item['link'],$searchTerm)!==false)
+				|| (mb_stripos($item['title'],$searchTerm)!==false)
+				|| (mb_stripos($item['category'],$searchTerm)!==false)
 				){
 					
 					if(!array_key_exists($item['link'], $linkAlreadyFound) 

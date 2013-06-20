@@ -116,7 +116,7 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 						$url = $url[0] . '?do=rss';
 
 						// Valid Shaarli ? 
-						if(is_valid_rss($url)){
+						if(is_valid_rss($url) !== false){
 							$rssList[$label] = $url;
 							file_put_contents($rssListFile, json_encode($rssList));						
 							$serverMsg = "Flux validé ! ";
@@ -136,7 +136,9 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 					if(in_array($url, $potentialShaarlis)){
 							$labelTmp = $flippedPotentialShaarlis[$url];
 							unset($potentialShaarlis[$labelTmp]);
-							file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis));					
+							if(false == file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis))){
+								$serverMsg = "Pb enregistrement";
+							}
 					}					
 				}
 			}	
