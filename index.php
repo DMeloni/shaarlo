@@ -11,7 +11,7 @@ global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME;
 // Autoredirect on boot.php
 $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
 
-if(!checkInstall() || !is_file($indexFile)){
+if(!checkInstall() && !is_file($indexFile)){
 	header('Location: boot.php');
 	return;
 }

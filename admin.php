@@ -12,10 +12,12 @@ unRequestMagicQuote();
 
 $serverMsg = '';
 
-global $DATA_DIR, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
+global $DATA_DIR, $CACHE_DIR_NAME , $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
+
+$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
 
 // Autoredirect on boot.php
-if(!checkInstall()){
+if(!checkInstall() && !is_file($indexFile)){
 	header('Location: boot.php');
 	return;
 }
@@ -107,6 +109,12 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 					$serverMsg = "Le nom du flux existe deja";
 				}else{
 					if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL	
+						// Url shaarli format 
+						$url = explode('?', $url);
+						
+						// Posted link is eg : http://xxx/?azerty or http://xxx/
+						$url = $url[0] . '?do=rss';
+
 						// Valid Shaarli ? 
 						if(is_valid_rss($url)){
 							$rssList[$label] = $url;
@@ -118,7 +126,6 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 								$flippeddisabledRssList = array_flip($disabledRssList);
 								file_put_contents($disabledRssListFile, json_encode($disabledRssList));
 							}
-
 						}else{
 							$serverMsg = "Le flux est non valide";
 						}

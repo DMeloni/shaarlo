@@ -10,8 +10,10 @@ header('Content-Type: text/html; charset=utf-8');
 
 global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $ARCHIVE_FILE_NAME, $CALENDAR_SORTING;
 
+$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
+
 // Autoredirect on boot.php
-if(!checkInstall()){
+if(!checkInstall() && !is_file($indexFile)){
 	header('Location: boot.php');
 	return;
 }

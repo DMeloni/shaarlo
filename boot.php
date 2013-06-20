@@ -16,7 +16,7 @@ $rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
 $rssList = json_decode(file_get_contents($rssListFile), true);
 
 $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
-if(checkInstall() && is_file($indexFile)){
+if(checkInstall() || is_file($indexFile)){
 	header('Location: index.php');
 }
 
@@ -78,7 +78,13 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 			}
 			else
 			{
-				if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL	
+				if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL
+					// Url shaarli format
+					$url = explode('?', $url);
+					
+					// Posted link is eg : http://xxx/?azerty or http://xxx/
+					$url = $url[0] . '?do=rss';
+
 					// Valid Shaarli ? 
 					if(is_valid_rss($url)){
 						$rssList[$label] = $url;
