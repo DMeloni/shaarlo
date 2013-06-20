@@ -19,7 +19,7 @@ if(!checkInstall() && !is_file($indexFile)){
 if(isset($_GET['q']) && !empty($_GET['q'])){
 	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
 	$rssFileList = array();
-	$searchTerm = htmlspecialchars($_GET['q']);
+	$searchTerm = $_GET['q'];
 	define('XPATH_RSS_ITEM', '/rss/channel/item');
 	$found = array();
 	$linkAlreadyFound = array();
@@ -35,11 +35,12 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 			}
 			$rssFileArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
 			foreach($rssFileArrayed as $item){
-				if((strpos(strtolower($item['description']),strtolower($searchTerm))!==false)
-				|| (strpos(strtolower($item['link']),strtolower($searchTerm))!==false)
-				|| (strpos(strtolower($item['title']),strtolower($searchTerm))!==false)
-				|| (strpos(strtolower($item['category']),strtolower($searchTerm))!==false)
+				if((mb_stripos(strip_tags($item['description']),($searchTerm))!==false)
+				|| (mb_stripos(($item['link']),($searchTerm))!==false)
+				|| (mb_stripos(($item['title']),($searchTerm))!==false)
+				|| (mb_stripos(($item['category']),($searchTerm))!==false)
 				){
+					
 					if(!array_key_exists($item['link'], $linkAlreadyFound) 
 					|| $linkAlreadyFound[$item['link']] < strlen($item['description'])
 					){
@@ -70,7 +71,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	$shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
 	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 	  <channel>
-	    <title>Recherche des liens :  '. $searchTerm .'</title>
+	    <title>Recherche des liens :  '. htmlspecialchars($searchTerm) .'</title>
 	    <link>http://shaarli.fr/</link>
 	    <description>Shaarli Aggregators</description>
 	    <language>fr-fr</language>
