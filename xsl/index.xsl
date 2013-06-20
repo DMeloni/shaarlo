@@ -5,7 +5,7 @@
 
     <xsl:output method="html" encoding="UTF-8"
         omit-xml-declaration="yes" indent="no" />
-    
+    <xsl:param name="searchTerm" />
     <xsl:template match="/">
 		<html lang="fr">
 			<head>
@@ -29,6 +29,9 @@
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
+					<form method="GET" action="index.php">
+						<input id="searchbar" type="text" name="q" placeholder="Rechercher un article" value="{$searchTerm}"/>
+					</form>
 				</div>
 				<div id="content">
 					<xsl:apply-templates select="/rss/channel/item"/>					
