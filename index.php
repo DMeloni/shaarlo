@@ -58,7 +58,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	// Obtient une liste de colonnes
 	$dateToSort = array();
 	foreach ($found as $key => $row) {
-		$dateToSort[$key]  = $row['pubDate'];
+		$dateToSort[$key]  = strtotime($row['pubDate']);
 	}
 	
 	// Trie les données par volume décroissant, edition croissant
