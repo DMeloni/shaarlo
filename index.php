@@ -24,7 +24,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	$found = array();
 	$linkAlreadyFound = array();
 	$nbFoundItems = 0;
-	$fileList =	scandir($archiveDir, 0);
+	$fileList =	scandir($archiveDir, 1);
 	foreach ($fileList as $file ) {
 		if ($file != "." && $file != "..") {
 			sscanf($file, 'rss_%4s%2s%2s.xml', $years, $months, $days);
