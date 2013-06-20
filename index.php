@@ -24,7 +24,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	$found = array();
 	$linkAlreadyFound = array();
 	$nbFoundItems = 0;
-	$fileList =	scandir($archiveDir, 0);
+	$fileList =	scandir($archiveDir, 1);
 	foreach ($fileList as $file ) {
 		if ($file != "." && $file != "..") {
 			sscanf($file, 'rss_%4s%2s%2s.xml', $years, $months, $days);
@@ -103,26 +103,21 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	}
 }else{
 	?><!DOCTYPE html><?php
-	if(isset($_GET['do']) && $_GET['do'] === 'rss'){
-		header('Location: rss.php');
-	}else 
-	{
-		if(isset($_GET['date'])){
-			$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
-			$rssFile = file_get_contents($rssFilePath);
-			if(is_file($rssFilePath)) {
-				$index = parseXsl('xsl/index.xsl', $rssFile);
-				$index = sanitize_output($index);
-				header('Content-Type: text/html; charset=utf-8');
-				echo $index;
-			}
+	if(isset($_GET['date'])){
+		$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
+		$rssFile = file_get_contents($rssFilePath);
+		if(is_file($rssFilePath)) {
+			$index = parseXsl('xsl/index.xsl', $rssFile);
+			$index = sanitize_output($index);
+			header('Content-Type: text/html; charset=utf-8');
+			echo $index;
+		}
+	}else{
+		if(is_file($indexFile)){
+			header('Content-Type: text/html; charset=utf-8');
+			readfile($indexFile);
 		}else{
-			if(is_file($indexFile)){
-				header('Content-Type: text/html; charset=utf-8');
-				readfile($indexFile);
-			}else{
-				header('Location: refresh.php?oneshoot=true');
-			}
+			header('Location: refresh.php?oneshoot=true');
 		}
 	}
 }
