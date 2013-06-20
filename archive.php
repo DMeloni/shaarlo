@@ -8,7 +8,7 @@ include 'fct/fct_valid.php';
 error_reporting(0);
 header('Content-Type: text/html; charset=utf-8');
 
-global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $ARCHIVE_FILE_NAME;
+global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $ARCHIVE_FILE_NAME, $CALENDAR_SORTING;
 
 // Autoredirect on boot.php
 if(!checkInstall()){
@@ -86,7 +86,12 @@ if(file_exists($archiveFile) && filemtime($archiveFile) > $expire) {
 								<div class="article-content">
 									<table border="1">
 										<?php 
-											asort($rssDay);
+											if('desc' === $CALENDAR_SORTING){
+												arsort($rssDay);
+											}
+											else {
+												asort($rssDay);
+											}
 											$rssCollumnsDay = array_chunk($rssDay, 7, true);
 											foreach($rssCollumnsDay as $rowDays){?>
 											<tr>

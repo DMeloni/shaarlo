@@ -11,7 +11,7 @@ $cache = 'index';
 
 $nbStep = 30;
 $sleepBeetweenLoops = 110;
-global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
+global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $COMMENT_SORTING;
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
@@ -202,7 +202,11 @@ for($j=0; $j < $nbStep; $j++){
 		
 		$i++;
 
-		ksort($rssContent['description']);
+		if('desc' === $COMMENT_SORTING){
+			ksort($rssContent['description']);
+		}else{
+			krsort($rssContent['description']);
+		}
 		
 		$shaarloRss .= sprintf("<item>
 							<title>%s</title>
