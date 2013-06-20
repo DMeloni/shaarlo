@@ -19,17 +19,10 @@ if(!checkInstall() && !is_file($indexFile)){
 
 header('Content-Type: text/html; charset=utf-8');
 
-<<<<<<< HEAD
 if(isset($_GET['q']) && !empty($_GET['q'])){
 	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
 	$rssFileList = array();
 	$searchTerm = htmlspecialchars($_GET['q']);
-=======
-if(isset($_GET['q'])){
-	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
-	$rssFileList = array();
-	$searchTerm = $_GET['q'];
->>>>>>> origin/master
 	define('XPATH_RSS_ITEM', '/rss/channel/item');
 	$found = array();
 	if ($handle = opendir($archiveDir)) {
@@ -59,7 +52,6 @@ if(isset($_GET['q'])){
 			}
 		}
 		closedir($handle);
-<<<<<<< HEAD
 	}
 	rsort($found);
 	
@@ -85,30 +77,6 @@ if(isset($_GET['q'])){
 	$shaarloRss .= '</channel></rss>';
 	
 	$index = parseXsl('xsl/index.xsl', $shaarloRss, array('searchTerm' => $_GET['q']));
-=======
-	}
-	$shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
-	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-	  <channel>
-	    <title>Recherche des liens :  '. $searchTerm .'</title>
-	    <link>http://shaarli.fr/</link>
-	    <description>Shaarli Aggregators</description>
-	    <language>fr-fr</language>
-	    <copyright>http://shaarli.fr/</copyright>';
-	foreach($found as $item){
-		$shaarloRss .= sprintf("<item>
-								<title>%s</title>
-								<link>%s</link>
-								<pubDate>%s</pubDate>
-								<description>%s</description>
-								<category>%s</category>
-								</item>",
-				$item['title'], $item['link'], $item['pubDate'],$item['description'], $item['category']
-		);	
-	}	
-	$shaarloRss .= '</channel></rss>';
-	$index = parseXsl('xsl/index.xsl', $shaarloRss);
->>>>>>> origin/master
 	$index = sanitize_output($index);
 	echo $index;
 		
