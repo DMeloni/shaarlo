@@ -12,5 +12,6 @@ $GLOBALS['DELETED_SHAARLIS_FILE_NAME'] = 'deleted_shaarli.txt';
 $GLOBALS['ARCHIVE_FILE_NAME'] = 'archive.html';
 $GLOBALS['CALENDAR_SORTING'] = 'desc';
 $GLOBALS['COMMENT_SORTING'] = 'desc'; /* sort url comment by date */
+$GLOBALS['MAX_FOUND_ITEM'] = 10; /* max item returned by search */
 
 

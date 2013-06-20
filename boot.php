@@ -56,7 +56,6 @@ if(!is_writable($DATA_DIR)){
 /*
 * Add a new rss
 */
-$flippeddisabledRssList = array_flip($disabledRssList);
 if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 
  	$assocUrlLabel = array_combine ($_POST['url'], $_POST['label']);
