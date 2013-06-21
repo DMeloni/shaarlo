@@ -103,7 +103,6 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 		echo $index;
 	}
 }else{
-	?><!DOCTYPE html><?php
 	if(isset($_GET['date'])){
 		$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
 		$rssFile = file_get_contents($rssFilePath);
