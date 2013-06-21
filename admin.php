@@ -15,8 +15,9 @@ $serverMsg = '';
 
 global $DATA_DIR, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
 
+$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html'); 
 // Autoredirect on boot.php
-if(!checkInstall()){
+if(!checkInstall() && !is_file($indexFile) ){
 	header('Location: boot.php');
 	return;
 }
@@ -108,8 +109,13 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 					$serverMsg = "Le nom du flux existe deja";
 				}else{
 					if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL	
+						// Url shaarli format 
+			            $url = explode('?', $url);
+			            
+			            // Posted link is eg : http://xxx/?azerty or http://xxx/
+			            $url = $url[0] . '?do=rss'; 
 						// Valid Shaarli ? 
-						if(is_valid_rss($url)){
+						if(is_valid_rss($url) !== false){
 							$rssList[$label] = $url;
 							file_put_contents($rssListFile, json_encode($rssList));						
 							$serverMsg = "Flux validé ! ";
@@ -130,7 +136,9 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 					if(in_array($url, $potentialShaarlis)){
 							$labelTmp = $flippedPotentialShaarlis[$url];
 							unset($potentialShaarlis[$labelTmp]);
-							file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis));					
+							if(false == file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis))){
+				            	$serverMsg = "Problème d'enregistrement";
+				            }				
 					}					
 				}
 			}	
@@ -306,7 +314,7 @@ ob_start();
 					<a title="Go to original place" href="">Info sur le dernier reload</a>
 					</h2>
 					<div class="article-content">
-						// <span>Dernier reload le : <?php echo $mtimeLastReload;?></span>
+						<span>Dernier reload le : <?php echo $mtimeLastReload;?></span>
 						<br/>
 						<a href="refresh.php?oneshoot=true">Forcer un reload</a>		
 					</div>	
