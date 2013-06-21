@@ -15,6 +15,11 @@
 	 * 
 	*/	
 	session_start();
+	include 'config.php';
+	global $DATA_DIR, $SECURE_ADMIN;
+	if($SECURE_ADMIN === false){
+		return;
+	}
 	
 	// ------------------------------------------------------------------
 	// configuration	
@@ -30,11 +35,13 @@
 	
 	// ---------------------------------------------------------------------------------
 	// sécurisation du passe: procédure astucieuse de JérômeJ (http://www.olissea.com/)
-	if(file_exists('pass.php')) include 'pass.php';
+	$passFile = sprintf('%s/%s', $DATA_DIR, 'pass.php');
+	
+	if(file_exists($passFile)) include $passFile;
 	if(!isset($auto_restrict['pass'])){
 		if(isset($_POST['pass'])&&isset($_POST['login'])&&$_POST['pass']!=''&&$_POST['login']!=''){ # Création du fichier pass.php
 			$salt = md5(uniqid('', true));
-			file_put_contents('pass.php', '<?php $auto_restrict["login"]="'.$_POST['login'].'";$auto_restrict["salt"] = '.var_export($salt,true).'; $auto_restrict["pass"] = '.var_export(hash('sha512', $salt.$_POST['pass']),true).'; ?>');
+			file_put_contents($passFile, '<?php $auto_restrict["login"]="'.$_POST['login'].'";$auto_restrict["salt"] = '.var_export($salt,true).'; $auto_restrict["pass"] = '.var_export(hash('sha512', $salt.$_POST['pass']),true).'; ?>');
 			include 'login_form.php';exit();
 		}
 		else{ # On affiche un formulaire invitant à rentrer le mdp puis on exit le script
@@ -50,7 +57,7 @@
 	// gestion de post pour demande de connexion
 	// si un utilisateur tente de se loguer, on gère ici
 	// ------------------------------------------------------------------	
-	if (isset($_POST['login'])&&isset($_POST['pass'])){
+	if (isset($_POST['login']) && isset($_POST['pass'])){
 		log_user($_POST['login'],$_POST['pass']);
 		if (isset($_POST['cookie'])){setcookie($auto_restrict['cookie_name'],sha1($_SERVER['HTTP_USER_AGENT']),time()+$auto_restrict['cookie_expiration_delay']*1440);}
 	}
