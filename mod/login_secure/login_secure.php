@@ -7,7 +7,5 @@
  * @version 2.0
  * no support : at your peril
  */
-
-include 'auto_restrict.php';
-
+require 'autorestrict.php';
 
