@@ -1,4 +1,5 @@
 <?php
+include 'auto_restrict.php';
 include 'config.php';
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
@@ -12,12 +13,11 @@ unRequestMagicQuote();
 
 $serverMsg = '';
 
-global $DATA_DIR, $CACHE_DIR_NAME , $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME;
+global $DATA_DIR, $CACHE_DIR_NAME , $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME; 
 
-$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
-
+$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html'); 
 // Autoredirect on boot.php
-if(!checkInstall() && !is_file($indexFile)){
+if(!checkInstall() && !is_file($indexFile) ){
 	header('Location: boot.php');
 	return;
 }
@@ -110,11 +110,10 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 				}else{
 					if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL	
 						// Url shaarli format 
-						$url = explode('?', $url);
-						
-						// Posted link is eg : http://xxx/?azerty or http://xxx/
-						$url = $url[0] . '?do=rss';
-
+			            $url = explode('?', $url);
+			            
+			            // Posted link is eg : http://xxx/?azerty or http://xxx/
+			            $url = $url[0] . '?do=rss'; 
 						// Valid Shaarli ? 
 						if(is_valid_rss($url) !== false){
 							$rssList[$label] = $url;
@@ -126,6 +125,7 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 								$flippeddisabledRssList = array_flip($disabledRssList);
 								file_put_contents($disabledRssListFile, json_encode($disabledRssList));
 							}
+
 						}else{
 							$serverMsg = "Le flux est non valide";
 						}
@@ -137,15 +137,24 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 							$labelTmp = $flippedPotentialShaarlis[$url];
 							unset($potentialShaarlis[$labelTmp]);
 							if(false == file_put_contents($potentialShaarlisListFile, json_encode($potentialShaarlis))){
-								$serverMsg = "Pb enregistrement";
-							}
+				            	$serverMsg = "Problème d'enregistrement";
+				            }				
 					}					
 				}
 			}	
 		}		
 	}
-}	
-
+}
+function readMyDir($dir) {
+   $dir = opendir($dir);
+   while(($entry = readdir($dir)) !== false) {
+       if($entry !== '.' && $entry !== '..') {
+           break;
+       }
+   }
+   closedir($dir);
+   return $entry;
+}
 ob_start();
 ?><!DOCTYPE html>
 <html lang="fr"> 
@@ -167,8 +176,14 @@ ob_start();
 			<a href="index.php">Accueil</a>
 			<a href="admin.php">Administration</a>
 			<a href="archive.php">Archive</a>
+			<div id="right">&nbsp;Vous etes <em>connecté!</em>&nbsp;
+				Durée d'inactivité avant déconnexion:<em> <?php echo (!isset($_COOKIE[$auto_restrict['cookie_name']])) ? $auto_restrict['session_expiration_delay'].' min' : $auto_restrict['cookie_expiration_delay'].' jour(s)'; ?>.</em>&nbsp;
+				<a href='admin.php' title="Recharger cette page" ><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAEO0lEQVR4Xs3TcUyUZRwH8O/z3vvee3ceB3cHiCAQeiKRliitTDQtpwOTxOklUxR3UUA1RSmrLWXoDET+UFqlbpoOqMbMwkQiBs4aEqYxEBHE4ADl6Di4Ozjujnvvfaq5+c+hxvynz/b89du+e/bdvvhfKDhejU+P1aDo+Hmm49RLoGfwUAymYJwEAYpQad+oeu3eW7lRW3oasHih7smDRUYGIuEC+qzS7BG333bG3sbPWH4Qk2HxEHd6TAhQsiS/vF9rNDl0tjFnRG3jn5xGJQ+yOGULQGRPc5KwK92axIuYBMEk3v38NlbFqZTVTeY1t4zWTbaxiUVuwavxil4JQ6joJRIZw8kZrT+qtTJrJqXU+MP+5EcHn7tuASshmt87x3Ou3x5722iyBbrcTgICUIaAEvF+gRIWCgXvDFSJhzUKW8GERzoOf4rKN1/x7fh0iw00QCpvHxGzTS4xx8sJfrxcMFLRcU3w2K4S1tPDaKYJVKsE1cgxrpTKhyVs2sCIc+Fo1HIMXG307bjohgMXG4yYOz/kxcEhW+qQqbdhvLf7e7fZ0uwcHjdLBI83YnXiRrNStU+gYKngFkT7cP/wvd6fbKaOIY8mAdKuG/Dx8R925LWOctvLr320Ou+bfc+s3DYTAJGwHHIuD6LWOMomVfYXRJ+85Yo49Etr6M7S4sA1uQnyiHglHmV3XTeyKpqkyZ8ci49duTlAt2T9g5v+q0bsrmhWvfzZpcKw90sPaNfteV4eukBBKcVj6XcdwaupOeAVvh9YnLYXKTtKJPPW7QxW6BL4Ofvb8URyG4dQdXeM3XnJGLP26IV5IQlbmPjsww/uVxruoaa+h+w4eolNyTuP9EM1eKTIMjPKWgfk2fWmRa9XD+YtOdvd9GzhuUwAZNaGd/CvsiYLLt+hzMELHcvSi79bykcvJ0m5Jb7LO9HYjRa7AtF+bkWX3RX3bSdSBl1IsnpI9IRjdIAOWzpi6yjt++BDNNxsI813HdquETHZbJ/YYBkxF9d11NOMxM2+wT+2dyGGryJVd1O3WdyaPVaXGOb2UBYiAesVvCrV3Oem32hTxBoMyhO/8XN4nltKiGuhY3DgrKW98VrBLhtuVpf7Lk+XdxRdqvcQZa/YJNLZJUTgA6lXABEBQhmRZeDmQD2cRMop5TI+aBqIv9hbZ79dm1P8ZX7rLEImnzS/GJiecBIeZ6dKKl22nxFmZFGPyMHrAURyf6SUAKIIBee1hsiGfpbZrhZWnc6/DoDiccKzjvzzSmKeyqz/NcrQTCPTLlpD9adbwvRft4VvrGiKSikrj15TlB7zwoYQAAj2Y/GfaFKnA+uBiIzSTVEZDX9FbD5TqV6hj1OvMMwPTHhLFxybqFZICQmcGYMpC8/4AmEZB6ZFGk4dDn/jwG51NJjQpK14YjMMegSvzkKIfuvsoFWvzeUAqBfFYyr+Bvk2whLdALgAAAAAAElFTkSuQmCC"/></a>&nbsp;
+				<a href='?deconnexion=ok' class="deco" title="DECONNEXION"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAFCUlEQVR4XoWVa2wU1xmGn5ld79W7a4xstDh4G6jBik1cx1sugoRc3FAKUiCK8qNQ5aJIEUT5UalARSFtqrYWQSVKRaoqRhCqVApSCVISAkooCkQhwXGgKTY3Y+PY4CveZe317s5tvx6PhGpFbvtJj+boO0fPeUc6M0cTEWaqt6uSGlADLHWBJUAeuDCNzmdvtTvMUDOKlbQBeAeoD2pCyAOxsghF22EimyNfhIKiiNYOPKfkHXyn9O8IdcV2hLY5QU9988ubWPteKz/+6gQrvjjOg18e50enjvD4/j08tHEdlV6SCF+rIDsU3hkTuxNw3K/TvKj2e9zX+kd8VXOxb49RLBiggdg2UjCRooPm81Po6qZn95+43jtCQTgJrFbpiwDTd9kW0Ghe9tN1JH6/k6JpYg2PUjKnEr1k+jJwLIvcpatuf8GuXxD+ywH+2X6l2SiyFdgNgIhwcG5T/cF4k3G++UlxDEOMwWGxs1mZKse2Zbi7Ry6f/sxFjd3eVE3035TRw0dl6K1DcrZupUw5lKtBREANPIqvjiWSkrvapaRDYo2lXGlqaEjeb3lNTmzbKW2vtsjFlr3u8/PX98lYX78rH/5Xhwzua5XuLVvlWOIBUa6LCk0H6nQkWbfxCfe17VQGb/kssuk0/2jZQyKToy4SY/7ieuKLaojrXqqzeQb2/5Xs6G0qF9eRK4/hi1cSjwYB6oEaXYPGoA6xVSvIdV7GWzEbgLOH/sYCC2K2A5pG+fq1LuOGgZMZJ5IrMPTuEQBKG+8nn0rji0UIaYIGS706NIZ08N87j7G/f0C46QdYhQL5M2eJzq7ANjPokVLl1gAYzk64iQE0tYGt1s5KJOgZGSEaCBD2gGErsUejsTQcxE7dwRoaweP3c7vjEpGCiXMnA0CxLMbdsicnVX+CuzXZ20esdiFmwO9uHtYho7HEq2sEPSUect90YnRdByCgRL7JHLblAOCZ+I+omMtjuxvi4o9GAFSYTqKZHKChnHndA225iRzGt/0Yvf1M9t8kdk8Vhm3jpDNu6mI2N12M20+lEcsmMDdOpq8ffTTlJjYVHrigK/s5U0BMy/2axtu/AaB6ywuI7SCWg9k/gGOa2IbJ5M0B3L4jzNn8PAC32r4mGgih+QNYbmIuaEfnNS0Eri5+fCWFaz04fh81h1sJzCrj6q9+h/XJGQDSc2bzbSFHxUiKKn+QsjWPcc+r2ymk73B47VM0UIJu2vSO3kGgQSWmS9Fx69wFfFVxPIZB9+43AKj9wy7iLTuJLP8hFbbwgCdA7cMPUb37Feb99pcAfPqbFhJFnUBpKRnDRNNoV75ORIQPq5saFMb5VevlypPPSufD6+XMiz+X8YFB+S/lzh19brO8l3xErmx4Rs4vXyNTDkW9iOCKFXyUaNr+8feXyaU1G6Vr00ty+Scb5bPVT8sXr/9Zrn98SjI3b03hjj/f+6YcWLlaTj+2Qbp+9pJcUms/qVkuyrHjrs877ce8p2hZzQPdN5ornWrCiSrihkn+dBuDx05xzTKYtG3CJSVEQ2GWJRbgD4XIqtM0eqMPxzRP6vDajDfIyXuTXmAb8OtIZYWv/L5FlEQjaD4fOA4g4PEihoE1kSV9+RrjwyMm8Aqwp/lGe/F/Xk2n5ifrgYPoWtIXDOELh/BHy8CrY6RSmNlJzHweRDqATY/2uGf0/995AKfnJz1AHdA4jSDQBpxzga5VPe0zCv4NGfzEC3rbCQIAAAAASUVORK5CYII="/></a>
+			</div>
 			<h1 id="top"><a href="./admin.php">Administration</a></h1> 
-		</div> 
+		</div>	
+			 
 		<div id="content">
 			<?php if (!empty($serverMsg)) { ?>
 			<div class="article shaarli-youm-org">
@@ -284,21 +299,26 @@ ob_start();
 				$date = date('Ymd');
 				$currentRss = sprintf('%s/%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME, 'rss_'.date('Ymd'). '.xml');
 				if(is_file($currentRss)){
-					$mtimeLastReload = filemtime($currentRss);
+					$mtimeLastReload = date('d/m/Y \à H\h i\m s\s', filemtime($currentRss));
+				}else{
+					$mtimeLastReload = str_replace(array('rss_','.xml'), '', readMyDir($DATA_DIR.DIRECTORY_SEPARATOR.$ARCHIVE_DIR_NAME));
+					$mtimeLastReload = preg_replace_callback(
+								"|([0-9]{4})([0-9]{2})([0-9]{2})|",
+					            function ($matches) {return $matches[3].'/'.$matches[2].'/'.$matches[1];},
+					            $mtimeLastReload
+					);
+				}
 				?>
 				<div class="article shaarli-youm-org">
 					<h2 class="article-title ">
 					<a title="Go to original place" href="">Info sur le dernier reload</a>
 					</h2>
 					<div class="article-content">
-						<span>Heure du dernier reload de la journée : <?php echo date('H\h i\m s\s', $mtimeLastReload);?></span>
+						<span>Dernier reload le : <?php echo $mtimeLastReload;?></span>
 						<br/>
 						<a href="refresh.php?oneshoot=true">Forcer un reload</a>		
 					</div>	
-				</div>					
-				<?php 
-				}				
-			?>
+				</div>
 		</div>
 		<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
 	</body>

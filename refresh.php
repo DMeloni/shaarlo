@@ -1,4 +1,5 @@
 <?php
+include 'auto_restrict.php';
 include 'config.php';
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
