@@ -44,7 +44,9 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 				if((mb_stripos(strip_tags($item['description']),($searchTerm))!==false && ('fulltext' === $type || 'description' == $type))
 				|| (mb_stripos($item['link'],$searchTerm)!==false && ('fulltext' === $type || 'link' == $type))
 				|| (mb_stripos($item['title'],$searchTerm)!==false && ('fulltext' === $type || 'title' == $type))
-				|| (mb_stripos($item['category'],$searchTerm)!==false && ('fulltext' === $type || 'category' == $type) )
+				|| (mb_stripos($item['category'],$searchTerm)!==false && 'fulltext' === $type) 
+				|| ((preg_match("#,$searchTerm,#", $item['category']) || preg_match("#^$searchTerm,#", $item['category'])/*Very ugly*/
+						|| preg_match("#,$searchTerm$#", $item['category']))&& 'category' === $type)
 				){
 					if(!array_key_exists($item['link'], $linkAlreadyFound) 
 					|| $linkAlreadyFound[$item['link']] < strlen($item['description'])
