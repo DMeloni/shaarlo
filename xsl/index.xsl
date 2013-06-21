@@ -6,6 +6,8 @@
     <xsl:output method="html" encoding="UTF-8"
         omit-xml-declaration="yes" indent="no" />
     <xsl:param name="searchTerm" />
+    <xsl:param name="mod_content_top" />
+    <xsl:param name="mod_content_bottom" />
     <xsl:template match="/">
 		<html lang="fr">
 			<head>
@@ -34,7 +36,9 @@
 					</form>
 				</div>
 				<div id="content">
-					<xsl:apply-templates select="/rss/channel/item"/>					
+					<xsl:value-of select="$mod_content_top" disable-output-escaping="yes"/>
+					<xsl:apply-templates select="/rss/channel/item"/>
+					<xsl:value-of select="$mod_content_bottom" disable-output-escaping="yes"/>					
 				</div>
 				<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
 			</body>

@@ -17,3 +17,5 @@ $GLOBALS['MAX_FOUND_ITEM'] = 10; /* max item returned by search */
 $GLOBALS['SECURE_ADMIN'] = true; /* active login/pwd for admin page access */
 
 
+require_once 'mod/mod.php';
+

@@ -1,12 +1,12 @@
 <?php 
 include 'config.php';
 include 'fct/fct_valid.php';
-include 'fct/fct_xsl.php';
-include 'fct/fct_rss.php';
+require_once 'fct/fct_xsl.php';
+require_once 'fct/fct_rss.php';
 
 // error_reporting(0);
 
-global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM;
+global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD;
 
 // Autoredirect on boot.php
 $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
@@ -97,17 +97,17 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 		header('Content-Type: application/rss+xml; charset=utf-8');
 		echo sanitize_output($shaarloRss);
 	}else{
-		$index = parseXsl('xsl/index.xsl', $shaarloRss, array('searchTerm' => $_GET['q']));
+		$index = parseXsl('xsl/index.xsl', $shaarloRss, array('searchTerm' => $_GET['q'], 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 		$index = sanitize_output($index);
 		header('Content-Type: text/html; charset=utf-8');
 		echo $index;
 	}
 }else{
-	if(isset($_GET['date'])){
+	if(isset($_GET['date']) && is_file($rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']))){
 		$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
 		$rssFile = file_get_contents($rssFilePath);
 		if(is_file($rssFilePath)) {
-			$index = parseXsl('xsl/index.xsl', $rssFile);
+			$index = parseXsl('xsl/index.xsl', $rssFile, array('mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 			$index = sanitize_output($index);
 			header('Content-Type: text/html; charset=utf-8');
 			echo $index;
@@ -115,7 +115,11 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	}else{
 		if(is_file($indexFile)){
 			header('Content-Type: text/html; charset=utf-8');
-			readfile($indexFile);
+			$rssFilePath = sprintf('%s/%s/rss.xml', $DATA_DIR, $CACHE_DIR_NAME);
+			$rssFile = file_get_contents($rssFilePath);
+			$index = parseXsl('xsl/index.xsl', $rssFile, array('mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+			$index = sanitize_output($index);
+			echo $index;			
 		}else{
 			header('Location: refresh.php?oneshoot=true');
 		}
