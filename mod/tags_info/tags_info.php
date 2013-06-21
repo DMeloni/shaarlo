@@ -59,7 +59,7 @@ $tags = '';
 $stopWords = array('<br/>', '[en]', '[fr]');
 foreach($categories as $value => $frequency){
 	if(strlen($value) > 3 && !in_array($value, $stopWords)){
-		$tags .=  $value . ' : ' . $frequency . "<br/>";
+		$tags .=  '<a href="index.php?q='.$value.'&amp;type=category">' . $value . '</a> : ' . $frequency . "<br/>";
 	}
 
 	if($i > 20){

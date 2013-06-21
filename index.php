@@ -4,7 +4,7 @@ include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';
 
-// error_reporting(0);
+error_reporting(0);
 
 global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD;
 
@@ -20,7 +20,13 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
 	$rssFileList = array();
 	$searchTerm = $_GET['q'];
-	define('XPATH_RSS_ITEM', '/rss/channel/item');
+	$type = 'fulltext';
+	if(isset($_GET['type']) && $_GET['type'] === 'category'){
+		$type = 'category';
+	}
+	if(!defined('XPATH_RSS_ITEM')){
+		define('XPATH_RSS_ITEM', '/rss/channel/item');
+	}
 	$found = array();
 	$linkAlreadyFound = array();
 	$nbFoundItems = 0;
@@ -35,12 +41,11 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 			}
 			$rssFileArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
 			foreach($rssFileArrayed as $item){
-				if((mb_stripos(strip_tags($item['description']),($searchTerm))!==false)
-				|| (mb_stripos($item['link'],$searchTerm)!==false)
-				|| (mb_stripos($item['title'],$searchTerm)!==false)
-				|| (mb_stripos($item['category'],$searchTerm)!==false)
+				if((mb_stripos(strip_tags($item['description']),($searchTerm))!==false && ('fulltext' === $type || 'description' == $type))
+				|| (mb_stripos($item['link'],$searchTerm)!==false && ('fulltext' === $type || 'link' == $type))
+				|| (mb_stripos($item['title'],$searchTerm)!==false && ('fulltext' === $type || 'title' == $type))
+				|| (mb_stripos($item['category'],$searchTerm)!==false && ('fulltext' === $type || 'category' == $type) )
 				){
-					
 					if(!array_key_exists($item['link'], $linkAlreadyFound) 
 					|| $linkAlreadyFound[$item['link']] < strlen($item['description'])
 					){
