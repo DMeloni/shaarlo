@@ -16,8 +16,11 @@
 	*/	
 	session_start();
 	include 'config.php';
-	global $DATA_DIR;
-
+	global $DATA_DIR, $SECURE_ADMIN;
+	if($SECURE_ADMIN === false){
+		return;
+	}
+	
 	// ------------------------------------------------------------------
 	// configuration	
 	// ------------------------------------------------------------------
@@ -54,7 +57,7 @@
 	// gestion de post pour demande de connexion
 	// si un utilisateur tente de se loguer, on gère ici
 	// ------------------------------------------------------------------	
-	if (isset($_POST['login'])&&isset($_POST['pass'])){
+	if (isset($_POST['login']) && isset($_POST['pass'])){
 		log_user($_POST['login'],$_POST['pass']);
 		if (isset($_POST['cookie'])){setcookie($auto_restrict['cookie_name'],sha1($_SERVER['HTTP_USER_AGENT']),time()+$auto_restrict['cookie_expiration_delay']*1440);}
 	}

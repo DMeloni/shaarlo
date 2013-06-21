@@ -29,7 +29,14 @@
 <div class="form_content">
 	<form action='' method='post' name='' >
 		<p class="logo"> </p>
-		<?php if(file_exists('pass.php')){echo '<h1>Identifiez-vous</h1>';}else{echo '<h1>Creez votre passe</h1>';} ?>
+		<?php 
+			global $DATA_DIR;
+			$passFile = sprintf('%s/%s', $DATA_DIR, 'pass.php');
+			if(file_exists($passFile)){
+				?><h1>Identifiez-vous</h1><?php
+			}else{
+				?><h1>Créez votre mot de passe</h1><?php 
+			} ?>
 			<hr/>
 			<label for='login'>Login </label>
 			<input type='text' name='login' id='login' required="required"/>
@@ -39,7 +46,7 @@
 		<input type='password' name='pass' id='pass'  required="required"/>	
 
 		<hr/>
-		<input id="cookie" type="checkbox" value="cookie" name="cookie"/><label for="cookie">Rest. connect.</label>
+		<input id="cookie" type="checkbox" value="cookie" name="cookie"/><label for="cookie">Rester connecté</label>
 		<hr/>
 		<input type='submit' value='Connexion'/>	
 	</form>
