@@ -41,7 +41,9 @@ define('XPATH_PREFIX_PURL_CONTENT', 'content');
 */
 define('XPATH_NAMESPACE_PURL_CONTENT', 'http://purl.org/rss/1.0/modules/content/');
 
+define('XPATH_RSS_ITEM', '/rss/channel/item');
 
+define('XPATH_RSS_TITLE', '/rss/channel/title');
 
 /*
  * Get a RSS 
@@ -117,15 +119,15 @@ function is_valid_rss($url){
 	$content = getRss($url);
 	$xmlContent = getSimpleXMLElement($content);
 	if($xmlContent !== false){
-		define('XPATH_RSS_ITEM', '/rss/channel/item');
 		$rssItems = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
 		$firstItem = reset($rssItems);
 		$link = $firstItem['link'];
+		if(!isset($firstItem['pubDate'])){
+			return false;
+		}
 		$rssTimestamp = strtotime($firstItem['pubDate']);
 		if(filter_var($link, FILTER_VALIDATE_URL)  && $rssTimestamp > 0){
-
 			// Return the title
-			define('XPATH_RSS_TITLE', '/rss/channel/title');
 			$list = $xmlContent->xpath(XPATH_RSS_TITLE);
 			return (string)$list[0];
 		}

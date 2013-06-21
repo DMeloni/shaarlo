@@ -205,40 +205,6 @@ ob_start();
 					</form>			
 				</div>	
 			</div>	
-			<?php
-			if(!empty($potentialShaarlis)){
-			?>	
-			<div class="article shaarli-youm-org">
-				<h2 class="article-title ">
-				<a title="Go to original place" href="">Proposition de flux</a>
-				</h2>
-				<div class="article-content">
-					<form action="admin.php" method="POST">	
-					<table style="width:90%;">
-					<?php 
-					foreach($potentialShaarlis as $rssKey => $rssUrl){?>
-								<tr>
-									<td  style="width:2%;" rowspan="2">
-										<input style="float:left;" type="checkbox" checked name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
-									</td>
-									<td></td>
-								</tr>
-								<tr>
-									<td>
-										<input type="text" style="width:99%;" name="label[]" value="<?php echo $rssKey;?>" />
-										<br/>
-										<input type="text" style="width:99%;" name="url[]" readonly value="<?php echo $rssUrl;?>" />
-									</td>
-								</tr>
-																						
-					<?php }?>	
-						</table>		
-						<input type="hidden" name="action" value="add" />
-						<input type="submit" value="Ajouter les selectionnés" class="bigbutton"/>					
-					</form>
-				</div>	
-			</div>	
-			<?php } ?>
 
 			<?php
 			if(!empty($rssList)){
