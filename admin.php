@@ -16,6 +16,7 @@ $serverMsg = '';
 global $DATA_DIR, $CACHE_DIR_NAME , $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME; 
 
 $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html'); 
+
 // Autoredirect on boot.php
 if(!checkInstall() && !is_file($indexFile) ){
 	header('Location: boot.php');

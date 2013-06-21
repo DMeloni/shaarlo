@@ -15,7 +15,9 @@
 	 * 
 	*/	
 	session_start();
-	
+	include 'config.php';
+	global $DATA_DIR;
+
 	// ------------------------------------------------------------------
 	// configuration	
 	// ------------------------------------------------------------------
@@ -30,11 +32,13 @@
 	
 	// ---------------------------------------------------------------------------------
 	// sécurisation du passe: procédure astucieuse de JérômeJ (http://www.olissea.com/)
-	if(file_exists('pass.php')) include 'pass.php';
+	$passFile = sprintf('%s/%s', $DATA_DIR, 'pass.php');
+	
+	if(file_exists($passFile)) include $passFile;
 	if(!isset($auto_restrict['pass'])){
 		if(isset($_POST['pass'])&&isset($_POST['login'])&&$_POST['pass']!=''&&$_POST['login']!=''){ # Création du fichier pass.php
 			$salt = md5(uniqid('', true));
-			file_put_contents('pass.php', '<?php $auto_restrict["login"]="'.$_POST['login'].'";$auto_restrict["salt"] = '.var_export($salt,true).'; $auto_restrict["pass"] = '.var_export(hash('sha512', $salt.$_POST['pass']),true).'; ?>');
+			file_put_contents($passFile, '<?php $auto_restrict["login"]="'.$_POST['login'].'";$auto_restrict["salt"] = '.var_export($salt,true).'; $auto_restrict["pass"] = '.var_export(hash('sha512', $salt.$_POST['pass']),true).'; ?>');
 			include 'login_form.php';exit();
 		}
 		else{ # On affiche un formulaire invitant à rentrer le mdp puis on exit le script
