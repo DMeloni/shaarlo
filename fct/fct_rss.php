@@ -45,6 +45,15 @@ define('XPATH_RSS_ITEM', '/rss/channel/item');
 
 define('XPATH_RSS_TITLE', '/rss/channel/title');
 
+define('XPATH_RSS_LINK', '/rss/channel/link');
+
+define('XPATH_RSS_DESCRIPTION', '/rss/channel/description');
+
+define('XPATH_RSS_TITLE', '/rss/channel/title');
+
+define('XPATH_RSS_COPYRIGHT', '/rss/channel/copyright');
+
+
 /*
  * Get a RSS 
  * 
@@ -53,7 +62,7 @@ define('XPATH_RSS_TITLE', '/rss/channel/title');
  *  
  */
 function getRss($url){
-	return file_get_contents($url);
+	return @file_get_contents($url);
 }
 
 

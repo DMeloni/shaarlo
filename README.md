@@ -30,10 +30,10 @@ Voilà, je pense qu'il y a un projet bien plus important que shaarlo qui se tram
 Un grand Merci à Sebsauvage.
 
 Merci aux contributeurs directs : 
--Bronco (warriordudimanche) (système de connection à l'interface d'admin mod login_secure)
--o*gina-rouge (idée de la recherche fulltext)
--Leomaradan (rapporteur de bug)
--tcitworld (aide à la compréhension xd)
+- Bronco (warriordudimanche) à travers jerrywham (système de connection à l'interface d'admin mod login_secure)
+- o*gina-rouge (idée de la recherche fulltext)
+- Leomaradan (rapporteur de bug)
+- tcitworld (aide à la compréhension xd)
 
 Et indirects : 
 -tous les shaarlistes =D

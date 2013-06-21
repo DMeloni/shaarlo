@@ -62,7 +62,9 @@
 			</h2>
 			<div class="article-content">
 				<xsl:value-of select="description" disable-output-escaping="yes"/>
-				<span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
+				<xsl:if test="category != ''" >
+					<span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
+				</xsl:if>
 			</div>
 		</div>    	
     </xsl:template>
