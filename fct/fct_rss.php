@@ -49,8 +49,6 @@ define('XPATH_RSS_LINK', '/rss/channel/link');
 
 define('XPATH_RSS_DESCRIPTION', '/rss/channel/description');
 
-define('XPATH_RSS_TITLE', '/rss/channel/title');
-
 define('XPATH_RSS_COPYRIGHT', '/rss/channel/copyright');
 
 
