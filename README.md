@@ -17,9 +17,7 @@ Quelques mots :
 
 (vu que la plupart des shaarlistes sont français (et aussi que je suis une quiche dans ce langage, je m'exprime en français ci dessous).
 
-La page d'admin n'est pas protégée par un système de session, c'est voulu, tout simplement parce qu'à force de se rajouter des mini projets comme celui ci, 
-on se retrouve vite avec mille pages de connexion (et c'est plutot moche à force). Dans l'idéal, il faudrait que cette page soit liée à son compte shaarli 
-(mais cela nécessiterait de posséder un compte shaarli sur le même serveur, ce qui n'est pas le cas de shaarli.fr par exemple).
+La page d'admin est protégée par un système de session (désactivable via le config.php). Merci à Bronco (warriordudimanche).
 
 Les flux RSS des shaarlis sont actuellement chargés par le script refresh.php (dans le cas de shaarli.fr, il est lancé toutes les 10 minutes une fois par heure (car OVH ne permet de lancer un script qu'une fois par heure...))
 
