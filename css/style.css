@@ -29,6 +29,8 @@ h1 a:hover{color:#444;}
 .article img{max-width:900px;}
 .article .collapsed{display:none;}
 .shaaliste{font-weight:bold;}
+.refreshButton{text-decoration:none;font-size:2em;}
+.disconnectButton{text-decoration:none;font-size:1.5em;color:red;}
 table {border-collapse: collapse;}
 td {padding:5px;}
 #footer{clear:both;padding:0 30px;}
