@@ -15,7 +15,7 @@ $GLOBALS['ARCHIVE_FILE_NAME'] = 'archive.html';
 $GLOBALS['CALENDAR_SORTING'] = 'desc';
 $GLOBALS['COMMENT_SORTING'] = 'desc'; /* sort url comment by date */
 $GLOBALS['MAX_FOUND_ITEM'] = 10; /* max item returned by search */
-$GLOBALS['SECURE_ADMIN'] = true; /* active login/pwd for admin page access */
+$GLOBALS['ACTIVE_WOT'] = 'no'; /* 'yes' active wot verif for shaared linked */
 
 require_once 'mod/mod.php';
 

@@ -3,6 +3,8 @@
 
     <xsl:output method="html" encoding="UTF-8"
         omit-xml-declaration="yes" indent="no" />
+    
+    <xsl:param name="wot" />
     <xsl:param name="my_shaarli" />
     <xsl:param name="searchTerm" />
     <xsl:param name="mod_content_top" />
@@ -41,6 +43,15 @@
 					<xsl:value-of select="$mod_content_bottom" disable-output-escaping="yes"/>					
 				</div>
 				<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
+				
+				<xsl:if test="$wot = 'yes'">
+					<script type="text/javascript">
+					var wot_rating_options = {
+					selector: ".wot"
+					};
+					</script>				
+					<script type="text/javascript" src="http://api.mywot.com/widgets/ratings.js"></script>
+				</xsl:if>
 			</body>
 		</html>
     </xsl:template>
@@ -83,7 +94,7 @@
 					<xsl:if test="$favourite = 0"> ☆</xsl:if>	
 					</a>
 				</xsl:if>
-				<a title="Go to original place" href="{link}"><xsl:value-of select="title" /></a>
+				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /></a>
 			</h2>
 			<div class="article-content">
 				<xsl:value-of select="description" disable-output-escaping="yes"/>
