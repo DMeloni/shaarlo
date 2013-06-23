@@ -219,7 +219,7 @@ ob_start();
 				<?php
 						foreach($rssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo str_replace(' ', '-', $rssKey); ?>" value="<?php echo $rssKey; ?>" />
-							<label for="<?php echo str_replace(' ', '-', $rssKey); ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
+							<label for="<?php echo str_replace(' ', '-', $rssKey); ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '(<a href="'.$rssUrl.'" >'.$rssUrl. '</a>)'; ?></span></label>
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="disable" />
@@ -245,7 +245,7 @@ ob_start();
 				<?php
 						foreach($disabledRssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
-							<label for="<?php echo $rssUrl; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '('.$rssUrl. ')'; ?></span></label>
+							<label for="<?php echo $rssUrl; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '(<a href="'.$rssUrl.'" >'.$rssUrl. '</a>)'; ?></span></label>
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="add" />

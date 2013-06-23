@@ -164,9 +164,10 @@ if(!empty($potentialShaarlis)){
 						</tr>
 						<tr>
 							<td>
-								<input type="text" style="width:99%;" name="label[]" value="'.$rssKey.'" />
+								<input type="text" style="width:20%;" name="label[]" value="'.$rssKey.'" />
 								<br/>
-								<input type="text" style="width:99%;" name="url[]" readonly value="'.$rssUrl.'" />
+								<a href="'.$rssUrl.'">'.$rssUrl.'</a>
+								<input type="hidden" name="url[]" readonly value="'.$rssUrl.'" />
 							</td>
 						</tr>';
 				}
