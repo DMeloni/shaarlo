@@ -1,12 +1,12 @@
 <?php
 // include 'auto_restrict.php';
-include 'config.php';
-include 'fct/fct_rss.php';
-include 'fct/fct_cache.php';
-include 'fct/fct_file.php';
-include 'fct/fct_sort.php';
-include 'fct/fct_valid.php';
-include 'fct/fct_xsl.php';
+require_once 'config.php';
+require_once 'fct/fct_rss.php';
+require_once 'fct/fct_cache.php';
+require_once 'fct/fct_file.php';
+require_once 'fct/fct_sort.php';
+require_once 'fct/fct_valid.php';
+require_once 'fct/fct_xsl.php';
 error_reporting(0);
 $cache = 'index';
 

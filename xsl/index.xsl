@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    >
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xmlns:php="http://php.net/xsl">
 
     <xsl:output method="html" encoding="UTF-8"
         omit-xml-declaration="yes" indent="no" />
+    <xsl:param name="my_shaarli" />
     <xsl:param name="searchTerm" />
     <xsl:param name="mod_content_top" />
     <xsl:param name="mod_content_bottom" />
+    
     <xsl:template match="/">
 		<html lang="fr">
 			<head>
@@ -58,6 +58,31 @@
 					article-title
 					<xsl:if test="$toptopic &gt; 1"> toptopic</xsl:if>	
 				</xsl:attribute> 
+						
+				<xsl:variable name="titrestring">
+	                 <xsl:value-of select="title" />				
+				</xsl:variable>
+								
+				<xsl:variable name="titleencoded">
+	                 <xsl:value-of select="php:function('urlencode', $titrestring)" />				
+				</xsl:variable>
+	        
+				<xsl:if test="$my_shaarli != ''" >
+					<xsl:variable name="favourite">
+						<xsl:call-template name="substring-count">
+						  <xsl:with-param name="string" select="description" />
+						  <xsl:with-param name="substr" select="$my_shaarli" />
+						</xsl:call-template>
+					</xsl:variable>				
+					<a class="shaare" title="Partager sur Shaarli" target="_blank" href='{$my_shaarli}?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>													
+					<xsl:attribute name="class">
+						shaare
+						<xsl:if test="$favourite &gt;= 1"> favourite</xsl:if>					
+					</xsl:attribute>
+					<xsl:if test="$favourite &gt;= 1"> ★</xsl:if>
+					<xsl:if test="$favourite = 0"> ☆</xsl:if>	
+					</a>
+				</xsl:if>
 				<a title="Go to original place" href="{link}"><xsl:value-of select="title" /></a>
 			</h2>
 			<div class="article-content">
@@ -110,5 +135,47 @@
 	    <xsl:otherwise>0</xsl:otherwise>
 	  </xsl:choose>
 	</xsl:template>
-        
+ 
+	<xsl:template name="urlencode">
+		<xsl:param name="str" />
+		<xsl:if test="$str">
+			<xsl:variable name="first-char" select="substring($str,1,1)" />
+			<xsl:choose>
+				<xsl:when test="contains($safe,$first-char)">
+					<xsl:value-of select="$first-char" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:variable name="codepoint">
+						<xsl:choose>
+							<xsl:when test="contains($ascii,$first-char)">
+								<xsl:value-of
+									select="string-length(substring-before($ascii,$first-char)) + 32" />
+							</xsl:when>
+							<xsl:when test="contains($latin1,$first-char)">
+								<xsl:value-of
+									select="string-length(substring-before($latin1,$first-char)) + 160" />
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:message terminate="no">
+									Warning: string contains a character that is out of range!
+									Substituting "?".
+								</xsl:message>
+								<xsl:text>63</xsl:text>
+							</xsl:otherwise>
+						</xsl:choose>
+					</xsl:variable>
+					<xsl:variable name="hex-digit1"
+						select="substring($hex,floor($codepoint div 16) + 1,1)" />
+					<xsl:variable name="hex-digit2"
+						select="substring($hex,$codepoint mod 16 + 1,1)" />
+					<xsl:value-of select="concat('%',$hex-digit1,$hex-digit2)" />
+				</xsl:otherwise>
+			</xsl:choose>
+			<xsl:if test="string-length($str) > 1">
+				<xsl:call-template name="url-encode">
+					<xsl:with-param name="str" select="substring($str,2)" />
+				</xsl:call-template>
+			</xsl:if>
+		</xsl:if>
+	</xsl:template>        
 </xsl:stylesheet>

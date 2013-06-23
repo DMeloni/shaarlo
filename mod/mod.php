@@ -8,6 +8,9 @@ $GLOBALS['MOD']['admin.php_top'] = $GLOBALS['MOD']['admin.php_bottom'] = $GLOBAL
 //require_once 'tags_info/tags_info.php';
 //require_once 'proposition/proposition.php';
 //require_once 'delete_duplicate_url/delete_duplicate_url.php';
+//require_once 'my_shaarli/my_shaarli.php';
+
 require_once 'test_mod/test_mod.php';
+
 
 		

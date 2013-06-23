@@ -16,6 +16,14 @@ if(!checkInstall() && !is_file($indexFile)){
 	return;
 }
 
+
+$myShaarli = array();
+$myShaarliFile = sprintf('%s/%s', $DATA_DIR, $MY_SHAARLI_FILE_NAME);
+if(is_file($myShaarliFile)){
+	$myShaarli = json_decode(file_get_contents($myShaarliFile), true);
+	$myShaarliUrl = reset($myShaarli);
+}
+
 if(isset($_GET['q']) && !empty($_GET['q'])){
 	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
 	$rssFileList = array();
@@ -104,7 +112,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 		header('Content-Type: application/rss+xml; charset=utf-8');
 		echo sanitize_output($shaarloRss);
 	}else{
-		$index = parseXsl('xsl/index.xsl', $shaarloRss, array('searchTerm' => $_GET['q'], 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+		$index = parseXsl('xsl/index.xsl', $shaarloRss, array('my_shaarli' => $myShaarliUrl, 'searchTerm' => $_GET['q'], 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 		$index = sanitize_output($index);
 		header('Content-Type: text/html; charset=utf-8');
 		echo $index;
@@ -115,7 +123,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 		$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
 		$rssFile = file_get_contents($rssFilePath);
 		if(is_file($rssFilePath)) {
-			$index = parseXsl('xsl/index.xsl', $rssFile, array('mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+			$index = parseXsl('xsl/index.xsl', $rssFile, array('my_shaarli' => $myShaarliUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 			$index = sanitize_output($index);
 			header('Content-Type: text/html; charset=utf-8');
 			echo $index;
@@ -125,7 +133,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 			header('Content-Type: text/html; charset=utf-8');
 			$rssFilePath = sprintf('%s/%s/rss.xml', $DATA_DIR, $CACHE_DIR_NAME);
 			$rssFile = file_get_contents($rssFilePath);
-			$index = parseXsl('xsl/index.xsl', $rssFile, array('mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+			$index = parseXsl('xsl/index.xsl', $rssFile, array('my_shaarli' => $myShaarliUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 			$index = sanitize_output($index);
 			echo $index;			
 		}else{

@@ -13,6 +13,8 @@ h2{margin:0;}
 #header>a{color:#444;margin-left:1em;}
 h1 a,h1 a:visited{color:#665;text-decoration:none;}
 h1 a:hover{color:#444;}
+.shaare{font-size:1em;font-weight:normal;}
+.favourite {color:#11C101 !important;}
 #content{width: 100%;}
 #sidebar{width:300px;float:left;}
 #sidebar div{padding:1em 30px;}
