@@ -139,6 +139,11 @@ for($j=0; $j < $nbStep; $j++){
 				$diffValue = 0;
 			}
 			
+			// Add a '/' character if last character is not /
+			if($link[strlen($link) - 1] !== '/'){
+				$link .= '/';
+			}
+						
 			$uniqRssKey = md5($link);
 			$description = sprintf('<b>%s</b>, il y a %s %s <br/> %s<br/>', unMagicQuote($rssKey), $diffValue, $diffUnity, str_replace('<br>', '<br/>', $rssItem['description']));
 			$title = $rssItem['title'];
