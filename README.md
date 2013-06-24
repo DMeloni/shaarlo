@@ -6,7 +6,7 @@ Unified Shaarlis Rss
 Installation : 
 *Copy all files into ftp server
 
-*Give write rights to data/
+*Give write permission to data/
 
 *Access http://../shaarlo/
 
@@ -24,19 +24,28 @@ Les flux RSS des shaarlis sont actuellement chargés par le script refresh.php (
 A la base, le nom de domaine shaarli.fr n'était qu'une redirection vers le wiki de sebsauvage, et vu que j'avais la flemme de prendre un nouveau nom de domaine (surtout pour une démo, c'est resté sur celle la).
 
 
-Voilà, je pense qu'il y a un projet bien plus important que shaarlo qui se trame en ce moment (c'est une supposition), en attendant ça fait déjà un joli aperçu de ce qu'on peut faire avec des flux rss ;-).
-
-
 Un grand Merci à Sebsauvage.
 
+### Fonctionnalités
+* Aggrégation des flux shaarlis selon l'url 
+* Possibilité de lier son Shaarli à son Shaarlo (utiliser le module my_shaarli ou éditer le fichier my_shaarli.txt)
+* Possibilité de lier son Respawn à son Shaarlo (utiliser le module my_respawn ou éditer le fichier my_respawn.txt)
+* Possibilité d'activer WOT pour la notation des liens partagés (on n'est jamais trop prudent)
+* Vision des Top Tags 
+* Recherche possible par fulltext / catégorie 
+* Recherche de nouveaux flux shaarli à partir de la liste existante 
+
+
+### Auteurs et contributeurs
 Merci aux contributeurs directs : 
-- Bronco (warriordudimanche) à travers jerrywham (système de connection à l'interface d'admin mod login_secure)
-- o*gina-rouge (idée de la recherche fulltext)
-- Leomaradan (rapporteur de bug)
-- tcitworld (aide à la compréhension xd)
+* jerrywham (quelqu'un qui a la main sur le coeur !)
+* o*gina-rouge (idée de la recherche fulltext)
+* Leomaradan (rapporteur de bug)
+* tcitworld (aide à la compréhension xd)
+
 
 Et indirects : 
--tous les shaarlistes =D
-
-
+* Bronco (warriordudimanche) pour son fork de Respawn
+* Timo (lehollandaisvolant) pour Respawn (forcément :P)
+* Tous les shaarlistes =D
 
