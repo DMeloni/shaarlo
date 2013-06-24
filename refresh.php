@@ -125,12 +125,27 @@ for($j=0; $j < $nbStep; $j++){
 			$category = $rssItem['category'];
 			$rssTimestamp = strtotime($rssItem['pubDate']);		
 			
-			// Add a '/' character if last character is not /
-			if($link[strlen($link) - 1] !== '/'){
-				$link .= '/';
-			}
-						
+
 			$uniqRssKey = md5($link);
+				
+			// Detect if another same link have an adding '/' character (last position)
+			if($link[strlen($link) - 1] !== '/'){
+				$slashLink = $link . '/';
+				$uniqSlashRssKey = md5($slashLink);
+				if(!array_key_exists($uniqRssKey, $rssContents) && array_key_exists($uniqSlashRssKey, $rssContents)){
+					$link = $slashLink;
+					$uniqRssKey = md5($link);
+					$uniqRssKey = $uniqSlashRssKey;
+				}
+			}else{
+				$unSlashLink = substr($link, 0, strlen($link) - 1);
+				$uniqUnslashRssKey = md5($unSlashLink);
+				if(!array_key_exists($uniqRssKey, $rssContents) && array_key_exists($uniqUnslashRssKey, $rssContents)){
+					$link = $unSlashLink;
+					$uniqRssKey = $uniqUnslashRssKey;						
+				}				
+			}
+
 			$descriptionDiff = sprintf('<b>%s</b>%s<br/> %s<br/>', unMagicQuote($rssKey), time_elapsed_string($rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 			$description = sprintf('<b>%s</b>, le %s <br/> %s<br/>', unMagicQuote($rssKey), date('d/m/Y \à H\h i\m s\s', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 				
@@ -149,7 +164,6 @@ for($j=0; $j < $nbStep; $j++){
 			){
 				$rssContents[$uniqRssKey] = array('toptopic' => false, 'link' => $link, 'description' => array($rssTimestamp => $description), 'descriptionDiff' => array($rssTimestamp => $descriptionDiff), 'title' => $title, 'date' => $rssTimestamp, 'category' => $category);
 			}else{
-
 				$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
 				$rssContents[$uniqRssKey]['descriptionDiff'][$rssTimestamp] = $descriptionDiff;
 				$rssContents[$uniqRssKey]['date'] = max($rssContents[$uniqRssKey]['date'], $rssTimestamp);
