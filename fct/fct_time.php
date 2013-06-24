@@ -14,7 +14,7 @@ function time_elapsed_string($ptime){
 
 	$a = array( 12 * 30 * 24 * 60 * 60  =>  'année',
 			30 * 24 * 60 * 60       =>  'mois',
-			24 * 60 * 60            =>  'jours',
+			24 * 60 * 60            =>  'jour',
 			60 * 60                 =>  'heure',
 			60                      =>  'minute',
 			1                       =>  'seconde'
