@@ -6,6 +6,7 @@
     
     <xsl:param name="wot" />
     <xsl:param name="my_shaarli" />
+    <xsl:param name="my_respawn" />
     <xsl:param name="searchTerm" />
     <xsl:param name="mod_content_top" />
     <xsl:param name="mod_content_bottom" />
@@ -85,7 +86,7 @@
 						  <xsl:with-param name="substr" select="$my_shaarli" />
 						</xsl:call-template>
 					</xsl:variable>				
-					<a class="shaare" title="Partager sur Shaarli" target="_blank" href='{$my_shaarli}?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>													
+					<a class="shaare" title="Partager sur Shaarli" target="_blank" href='{$my_shaarli}?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
 					<xsl:attribute name="class">
 						shaare
 						<xsl:if test="$favourite &gt;= 1"> favourite</xsl:if>					
@@ -94,6 +95,9 @@
 					<xsl:if test="$favourite = 0"> ☆</xsl:if>	
 					</a>
 				</xsl:if>
+				<xsl:if test="$my_respawn != ''" >
+					<a class="shaare" title="Sauvegarder" target="_blank" href='{$my_respawn}?q={link}'>☉</a>
+				</xsl:if>				
 				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /></a>
 			</h2>
 			<div class="article-content">

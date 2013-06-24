@@ -6,7 +6,7 @@ require_once 'fct/fct_rss.php';
 
 error_reporting(0);
 
-global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD, $ACTIVE_WOT;
+global $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD, $ACTIVE_WOT, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME;
 
 // Autoredirect on boot.php
 $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
@@ -18,11 +18,21 @@ if(!checkInstall() && !is_file($indexFile)){
 
 
 $myShaarli = array();
+$myShaarliUrl = '';
 $myShaarliFile = sprintf('%s/%s', $DATA_DIR, $MY_SHAARLI_FILE_NAME);
 if(is_file($myShaarliFile)){
 	$myShaarli = json_decode(file_get_contents($myShaarliFile), true);
 	$myShaarliUrl = reset($myShaarli);
 }
+
+$myRespawnUrl = array();
+$myRespawnUrl = '';
+$myRespawnFile = sprintf('%s/%s', $DATA_DIR, $MY_RESPAWN_FILE_NAME);
+if(is_file($myRespawnFile)){
+	$myRespawn = json_decode(file_get_contents($myRespawnFile), true);
+	$myRespawnUrl = reset($myRespawn);
+}
+
 
 if(isset($_GET['q']) && !empty($_GET['q'])){
 	$archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
@@ -112,7 +122,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 		header('Content-Type: application/rss+xml; charset=utf-8');
 		echo sanitize_output($shaarloRss);
 	}else{
-		$index = parseXsl('xsl/index.xsl', $shaarloRss, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl, 'searchTerm' => $_GET['q'], 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+		$index = parseXsl('xsl/index.xsl', $shaarloRss, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'searchTerm' => $_GET['q'], 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 		$index = sanitize_output($index);
 		header('Content-Type: text/html; charset=utf-8');
 		echo $index;
@@ -123,7 +133,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 		$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
 		$rssFile = file_get_contents($rssFilePath);
 		if(is_file($rssFilePath)) {
-			$index = parseXsl('xsl/index.xsl', $rssFile, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+			$index = parseXsl('xsl/index.xsl', $rssFile, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 			$index = sanitize_output($index);
 			header('Content-Type: text/html; charset=utf-8');
 			echo $index;
@@ -133,7 +143,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 			header('Content-Type: text/html; charset=utf-8');
 			$rssFilePath = sprintf('%s/%s/rssDiff.xml', $DATA_DIR, $CACHE_DIR_NAME);
 			$rssFile = file_get_contents($rssFilePath);
-			$index = parseXsl('xsl/index.xsl', $rssFile, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+			$index = parseXsl('xsl/index.xsl', $rssFile, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 			$index = sanitize_output($index);
 			echo $index;			
 		}else{
