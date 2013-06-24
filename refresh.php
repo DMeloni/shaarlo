@@ -123,29 +123,13 @@ for($j=0; $j < $nbStep; $j++){
 			$category = $rssItem['category'];
 			$rssTimestamp = strtotime($rssItem['pubDate']);
 			
-			$actualTimestamp = time();
-			$diffValue = round(($actualTimestamp - $rssTimestamp) / 60);
-			$diffUnity = 'minute(s)';
-			if($diffValue > 60){
-				$diffValue = round($diffValue/ 60);
-				$diffUnity = 'heure(s)';
-				if($diffValue > 24){
-					$diffValue = round($diffValue/ 24);
-					$diffUnity = 'jour(s)';
-				}	
-			}
-				
-			if($diffValue <= 0){
-				$diffValue = 0;
-			}
-			
 			// Add a '/' character if last character is not /
 			if($link[strlen($link) - 1] !== '/'){
 				$link .= '/';
 			}
 						
 			$uniqRssKey = md5($link);
-			$description = sprintf('<b>%s</b>, il y a %s %s <br/> %s<br/>', unMagicQuote($rssKey), $diffValue, $diffUnity, str_replace('<br>', '<br/>', $rssItem['description']));
+			$description = sprintf('<b>%s</b>, le %s <br/> %s<br/>', unMagicQuote($rssKey), date('d/m/Y \à H\h i\m s\s', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 			$title = $rssItem['title'];
 			
 			// Delete the Shaarli link and replace it by the 'real' link
