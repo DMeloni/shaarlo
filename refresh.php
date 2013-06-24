@@ -147,7 +147,7 @@ for($j=0; $j < $nbStep; $j++){
 			}
 
 			$descriptionDiff = sprintf('<b>%s</b>%s<br/> %s<br/>', unMagicQuote($rssKey), time_elapsed_string($rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
-			$description = sprintf('<b>%s</b>, le %s <br/> %s<br/>', unMagicQuote($rssKey), date('d/m/Y \à H\h i\m s\s', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
+			$description = sprintf('<b>%s</b>, le %s <br/> %s<br/>', unMagicQuote($rssKey), date('d/m/Y \à H:i', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 				
 			$title = $rssItem['title'];
 			
