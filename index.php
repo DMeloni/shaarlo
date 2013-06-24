@@ -131,7 +131,7 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	}else{
 		if(is_file($indexFile)){
 			header('Content-Type: text/html; charset=utf-8');
-			$rssFilePath = sprintf('%s/%s/rss.xml', $DATA_DIR, $CACHE_DIR_NAME);
+			$rssFilePath = sprintf('%s/%s/rssDiff.xml', $DATA_DIR, $CACHE_DIR_NAME);
 			$rssFile = file_get_contents($rssFilePath);
 			$index = parseXsl('xsl/index.xsl', $rssFile, array('wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 			$index = sanitize_output($index);

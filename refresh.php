@@ -7,6 +7,8 @@ require_once 'fct/fct_file.php';
 require_once 'fct/fct_sort.php';
 require_once 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
+require_once 'fct/fct_time.php';
+
 error_reporting(0);
 $cache = 'index';
 
@@ -18,7 +20,7 @@ header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
 	$actualDate = date('Ymd');
 	$actualDateFormat = date('d/m/Y');
-	$shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
+	$shaarloRss = $shaarloRssDiff = '<?xml version="1.0" encoding="utf-8"?>
 	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 	  <channel>
 	    <title>Les discussions de Shaarli du '.$actualDateFormat.'</title>
@@ -121,7 +123,7 @@ for($j=0; $j < $nbStep; $j++){
 			$link = $rssItem['link'];
 			$guid = $rssItem['guid'];
 			$category = $rssItem['category'];
-			$rssTimestamp = strtotime($rssItem['pubDate']);
+			$rssTimestamp = strtotime($rssItem['pubDate']);		
 			
 			// Add a '/' character if last character is not /
 			if($link[strlen($link) - 1] !== '/'){
@@ -129,7 +131,9 @@ for($j=0; $j < $nbStep; $j++){
 			}
 						
 			$uniqRssKey = md5($link);
+			$descriptionDiff = sprintf('<b>%s</b>%s<br/> %s<br/>', unMagicQuote($rssKey), time_elapsed_string($rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 			$description = sprintf('<b>%s</b>, le %s <br/> %s<br/>', unMagicQuote($rssKey), date('d/m/Y \à H\h i\m s\s', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
+				
 			$title = $rssItem['title'];
 			
 			// Delete the Shaarli link and replace it by the 'real' link
@@ -143,10 +147,11 @@ for($j=0; $j < $nbStep; $j++){
 
 			if(!array_key_exists($uniqRssKey, $rssContents) 
 			){
-				$rssContents[$uniqRssKey] = array('toptopic' => false, 'link' => $link, 'description' => array($rssTimestamp => $description), 'title' => $title, 'date' => $rssTimestamp, 'category' => $category);
+				$rssContents[$uniqRssKey] = array('toptopic' => false, 'link' => $link, 'description' => array($rssTimestamp => $description), 'descriptionDiff' => array($rssTimestamp => $descriptionDiff), 'title' => $title, 'date' => $rssTimestamp, 'category' => $category);
 			}else{
 
 				$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
+				$rssContents[$uniqRssKey]['descriptionDiff'][$rssTimestamp] = $descriptionDiff;
 				$rssContents[$uniqRssKey]['date'] = max($rssContents[$uniqRssKey]['date'], $rssTimestamp);
 				$rssContents[$uniqRssKey]['toptopic'] = true;
 			}
@@ -174,8 +179,10 @@ for($j=0; $j < $nbStep; $j++){
 
 		if('desc' === $COMMENT_SORTING){
 			ksort($rssContent['description']);
+			ksort($rssContent['descriptionDiff']);
 		}else{
 			krsort($rssContent['description']);
+			krsort($rssContent['descriptionDiff']);
 		}
 		
 		$shaarloRss .= sprintf("<item>
@@ -187,6 +194,15 @@ for($j=0; $j < $nbStep; $j++){
 							</item>",
 				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>', $rssContent['category']
 				);
+		$shaarloRssDiff .= sprintf("<item>
+				<title>%s</title>
+				<link>%s</link>
+				<pubDate>%s</pubDate>
+				<description>%s</description>
+				<category>%s</category>
+				</item>",
+				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['descriptionDiff']) . ']]>', $rssContent['category']
+		);		
 	}
 // 		// stop profiler
 // 		$xhprof_data = xhprof_disable();
@@ -204,7 +220,9 @@ for($j=0; $j < $nbStep; $j++){
 // 		echo $run_id;	
 
 	$shaarloRss .= '</channel></rss>';
+	$shaarloRssDiff .= '</channel></rss>';
 	
+	file_put_contents(sprintf('%s/%s/rssDiff.xml', $DATA_DIR, $CACHE_DIR_NAME), sanitize_output($shaarloRssDiff));
 	file_put_contents(sprintf('%s/%s/rss.xml', $DATA_DIR, $CACHE_DIR_NAME), sanitize_output($shaarloRss));
 	file_put_contents(sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $actualDate), sanitize_output($shaarloRss));
 	// Save the potential Shaarlis list
