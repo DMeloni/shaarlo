@@ -169,6 +169,13 @@ for($j=0; $j < $nbStep; $j++){
 				}				
 			}
 			
+			/*
+			 * Add forced Permalink if not found
+			 */
+			if(false === mb_stripos($rssItem['description'],sprintf('<a href="%s">Permalink</a>', $guid))){
+				$rssItem['description'].= sprintf('<br/>(<a href="%s">Permalink</a>)', $guid);
+			}
+
 			$descriptionDiff = sprintf('%s <b>%s</b>%s<br/> %s<br/>', $imgFavicon, unMagicQuote($rssKey), time_elapsed_string($rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 			$description = sprintf('%s <b>%s</b>, le %s <br/> %s<br/>', $imgFavicon, unMagicQuote($rssKey), date('d/m/Y \à H:i', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 				
