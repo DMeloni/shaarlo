@@ -14,7 +14,7 @@ $cache = 'index';
 
 $nbStep = 30;
 $sleepBeetweenLoops = 110;
-global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING, $ACTIVE_FAVICON, $FAVICON_DIR_NAME;
+global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING, $ACTIVE_FAVICON, $FAVICON_DIR_NAME;
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
@@ -24,7 +24,7 @@ for($j=0; $j < $nbStep; $j++){
 	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 	  <channel>
 	    <title>Les discussions de Shaarli du '.$actualDateFormat.'</title>
-	    <link>http://shaarli.fr/</link>
+	    <link>'.$SHAARLO_URL.'</link>
 	    <description>Shaarli Aggregators</description>
 	    <language>fr-fr</language>
 	    <copyright>http://shaarli.fr/</copyright>';
@@ -113,14 +113,12 @@ for($j=0; $j < $nbStep; $j++){
 				mkdir(sprintf( '%s/%s', $DATA_DIR, $FAVICON_DIR_NAME));
 			}else{
 				$faviconPath = sprintf('%s/%s/%s.ico', $DATA_DIR, $FAVICON_DIR_NAME, $rssKey);
-				if(!is_file($faviconPath)){
-					$shaarliUrl = explode('?', $guid);
-					$shaarliUrl = sprintf('%simages/favicon.ico', $shaarliUrl[0]);
-					if(urlExists($shaarliUrl)){
-						$favicon = @file_get_contents($shaarliUrl);
-						if(false !== $favicon){
-							file_put_contents($faviconPath, $favicon);
-						}
+				$shaarliUrl = explode('?', $guid);
+				$shaarliUrl = sprintf('%simages/favicon.ico', $shaarliUrl[0]);
+				if(urlExists($shaarliUrl)){
+					$favicon = @file_get_contents($shaarliUrl);
+					if(false !== $favicon){
+						file_put_contents($faviconPath, $favicon);
 					}
 				}
 				if(is_file($faviconPath)){

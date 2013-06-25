@@ -10,6 +10,7 @@
     <xsl:param name="searchTerm" />
     <xsl:param name="mod_content_top" />
     <xsl:param name="mod_content_bottom" />
+    <xsl:param name="rss_url" />
     
     <xsl:template match="/">
 		<html lang="fr">
@@ -24,7 +25,7 @@
 				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 				<link rel="shortcut icon" href="favicon.ico" />
 				<link rel="stylesheet" href="css/style.css" type="text/css" media="screen"/>
-				<link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="Shaarlo Feed" />
+				<link rel="alternate" type="application/rss+xml" href="{$rss_url}" title="Shaarlo Feed" />
 			</head>
 			<body>
 				<div id="header">
