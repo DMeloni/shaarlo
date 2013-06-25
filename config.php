@@ -20,6 +20,7 @@ $GLOBALS['MAX_FOUND_ITEM'] = 10; /* max item returned by search */
 $GLOBALS['ACTIVE_WOT'] = 'no'; /* 'yes' active wot verif for shaared linked */
 $GLOBALS['ACTIVE_FAVICON'] = false; /* 'yes' active shaarli favicon recuperation */
 $GLOBALS['DATE_FORMAT'] = '\l\e d/m/Y \à H\h i\m s\s'; /* active date format */
+$GLOBALS['SHAARLO_URL'] = 'http://shaarlo.fr/'; /* your shaarlo's url (usefulfor the main RSS) */
 
 require_once 'mod/mod.php';
 
