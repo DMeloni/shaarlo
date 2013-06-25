@@ -11,6 +11,7 @@
     <xsl:param name="mod_content_top" />
     <xsl:param name="mod_content_bottom" />
     <xsl:param name="rss_url" />
+    <xsl:param name="next_previous" />
     
     <xsl:template match="/">
 		<html lang="fr">
@@ -60,6 +61,23 @@
     
     <xsl:template match="item">
 		<div class="article shaarli-youm-org">
+			<xsl:if test="$next_previous = 'yes'">
+				<div style="font-size:2em;">
+					<a name="link{position()}" style="display:hidden;" href="" />
+					<xsl:if test="(position()-1) &gt; 0">
+						<a title="Lien précédent" style="text-decoration:none;" href="#link{position()-1}">&#171;</a>
+					</xsl:if>
+					<xsl:if test="(position()-1) &lt;= 0">
+						<a title="Aller au dernier lien" style="text-decoration:none;" href="#link{count(/rss/channel/item)}">&#171;</a>
+					</xsl:if>
+					<xsl:if test="(position()+1) &lt;= count(/rss/channel/item)">
+						<a title="Lien suivant" style="float:right;text-decoration:none;" href="#link{position()+1}">&#187;</a>
+					</xsl:if>
+					<xsl:if test="(position()+1) &gt; count(/rss/channel/item)">
+						<a title="Aller au premier lien" style="float:right;text-decoration:none;" href="#link1">&#187;</a>
+					</xsl:if>					
+				</div>
+			</xsl:if>
 			<h2>
 				<xsl:attribute name="class">
 					<xsl:variable name="toptopic">
