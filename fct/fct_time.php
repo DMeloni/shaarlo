@@ -26,7 +26,11 @@ function time_elapsed_string($ptime){
 		if ($d >= 1)
 		{
 			$r = round($d);
-			return ', il y a ' . $r . ' ' . $str . ($r > 1 ? 's' : '');
+			if($str === 'mois'){
+				return ', il y a ' . $r . ' ' . $str;
+			}else{
+				return ', il y a ' . $r . ' ' . $str . ($r > 1 ? 's' : '');
+			}
 		}
 	}
 }

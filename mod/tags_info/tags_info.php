@@ -31,7 +31,7 @@ $rssFileList = array();
 if(!defined('XPATH_RSS_ITEM')){
 	define('XPATH_RSS_ITEM', '/rss/channel/item');
 }
-
+$categories = array();
 $fileList =	scandir($archiveDir, 1);
 foreach ($fileList as $file ){
 	if ($file != "." && $file != "..") {
@@ -53,6 +53,7 @@ foreach ($fileList as $file ){
 		}
 	}
 }
+
 arsort($categories);
 $i = 0;
 $tags = '';
