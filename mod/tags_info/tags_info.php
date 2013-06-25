@@ -54,25 +54,26 @@ foreach ($fileList as $file ){
 	}
 }
 
-arsort($categories);
-$i = 0;
-$tags = '';
-$stopWords = array('<br/>', '[en]', '[fr]');
-foreach($categories as $value => $frequency){
-	if(strlen($value) > 3 && !in_array($value, $stopWords)){
-		$tags .=  '<a href="index.php?q='.$value.'&amp;type=category">' . $value . '</a> : ' . $frequency . "<br/>";
+if(count($categories) > 0){
+	arsort($categories);
+	$i = 0;
+	$tags = '';
+	$stopWords = array('<br/>', '[en]', '[fr]');
+	foreach($categories as $value => $frequency){
+		if(strlen($value) > 3 && !in_array($value, $stopWords)){
+			$tags .=  '<a href="index.php?q='.$value.'&amp;type=category">' . $value . '</a> : ' . $frequency . "<br/>";
+		}
+	
+		if($i > 20){
+			break;
+		}
+		$i++;
 	}
-
-	if($i > 20){
-		break;
-	}
-	$i++;
+	
+	$MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
+					<h2 class="article-title ">
+					<a title="Go to original place" href="">Top Tags</a>
+					</h2>
+					<div class="article-content">%s</div>
+				</div>', $tags);
 }
-
-$MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
-				<h2 class="article-title ">
-				<a title="Go to original place" href="">Top Tags</a>
-				</h2>
-				<div class="article-content">%s</div>
-			</div>', $tags);
-

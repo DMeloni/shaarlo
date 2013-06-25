@@ -23,7 +23,7 @@ if(!in_array($file, $modActivedOnPages)){ //
 }
 
 
-global $MOD, $MY_SHAARLI_FILE_NAME; // Super variable (linked with shaarlo pages)
+global $MOD, $DATA_DIR, $MY_SHAARLI_FILE_NAME; // Super variable (linked with shaarlo pages)
 
 
 $myShaarli = array();
@@ -36,7 +36,7 @@ if(is_file($myShaarliFile)){
  * Catch user submit here
  */
 if(isset($_POST['mod']) && $_POST['mod'] === 'my_shaarli' && !empty($_POST['shaarli_url'])){	
-	if (is_writable($myShaarliFile) && filter_var($_POST['shaarli_url'], FILTER_VALIDATE_URL) && urlExists($_POST['shaarli_url'])) {
+	if (filter_var($_POST['shaarli_url'], FILTER_VALIDATE_URL) && urlExists($_POST['shaarli_url'])) {
 		$myShaarli = array('me' => $_POST['shaarli_url']);
 		$myShaarliJson = json_encode($myShaarli);
 		file_put_contents($myShaarliFile, $myShaarliJson);
