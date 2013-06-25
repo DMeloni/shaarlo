@@ -23,7 +23,7 @@ if(!in_array($file, $modActivedOnPages)){ //
 }
 
 
-global $MOD, $MY_RESPAWN_FILE_NAME; // Super variable (linked with shaarlo pages)
+global $MOD, $DATA_DIR, $MY_RESPAWN_FILE_NAME; // Super variable (linked with shaarlo pages)
 
 
 $myRespawn = array();
@@ -36,7 +36,7 @@ if(is_file($myRespawnFile)){
  * Catch user submit here
  */
 if(isset($_POST['mod']) && $_POST['mod'] === 'my_respawn' && !empty($_POST['respawn_url'])){	
-	if (is_writable($myRespawnFile) && filter_var($_POST['respawn_url'], FILTER_VALIDATE_URL) && urlExists($_POST['respawn_url'])) {
+	if (filter_var($_POST['respawn_url'], FILTER_VALIDATE_URL) && urlExists($_POST['respawn_url'])) {
 		$myRespawn = array('me' => $_POST['respawn_url']);
 		$myRespawnJson = json_encode($myRespawn);
 		file_put_contents($myRespawnFile, $myRespawnJson);
