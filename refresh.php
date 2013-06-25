@@ -14,7 +14,7 @@ $cache = 'index';
 
 $nbStep = 30;
 $sleepBeetweenLoops = 110;
-global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING;
+global $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING, $ACTIVE_FAVICON, $FAVICON_DIR_NAME;
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
@@ -34,7 +34,6 @@ for($j=0; $j < $nbStep; $j++){
 	 * Absolute path to Item 
 	 */
 	
-	define('XPATH_RSS_ITEM', '/rss/channel/item');
 	$rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
 	
 	$potentialShaarlis = array();
@@ -108,6 +107,28 @@ for($j=0; $j < $nbStep; $j++){
 		/*
 		 * Récupération des liens
 		 */
+		$imgFavicon = '';
+		if(true === $ACTIVE_FAVICON ){
+			if(!is_dir(sprintf('%s/%s', $DATA_DIR, $FAVICON_DIR_NAME))){
+				mkdir(sprintf( '%s/%s', $DATA_DIR, $FAVICON_DIR_NAME));
+			}else{
+				$faviconPath = sprintf('%s/%s/%s.ico', $DATA_DIR, $FAVICON_DIR_NAME, $rssKey);
+				if(!is_file($faviconPath)){
+					$shaarliUrl = explode('?', $guid);
+					$shaarliUrl = sprintf('%simages/favicon.ico', $shaarliUrl[0]);
+					if(urlExists($shaarliUrl)){
+						$favicon = @file_get_contents($shaarliUrl);
+						if(false !== $favicon){
+							file_put_contents($faviconPath, $favicon);
+						}
+					}
+				}
+				if(is_file($faviconPath)){
+					$imgFavicon = sprintf('<img alt="" width="16px" height="16px" src="%s" />', $faviconPath);
+				}
+			}
+		}
+
 		foreach($arrayedRss as $rssItem){
 	// 		array (
 	// 		  0 => 'Rss Title',
@@ -120,6 +141,10 @@ for($j=0; $j < $nbStep; $j++){
 			/*
 			 * Automatic recuperation of linked rss 
 			 */
+			if(!isset($rssItem['category'])){
+				continue;
+			}
+
 			$link = $rssItem['link'];
 			$guid = $rssItem['guid'];
 			$category = $rssItem['category'];
@@ -145,9 +170,9 @@ for($j=0; $j < $nbStep; $j++){
 					$uniqRssKey = $uniqUnslashRssKey;						
 				}				
 			}
-
-			$descriptionDiff = sprintf('<b>%s</b>%s<br/> %s<br/>', unMagicQuote($rssKey), time_elapsed_string($rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
-			$description = sprintf('<b>%s</b>, le %s <br/> %s<br/>', unMagicQuote($rssKey), date('d/m/Y \à H:i', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
+			
+			$descriptionDiff = sprintf('%s <b>%s</b>%s<br/> %s<br/>', $imgFavicon, unMagicQuote($rssKey), time_elapsed_string($rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
+			$description = sprintf('%s <b>%s</b>, le %s <br/> %s<br/>', $imgFavicon, unMagicQuote($rssKey), date('d/m/Y \à H:i', $rssTimestamp), str_replace('<br>', '<br/>', $rssItem['description']));
 				
 			$title = $rssItem['title'];
 			

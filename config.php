@@ -4,6 +4,7 @@
 */
 $GLOBALS['DATA_DIR'] = 'data';
 $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive';
+$GLOBALS['FAVICON_DIR_NAME'] = 'favicon';
 $GLOBALS['CACHE_DIR_NAME'] = 'cache';
 $GLOBALS['SHAARLIS_FILE_NAME'] = 'shaarli.txt';
 $GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt';
@@ -17,6 +18,7 @@ $GLOBALS['CALENDAR_SORTING'] = 'desc';
 $GLOBALS['COMMENT_SORTING'] = 'desc'; /* sort url comment by date */
 $GLOBALS['MAX_FOUND_ITEM'] = 10; /* max item returned by search */
 $GLOBALS['ACTIVE_WOT'] = 'no'; /* 'yes' active wot verif for shaared linked */
+$GLOBALS['ACTIVE_FAVICON'] = false; /* 'yes' active shaarli favicon recuperation */
 $GLOBALS['DATE_FORMAT'] = '\l\e d/m/Y \à H\h i\m s\s'; /* active date format */
 
 require_once 'mod/mod.php';
