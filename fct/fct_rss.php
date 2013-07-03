@@ -226,5 +226,21 @@ function sanitize_output($buffer) {
 
 
 
+/**
+ * Get json representation of opml xml
+ */
+function getAllGReaderFlux($pathFlux){
+	$document = new DomDocument();
+	$document->load($pathFlux);
+	
+	$xpath = new DomXPath($document);
 
+	$allFlux = array();
+	foreach($xpath->query("//opml/body/outline") as $row){
+		$labelTmp = $xpath->query("@text",$row)->item(0)->nodeValue;
+		$urlTmp = $xpath->query("@xmlUrl",$row)->item(0)->nodeValue;
+		$allFlux[$labelTmp] = $urlTmp;
+	}
+	return $allFlux;
+}
 
