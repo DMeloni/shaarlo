@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xmlns:php="http://php.net/xsl">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xmlns:php="http://php.net/xsl" exclude-result-prefixes="php">
 
     <xsl:output method="html" encoding="UTF-8"
-        omit-xml-declaration="yes" indent="no" />
+        omit-xml-declaration="yes" indent="no"/>
     
     <xsl:param name="wot" />
     <xsl:param name="my_shaarli" />
@@ -33,6 +33,7 @@
 					<a href="index.php">Accueil</a>
 					<a href="admin.php">Administration</a>
 					<a href="archive.php">Archive</a>
+					<a href="random.php">Aléatoire</a>
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
@@ -63,7 +64,7 @@
 		<div class="article shaarli-youm-org">
 			<xsl:if test="$next_previous = 'yes'">
 				<div style="font-size:2em;">
-					<a name="link{position()}" style="display:hidden;" href="" />
+					<a id="link{position()}" style="display:hidden;" href="#link{position()}" />
 					<xsl:if test="(position()-1) &gt; 0">
 						<a title="Lien précédent" style="text-decoration:none;" href="#link{position()-1}">&#171;</a>
 					</xsl:if>

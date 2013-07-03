@@ -175,6 +175,7 @@ ob_start();
 			<a href="index.php">Accueil</a>
 			<a href="admin.php">Administration</a>
 			<a href="archive.php">Archive</a>
+			<a href="random.php">Aléatoire</a>
 			<h1 id="top"><a href="./admin.php">Administration</a></h1> 
 		</div>	
 			 

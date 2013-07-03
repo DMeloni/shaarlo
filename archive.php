@@ -70,6 +70,7 @@ if(file_exists($archiveFile) && filemtime($archiveFile) > $expire) {
 				<a href="index.php">Accueil</a>
 				<a href="admin.php">Administration</a>
 				<a href="archive.php">Archive</a>
+				<a href="random.php">Aléatoire</a>
 				<h1 id="top"><a href="./archive.php">Archives des discussions de Shaarli</a></h1> 
 			</div> 
 			<div id="content">
