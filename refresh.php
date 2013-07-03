@@ -13,8 +13,7 @@ error_reporting(0);
 $cache = 'index';
 
 $nbStep = 30;
-$sleepBeetweenLoops = 110;
-global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING, $ACTIVE_FAVICON, $FAVICON_DIR_NAME;
+global $REFRESH_SLEEP, $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_NAME, $POTENTIAL_SHAARLIS_FILE_NAME, $DISABLED_SHAARLIS_FILE_NAME, $NO_HTTPS_SHAARLIS_FILE_NAME, $COMMENT_SORTING, $ACTIVE_FAVICON, $FAVICON_DIR_NAME;
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
@@ -282,7 +281,7 @@ for($j=0; $j < $nbStep; $j++){
 		return;
 	}
 // 	return;
-	sleep($sleepBeetweenLoops);
+	sleep($REFRESH_SLEEP);
 }
 
 
