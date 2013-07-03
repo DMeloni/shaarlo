@@ -148,7 +148,10 @@ for($j=0; $j < $nbStep; $j++){
 			$category = $rssItem['category'];
 			$rssTimestamp = strtotime($rssItem['pubDate']);		
 			
-
+			if($link == 'http://'){
+				$link = $guid;
+			}
+			
 			$uniqRssKey = md5($link);
 				
 			// Detect if another same link have an adding '/' character (last position)
@@ -186,9 +189,6 @@ for($j=0; $j < $nbStep; $j++){
 				$link = $assocShaarliIdUrl[$uniqRssKey];
 				$uniqRssKey = md5($assocShaarliIdUrl[$uniqRssKey]);
 			}						
-			if($link == 'http://'){
-				$link = $guid;
-			}
 
 			if(!array_key_exists($uniqRssKey, $rssContents) 
 			){

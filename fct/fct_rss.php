@@ -133,7 +133,7 @@ function is_valid_rss($url){
 			return false;
 		}
 		$rssTimestamp = strtotime($firstItem['pubDate']);
-		if(filter_var($link, FILTER_VALIDATE_URL)  && $rssTimestamp > 0){
+		if(('http://' === $link || filter_var($link, FILTER_VALIDATE_URL))  && $rssTimestamp > 0){
 			// Return the title
 			$list = $xmlContent->xpath(XPATH_RSS_TITLE);
 			return (string)$list[0];

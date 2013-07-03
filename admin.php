@@ -112,7 +112,7 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 			            $url = explode('?', $url);
 			            
 			            // Posted link is eg : http://xxx/?azerty or http://xxx/
-			            $url = $url[0] . '?do=rss'; 
+			            $url = $url[0] . '/?do=rss'; 
 						// Valid Shaarli ? 
 						if(is_valid_rss($url) !== false){
 							$rssList[$label] = $url;
