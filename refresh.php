@@ -235,7 +235,7 @@ for($j=0; $j < $nbStep; $j++){
 							<description>%s</description>
 							<category>%s</category>
 							</item>",
-				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>', $rssContent['category']
+				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>', htmlspecialchars($rssContent['category'])
 				);
 		$shaarloRssDiff .= sprintf("<item>
 				<title>%s</title>
@@ -244,7 +244,7 @@ for($j=0; $j < $nbStep; $j++){
 				<description>%s</description>
 				<category>%s</category>
 				</item>",
-				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['descriptionDiff']) . ']]>', $rssContent['category']
+				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['descriptionDiff']) . ']]>', htmlspecialchars($rssContent['category'])
 		);		
 	}
 // 		// stop profiler
