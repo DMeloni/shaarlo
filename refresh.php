@@ -151,6 +151,8 @@ for($j=0; $j < $nbStep; $j++){
 				$link = $guid;
 			}
 			
+			$link = str_replace('//?', '/?', $link);
+			
 			$uniqRssKey = md5($link);
 				
 			// Detect if another same link have an adding '/' character (last position)
