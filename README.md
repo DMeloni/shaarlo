@@ -4,14 +4,17 @@ shaarlo
 Unified Shaarlis Rss 
 
 Installation : 
-*Copy all files into ftp server
+*Copy all files into ftp server (http server tested are apache2 & nginx)
 
 *Give write permission to data/
 
 *Access http://../shaarlo/
 
-*Schedule refresh.php (eg. crontab it)
+*Schedule refresh.php (eg. crontab it) (wget cron, curl cron, ajax cron, dwarf cron, ovh scheduler ...)
 
+*Configure your shaarlo (edit config.php)
+
+*Love life
 
 Quelques mots : 
 
