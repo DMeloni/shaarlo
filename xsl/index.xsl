@@ -5,6 +5,7 @@
         omit-xml-declaration="yes" indent="no"/>
     
     <xsl:param name="wot" />
+    <xsl:param name="youtube" />
     <xsl:param name="my_shaarli" />
     <xsl:param name="my_respawn" />
     <xsl:param name="searchTerm" />
@@ -121,6 +122,31 @@
 				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /></a>
 			</h2>
 			<div class="article-content">
+				<xsl:if test="$youtube = 'yes'">
+					<xsl:variable name="youtubevideoid">
+						<xsl:if test="substring-after(link, '?v=') != ''" >
+							<xsl:if test="substring-before(substring-after(link, '?v='), '&amp;feature') != ''" >
+								<xsl:value-of select="substring-before(substring-after(link, '?v='), '&amp;feature')" />
+							</xsl:if>	
+							<xsl:if test="substring-before(substring-after(link, '?v='), '&amp;feature') = ''" >
+								<xsl:value-of select="substring-after(link, '?v=')" />
+							</xsl:if>							
+						</xsl:if>	
+						
+						
+					</xsl:variable>			
+					
+					<xsl:if test="$youtubevideoid != ''" >
+					    <div class="wrapper">
+						    <div class="h_iframe">
+							<!-- a transparent image is preferable -->
+							<img class="ratio" src="css/transparent.png"/>
+							<iframe src="http://www.youtube.com/embed/{$youtubevideoid}" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+						    </div>	
+					    </div>	
+					    <br/>
+					</xsl:if>							 				    
+				</xsl:if>			
 				<xsl:value-of select="description" disable-output-escaping="yes"/>
 				<xsl:if test="category != ''" >
 					<span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
