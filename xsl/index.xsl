@@ -124,17 +124,21 @@
 			<div class="article-content">
 				<xsl:if test="$youtube = 'yes'">
 					<xsl:variable name="youtubevideoid">
-						<xsl:if test="substring-after(link, '?v=') != ''" >
-							<xsl:if test="substring-before(substring-after(link, '?v='), '&amp;feature') != ''" >
-								<xsl:value-of select="substring-before(substring-after(link, '?v='), '&amp;feature')" />
-							</xsl:if>	
-							<xsl:if test="substring-before(substring-after(link, '?v='), '&amp;feature') = ''" >
-								<xsl:value-of select="substring-after(link, '?v=')" />
-							</xsl:if>							
+						<xsl:if test="substring-after(link, 'youtube.com/watch?feature=player_embedded&amp;v=') != ''" >
+							<xsl:value-of select="substring-after(link, 'youtube.com/watch?feature=player_embedded&amp;v=')" />
 						</xsl:if>	
-						
-						
+						<xsl:if test="substring-after(link, 'youtube.com/watch?feature=player_embedded&amp;v=') = ''" >
+							<xsl:if test="substring-after(link, '?v=') != ''" >
+								<xsl:if test="substring-before(substring-after(link, '?v='), '&amp;feature') != ''" >
+									<xsl:value-of select="substring-before(substring-after(link, '?v='), '&amp;feature')" />
+								</xsl:if>	
+								<xsl:if test="substring-before(substring-after(link, '?v='), '&amp;feature') = ''" >
+									<xsl:value-of select="substring-after(link, '?v=')" />
+								</xsl:if>							
+							</xsl:if>	
+						</xsl:if>	
 					</xsl:variable>			
+					
 					
 					<xsl:if test="$youtubevideoid != ''" >
 					    <div class="wrapper">
