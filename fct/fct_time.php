@@ -9,7 +9,7 @@ function time_elapsed_string($ptime){
 
 	if ($etime < 1)
 	{
-		return '0 seconds';
+		return ', maintenant';
 	}
 
 	$a = array( 12 * 30 * 24 * 60 * 60  =>  'année',
