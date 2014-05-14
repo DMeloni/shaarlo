@@ -4,6 +4,7 @@
     <xsl:output method="html" encoding="UTF-8"
         omit-xml-declaration="yes" indent="no"/>
     
+    <xsl:param name="is_secure" />
     <xsl:param name="wot" />
     <xsl:param name="youtube" />
     <xsl:param name="my_shaarli" />
@@ -13,6 +14,8 @@
     <xsl:param name="mod_content_bottom" />
     <xsl:param name="rss_url" />
     <xsl:param name="next_previous" />
+    <xsl:param name="date_demain" />
+    <xsl:param name="date_hier" />
     
     <xsl:template match="/">
 		<html lang="fr">
@@ -35,21 +38,46 @@
 					<a href="admin.php">Administration</a>
 					<a href="archive.php">Archive</a>
 					<a href="random.php">Aléatoire</a>
+					<!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>-->
+					<a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
 					<form method="GET" action="index.php">
 						<input id="searchbar" type="text" name="q" placeholder="Rechercher un article" value="{$searchTerm}"/>
 					</form>
+
+                    <div class="pagination">
+                        <div class="liens">
+                            <xsl:if test="$date_hier">
+                                <a href="?date={$date_hier}">Jour précédent</a>
+                            </xsl:if>
+                            <xsl:if test="$date_demain">
+                                <a href="?date={$date_demain}"> / Jour suivant</a>
+                            </xsl:if>
+                        </div>
+                        <div class="clear"/>
+                    </div>
 				</div>
 				<div id="content">
 					<xsl:value-of select="$mod_content_top" disable-output-escaping="yes"/>
 					<xsl:apply-templates select="/rss/channel/item"/>
 					<xsl:value-of select="$mod_content_bottom" disable-output-escaping="yes"/>					
 				</div>
+                <div class="pagination">
+                    <div class="liens">
+                        <xsl:if test="$date_hier">
+                            <a href="?date={$date_hier}">Jour précédent</a>
+                        </xsl:if>
+                        <xsl:if test="$date_demain">
+                            <a href="?date={$date_demain}"> / Jour suivant</a>
+                        </xsl:if>
+                    </div>
+                    <div class="clear"/>
+                </div>
 				<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
 				
-				<xsl:if test="$wot = 'yes'">
+				<xsl:if test="$is_secure = 'no' and $wot = 'yes'">
 					<script type="text/javascript">
 					var wot_rating_options = {
 					selector: ".wot"
@@ -57,6 +85,7 @@
 					</script>				
 					<script type="text/javascript" src="http://api.mywot.com/widgets/ratings.js"></script>
 				</xsl:if>
+				
 			</body>
 		</html>
     </xsl:template>
@@ -122,9 +151,7 @@
 				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /></a>
 			</h2>
 			<div class="article-content">
-			
-			
-				<xsl:if test="$youtube = 'yes'">
+				<xsl:if test="$is_secure = 'no' and $youtube = 'yes'">
 					<xsl:variable name="youtubevideoid">
 						<xsl:if test="substring-after(link, 'youtube.com') != ''" >
 							<xsl:if test="substring-before(substring-after(link, 'v='), '&amp;') != ''" >
@@ -139,8 +166,7 @@
 								</xsl:if>	
 							</xsl:if>											
 						</xsl:if>	
-					</xsl:variable>			
-					
+					</xsl:variable>								
 					<xsl:if test="$youtubevideoid != ''" >
 					    <div class="wrapper">
 						    <div class="h_iframe">

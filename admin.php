@@ -108,14 +108,16 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 					$serverMsg = "Le nom du flux existe deja";
 				}else{
 					if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL	
-						// Url shaarli format 
+						// Url shaarli format
+                        /*
 			            $url = explode('?', $url);
 			            
 			            // Posted link is eg : http://xxx/?azerty or http://xxx/
 						if($url[0][strlen($url[0]) - 1] !== '/'){
 							$url[0] = $url[0] . '/';
 						}			            
-			            $url = $url[0] . '?do=rss'; 
+			            $url = $url[0] . '?do=rss';
+                        */
 						// Valid Shaarli ? 
 						if(is_valid_rss($url) !== false){
 							$rssList[$label] = $url;
@@ -179,6 +181,7 @@ ob_start();
 			<a href="admin.php">Administration</a>
 			<a href="archive.php">Archive</a>
 			<a href="random.php">Aléatoire</a>
+			<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>									
 			<h1 id="top"><a href="./admin.php">Administration</a></h1> 
 		</div>	
 			 

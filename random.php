@@ -41,7 +41,7 @@ $fileList =	scandir($archiveDir, 1);
 //. and .. suppression
 array_pop($fileList);
 array_pop($fileList);
-$nbDisplayedArticles = 10;
+$nbDisplayedArticles = 50;
 
 /*
  * Items randomization

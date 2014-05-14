@@ -11,19 +11,19 @@ $GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt';
 $GLOBALS['POTENTIAL_SHAARLIS_FILE_NAME'] = 'potential_shaarli.txt';
 $GLOBALS['DELETED_SHAARLIS_FILE_NAME'] = 'deleted_shaarli.txt';
 $GLOBALS['NO_HTTPS_SHAARLIS_FILE_NAME'] = 'no_https_shaarli.txt';
-$GLOBALS['MY_SHAARLI_FILE_NAME'] = 'my_shaarli.txt';; /* your shaarli file name */
-$GLOBALS['MY_RESPAWN_FILE_NAME'] = 'my_respawn.txt';; /* your shaarli file name */
+//$GLOBALS['MY_SHAARLI_FILE_NAME'] = 'my_shaarli.txt';; /* your shaarli file name */
+//$GLOBALS['MY_RESPAWN_FILE_NAME'] = 'my_respawn.txt';; /* your shaarli file name */
 $GLOBALS['ARCHIVE_FILE_NAME'] = 'archive.html';
 $GLOBALS['CALENDAR_SORTING'] = 'desc';
 $GLOBALS['COMMENT_SORTING'] = 'desc'; /* sort url comment by date */
 $GLOBALS['MAX_FOUND_ITEM'] = 10; /* max item returned by search */
-$GLOBALS['ACTIVE_WOT'] = 'no'; /* 'yes' active wot verif for shaared linked */
-$GLOBALS['ACTIVE_YOUTUBE'] = 'no'; /* 'yes' active youtube embeded video */
-$GLOBALS['ACTIVE_NEXT_PREVIOUS'] = 'no'; /* 'yes' active next/previous button : useful for mobile view*/
+$GLOBALS['ACTIVE_WOT'] = 'yes'; /* 'yes' active wot verif for shaared linked */
+$GLOBALS['ACTIVE_YOUTUBE'] = 'yes'; /* 'yes' active youtube embeded video */
+$GLOBALS['ACTIVE_NEXT_PREVIOUS'] = 'yes'; /* 'yes' active next/previous button : useful for mobile view*/
 $GLOBALS['ACTIVE_FAVICON'] = false; /* 'yes' active shaarli favicon recuperation */
 $GLOBALS['DATE_FORMAT'] = '\l\e d/m/Y \à H\h i\m s\s'; /* active date format */
-$GLOBALS['SHAARLO_URL'] = 'http://shaarlo.fr/'; /* your shaarlo's url (usefulfor the main RSS) */
-$GLOBALS['REFRESH_SLEEP'] = 110; /* x Seconds beetween refresh loops */
+$GLOBALS['SHAARLO_URL'] = 'http://shaarli.fr/'; /* your shaarlo's url (usefulfor the main RSS) */
+$GLOBALS['REFRESH_SLEEP'] = 60;
 
 require_once 'mod/mod.php';
 

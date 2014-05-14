@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 
 /**
@@ -53,14 +53,37 @@ define('XPATH_RSS_COPYRIGHT', '/rss/channel/copyright');
 
 
 /*
- * Get a RSS 
- * 
+ * Get a RSS
+ *
  * @param $ur
  * @return atom
- *  
+ *
  */
-function getRss($url){
-	return @file_get_contents($url);
+function getRss($url, $sslVersion=null){
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    if($sslVersion != null) {
+        curl_setopt($ch, CURLOPT_SSLVERSION, $sslVersion);
+    }
+
+    $result = curl_exec($ch);
+    curl_close($ch);
+    var_export($result);
+
+    if($result== false && $sslVersion == null){
+        return getRss($url, 1);
+    }
+    if($result== false && $sslVersion == 1){
+        return getRss($url, 3);
+    }
+
+    return $result;
 }
 
 
@@ -71,75 +94,80 @@ function getRss($url){
 * return : tableau associatif
 */
 function convertXmlToTableau($xml,$xpath){
-	$list = $xml->xpath($xpath);
-	$tableau = array();
-	foreach ($list as $elt){
-		$classArray = array();
-		foreach ($elt as $key => $el){
-			$value = (string)$el;
-			if(empty($classArray[$key])){
-				$classArray[$key] = $value;
-			}else{
-				$classArray[$key] .= ',' . $value;
-			}
-		}
-		$tableau[] = $classArray ;
-	}
-	return $tableau;
+    $list = $xml->xpath($xpath);
+    $tableau = array();
+    foreach ($list as $elt){
+        $classArray = array();
+        foreach ($elt as $key => $el){
+            $value = (string)$el;
+            if(empty($classArray[$key])){
+                $classArray[$key] = $value;
+            }else{
+                $classArray[$key] .= ',' . $value;
+            }
+        }
+        $tableau[] = $classArray ;
+    }
+    return $tableau;
 }
 
-function urlExists($url) {
-	if (function_exists('curl_init')){
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$data = curl_exec($ch);
-		$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		curl_close($ch);
+function urlExists($url, $sslVersion=1) {
+    if (function_exists('curl_init')){
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSLVERSION,$sslVersion);
+        $data = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
-		if($httpcode>=200 && $httpcode<300){
-			return true;
-		} else {
-			return false;
-		}
-	}
-	if (function_exists ( 'get_headers')){
-		$file_headers = get_headers($url);
-		if($file_headers[0] == 'HTTP/1.1 404 Not Found') {
-			return false;
-		}
-		else {
-			return true;
-		}
-	} 
-	return false;
+        if($httpcode>=200 && $httpcode<300){
+            return true;
+        } else {
+            return urlExists($url, 3);
+        }
+    }
+    if (function_exists ( 'get_headers')){
+        $file_headers = get_headers($url);
+        if($file_headers[0] == 'HTTP/1.1 404 Not Found') {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
-* Return true if the rss is valid, else false 
+* Return true if the rss is valid, else false
 */
 function is_valid_rss($url){
-	if(!urlExists($url)){
-		return false;
-	}
-	$content = getRss($url);
-	$xmlContent = getSimpleXMLElement($content);
-	if($xmlContent !== false){
-		$rssItems = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
-		$firstItem = reset($rssItems);
-		$link = $firstItem['link'];
-		if(!isset($firstItem['pubDate'])){
-			return false;
-		}
-		$rssTimestamp = strtotime($firstItem['pubDate']);
-		if(('http://' === $link || filter_var($link, FILTER_VALIDATE_URL))  && $rssTimestamp > 0){
-			// Return the title
-			$list = $xmlContent->xpath(XPATH_RSS_TITLE);
-			return (string)$list[0];
-		}
-	}
-	return false;	
+    if(!urlExists($url)){
+        return false;
+    }
+    $content = getRss($url);
+    $xmlContent = getSimpleXMLElement($content);
+    if($xmlContent !== false){
+        $rssItems = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
+        $firstItem = reset($rssItems);
+        $link = $firstItem['link'];
+        if(!isset($firstItem['pubDate'])){
+            return false;
+        }
+        $rssTimestamp = strtotime($firstItem['pubDate']);
+        if($rssTimestamp > 0){
+            // Return the title
+            $list = $xmlContent->xpath(XPATH_RSS_TITLE);
+            return (string)$list[0];
+        }
+    }
+    return false;
 }
 
 
@@ -153,22 +181,22 @@ function is_valid_rss($url){
  * @return SimpleXMLElement L'objet SimpleXMLElement dont le contenu est $xmlEntree ou FALSE en cas d'erreur
  */
 function getSimpleXMLElement($xmlEntree, $namespaceParDefaut=false, $depuisFichier=false) {
-	$boolDepuisFichier = chaineEnBooleen($depuisFichier);
-	// Création de l'objet SimpleXMLElement
-	try {
-		if($namespaceParDefaut) {
-			// un namespace par défaut a été fourni
-			$xmlRetour = @(new SimpleXMLElement($xmlEntree, null, $boolDepuisFichier, $namespaceParDefaut, false));
-		} else {
-			// pas de namespace par défaut
-			$xmlRetour = @(new SimpleXMLElement($xmlEntree, null, $boolDepuisFichier));
-		}
-	} catch (Exception $e) {
-		return false;
-	}
-	// Enregistrement des espaces de noms
-	registerDefaultXPathNamespaces($xmlRetour);
-	return $xmlRetour;
+    $boolDepuisFichier = chaineEnBooleen($depuisFichier);
+    // Création de l'objet SimpleXMLElement
+    try {
+        if($namespaceParDefaut) {
+            // un namespace par défaut a été fourni
+            $xmlRetour = @(new SimpleXMLElement($xmlEntree, null, $boolDepuisFichier, $namespaceParDefaut, false));
+        } else {
+            // pas de namespace par défaut
+            $xmlRetour = @(new SimpleXMLElement($xmlEntree, null, $boolDepuisFichier));
+        }
+    } catch (Exception $e) {
+        return false;
+    }
+    // Enregistrement des espaces de noms
+    registerDefaultXPathNamespaces($xmlRetour);
+    return $xmlRetour;
 }
 
 /**
@@ -184,14 +212,14 @@ function getSimpleXMLElement($xmlEntree, $namespaceParDefaut=false, $depuisFichi
  * @return bool
  */
 function chaineEnBooleen($chaineTest) {
-	if( !(bool)$chaineTest
-	|| !strncasecmp($chaineTest, 'false', 5)
-	|| !strncasecmp($chaineTest, 'faux', 4) ) {
-		// le paramètre est casté en FALSE ou est une chaine "fausse"
-		return false;
-	} else {
-		return true;
-	}
+    if( !(bool)$chaineTest
+    || !strncasecmp($chaineTest, 'false', 5)
+    || !strncasecmp($chaineTest, 'faux', 4) ) {
+        // le paramètre est casté en FALSE ou est une chaine "fausse"
+        return false;
+    } else {
+        return true;
+    }
 }
 
 
@@ -201,27 +229,27 @@ function chaineEnBooleen($chaineTest) {
  * @param SimpleXMLElement $xml
  */
 function registerDefaultXPathNamespaces(SimpleXMLElement $xml) {
-	$xml->registerXPathNamespace(XPATH_PREFIX_ATOM, XPATH_NAMESPACE_ATOM);
-	$xml->registerXPathNamespace(XPATH_PREFIX_XHTML, XPATH_NAMESPACE_XHTML);
-	$xml->registerXPathNamespace(XPATH_PREFIX_OPEN_SEARCH, XPATH_NAMESPACE_OPEN_SEARCH);
-	$xml->registerXPathNamespace(XPATH_PREFIX_PURL_CONTENT, XPATH_NAMESPACE_PURL_CONTENT);
+    $xml->registerXPathNamespace(XPATH_PREFIX_ATOM, XPATH_NAMESPACE_ATOM);
+    $xml->registerXPathNamespace(XPATH_PREFIX_XHTML, XPATH_NAMESPACE_XHTML);
+    $xml->registerXPathNamespace(XPATH_PREFIX_OPEN_SEARCH, XPATH_NAMESPACE_OPEN_SEARCH);
+    $xml->registerXPathNamespace(XPATH_PREFIX_PURL_CONTENT, XPATH_NAMESPACE_PURL_CONTENT);
 }
 
 
 function sanitize_output($buffer) {
-	$search = array(
-			'/\>[^\S ]+/s', //strip whitespaces after tags, except space
-			'/[^\S ]+\</s', //strip whitespaces before tags, except space
-			'/(\s)+/s'  // shorten multiple whitespace sequences
-	);
-	$replace = array(
-			'>',
-			'<',
-			'\\1'
-	);
-	$buffer = preg_replace($search, $replace, $buffer);
+    $search = array(
+            '/\>[^\S ]+/s', //strip whitespaces after tags, except space
+            '/[^\S ]+\</s', //strip whitespaces before tags, except space
+            '/(\s)+/s'  // shorten multiple whitespace sequences
+    );
+    $replace = array(
+            '>',
+            '<',
+            '\\1'
+    );
+    $buffer = preg_replace($search, $replace, $buffer);
 
-	return $buffer;
+    return $buffer;
 }
 
 
@@ -230,17 +258,17 @@ function sanitize_output($buffer) {
  * Get json representation of opml xml
  */
 function getAllGReaderFlux($pathFlux){
-	$document = new DomDocument();
-	$document->load($pathFlux);
-	
-	$xpath = new DomXPath($document);
+    $document = new DomDocument();
+    $document->load($pathFlux);
 
-	$allFlux = array();
-	foreach($xpath->query("//opml/body/outline") as $row){
-		$labelTmp = $xpath->query("@text",$row)->item(0)->nodeValue;
-		$urlTmp = $xpath->query("@xmlUrl",$row)->item(0)->nodeValue;
-		$allFlux[$labelTmp] = $urlTmp;
-	}
-	return $allFlux;
+    $xpath = new DomXPath($document);
+
+    $allFlux = array();
+    foreach($xpath->query("//opml/body/outline") as $row){
+        $labelTmp = $xpath->query("@text",$row)->item(0)->nodeValue;
+        $urlTmp = $xpath->query("@xmlUrl",$row)->item(0)->nodeValue;
+        $allFlux[$labelTmp] = $urlTmp;
+    }
+    return $allFlux;
 }
 

@@ -1,69 +1,42 @@
 <?php
-include 'config.php';
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
-include 'fct/fct_valid.php';
 error_reporting(0);
 header('Content-Type: text/html; charset=utf-8');
 
 $serverMsg = '';
+
 $rssList = array();
-global $DATA_DIR, $SHAARLIS_FILE_NAME;
-$rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
-
-$rssList = json_decode(file_get_contents($rssListFile), true);
-
-$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
-if(checkInstall() || is_file($indexFile)){
+$rssListFile = 'data/shaarli.txt';									
+if(is_file($rssListFile)){
 	header('Location: index.php');
+	return;
 }
 
+$rssList = json_decode(file_get_contents($rssListFile), true);
 
 /*
  * Rights validation
  */
-if(!is_dir($DATA_DIR)){
-	if(!mkdir($DATA_DIR)){
-		$serverMsg = "Le dossier $DATA_DIR ne peut pas être créé";
-	}
-}
-if(!is_writable($DATA_DIR)){
-	$serverMsg = "Le dossier $DATA_DIR est non writable";
-}else{
-	if(!is_file($rssListFile) && !file_put_contents($rssListFile, json_encode(array()))){
-		$serverMsg = "Le fichier $rssListFile est non pushable";
-	}
-	if(!is_writable($rssListFile)){
-		$serverMsg = "Le fichier $rssListFile est non writable";
-	}	
-	$cacheDir  = sprintf('%s/%s', $DATA_DIR, $CACHE_DIR_NAME);
-	if(!is_dir($cacheDir)){
-		if(!mkdir($cacheDir)){
-			$serverMsg = "Le dossier $cacheDir ne peut pas être créé";
-		}
-	}
-	$archiveDir  = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
-	if(!is_dir($archiveDir)){
-		if(!mkdir($archiveDir)){
-			$serverMsg = "Le dossier $archiveDir ne peut pas être créé";
-		}
-	}	
+
+if(!is_writable('cache')){
+	$serverMsg = "Le dossier cache est non writable";
 }
 
-$mods = get_loaded_extensions();
-if (!in_array('xsl',$mods)){
-	$serverMsg = "Le module xsl est obligatoire";
-}
-if (!in_array('mbstring',$mods)){
-	$serverMsg = "Le module mbstring est obligatoire";
+if(!is_writable('data')){
+	$serverMsg = "Le dossier data est non writable";
 }
 
+if(!is_writable('archive')){
+	$serverMsg = "Le dossier archive est non writable";
+}
 
 /*
 * Add a new rss
 */
+$flippeddisabledRssList = array_flip($disabledRssList);
 if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 
  	$assocUrlLabel = array_combine ($_POST['url'], $_POST['label']);
@@ -85,21 +58,14 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 			}
 			else
 			{
-				if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL
-					// Url shaarli format
-					$url = explode('?', $url);
-					
-					// Posted link is eg : http://xxx/?azerty or http://xxx/
-					$url = $url[0] . '?do=rss';
-
+				if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL	
 					// Valid Shaarli ? 
-					if(is_valid_rss($url) !== false){
+					if(is_valid_rss($url)){
 						$rssList[$label] = $url;
 						file_put_contents($rssListFile, json_encode($rssList));						
 						header("Location: refresh.php?oneshoot=true");
-						return;
 					}else{
-						$serverMsg = "Le flux est injoignable";
+						$serverMsg = "Le flux est non valide";
 					}
 				}else{
 						$serverMsg = "L'url est non valide";
@@ -127,7 +93,7 @@ ob_start();
 	</head>
 	<body>
 		<div id="header"> 
-			<h1 id="top"><a href="./boot.php">Installation</a></h1> 
+			<h1 id="top"><a href="./install.php">Installation</a></h1> 
 		</div> 
 		<div id="content">
 			<?php if (!empty($serverMsg)) { ?>
@@ -140,7 +106,7 @@ ob_start();
 				<a title="Go to original place" href="">Débuter avec un flux shaarli</a>
 				</h2>
 				<div class="article-content">
-					<form action="boot.php" method="POST">				
+					<form action="install.php" method="POST">				
 							<label for="label">Titre du flux</label>
 							<input type="text" name="label[]"></input>
 							<br/>
@@ -161,4 +127,3 @@ $page = ob_get_contents();
 ob_end_clean(); 
 $page = sanitize_output($page);
 echo $page;
-

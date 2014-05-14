@@ -14,6 +14,7 @@ require_once 'fct/fct_rss.php';
 */
 global $DATA_DIR, $SHAARLIS_FILE_NAME;
 $allFlux = array();
+/*
 if(isset($_POST['mod']) && $_POST['mod'] === 'opml' && !empty($_FILES['subscription']['tmp_name'])){
 	$xmlDoc=new DomDocument();
 	$rc=@($xmlDoc->loadXML(file_get_contents($_FILES['subscription']['tmp_name'])));
@@ -29,7 +30,7 @@ if(isset($_POST['mod']) && $_POST['mod'] === 'opml' && !empty($_FILES['subscript
 		$rssList = array_merge($rssList, $allFlux);
 		file_put_contents($rssListFile, json_encode($rssList));
 	}
-}
+*/
 
 /*
  * Get the opml file

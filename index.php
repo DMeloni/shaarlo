@@ -4,7 +4,7 @@ include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';
 
-error_reporting(0);
+error_reporting(1);
 
 global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
 
@@ -75,9 +75,11 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 					}
 				}
 			}
-			if($nbFoundItems >= $MAX_FOUND_ITEM){
+			
+		if( ($nbFoundItems >= $MAX_FOUND_ITEM && !($searchTerm == 'youtube' && isset($_GET['do']) && $_GET['do'] == 'rss')) || $nbFoundItems >= 20){
 				break;
 			}
+			
 		}
 	}
 	
@@ -138,10 +140,23 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 	{
 	?><!DOCTYPE html><?php
 		if(isset($_GET['date']) && is_file($rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']))){
-			$rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
-			$rssFile = file_get_contents($rssFilePath);
+            $rssFilePath = sprintf('%s/%s/rss_%s.xml', $DATA_DIR, $ARCHIVE_DIR_NAME, $_GET['date']);
+            $rssFile = file_get_contents($rssFilePath);
+
+            $date = $_GET['date'];
+            $dateJMoins1 = new DateTime($date);
+            $dateJMoins1->modify('-1 day');
+            $dateHier = $dateJMoins1->format('Ymd');
+            $dateJPlus1 = new DateTime($date);
+            $dateJPlus1->modify('+1 day');
+
+            $dateDemain = '';
+            if($dateJPlus1->format('Ymd') <= date('Ymd')) {
+                $dateDemain = $dateJPlus1->format('Ymd');
+            }
+
 			if(is_file($rssFilePath)) {
-				$index = parseXsl('xsl/index.xsl', $rssFile, array('next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'youtube' => $ACTIVE_YOUTUBE, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+				$index = parseXsl('xsl/index.xsl', $rssFile, array('date_demain' => $dateDemain, 'date_hier' => $dateHier, 'next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'youtube' => $ACTIVE_YOUTUBE, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 				$index = sanitize_output($index);
 				header('Content-Type: text/html; charset=utf-8');
 				echo $index;
@@ -152,7 +167,25 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 				header('Content-Type: text/html; charset=utf-8');
 				$rssFilePath = sprintf('%s/%s/rssDiff.xml', $DATA_DIR, $CACHE_DIR_NAME);
 				$rssFile = file_get_contents($rssFilePath);
-				$index = parseXsl('xsl/index.xsl', $rssFile, array('next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'youtube' => $ACTIVE_YOUTUBE, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
+				
+				$isSecure = 'no';
+				if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']) {
+					$isSecure = 'yes';
+					$ACTIVE_WOT = 'no';
+				}
+                $date = date('Ymd');
+                $dateJMoins1 = new DateTime($date);
+                $dateJMoins1->modify('-1 day');
+                $dateHier = $dateJMoins1->format('Ymd');
+                $dateJPlus1 = new DateTime($date);
+                $dateJPlus1->modify('+1 day');
+
+                $dateDemain = '';
+                if($dateJPlus1->format('Ymd') <= date('Ymd')) {
+                    $dateDemain = $dateJPlus1->format('Ymd');
+                }
+
+                $index = parseXsl('xsl/index.xsl', $rssFile, array('date_demain' => $dateDemain, 'date_hier' => $dateHier, 'next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'youtube' => $ACTIVE_YOUTUBE, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl, 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'].'_top')]));
 				$index = sanitize_output($index);
 				echo $index;			
 			}else{
