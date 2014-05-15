@@ -74,7 +74,6 @@ function getRss($url, $sslVersion=null){
 
     $result = curl_exec($ch);
     curl_close($ch);
-    var_export($result);
 
     if($result== false && $sslVersion == null){
         return getRss($url, 1);

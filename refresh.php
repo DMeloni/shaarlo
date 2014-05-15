@@ -82,6 +82,12 @@ for($j=0; $j < $nbStep; $j++){
 		}
 		file_put_contents(sprintf('%s/rss_%s', $DATA_DIR, $rssKey), $content);
 	}
+	echo 'cououc';
+        if(isset($_GET['oneshoot'])){
+		echo 'lol';
+		header('Location: refreshdiscuss.php?oneshoot=true');
+		return;
+        }
 	sleep($REFRESH_SLEEP);
 }
 
