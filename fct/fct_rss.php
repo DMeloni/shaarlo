@@ -68,6 +68,7 @@ function getRss($url, $sslVersion=null){
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
     if($sslVersion != null) {
         curl_setopt($ch, CURLOPT_SSLVERSION, $sslVersion);
     }
@@ -110,7 +111,7 @@ function convertXmlToTableau($xml,$xpath){
     return $tableau;
 }
 
-function urlExists($url, $sslVersion=1) {
+function urlExists($url, $sslVersion=null) {
     if (function_exists('curl_init')){
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
@@ -120,15 +121,23 @@ function urlExists($url, $sslVersion=1) {
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_SSLVERSION,$sslVersion);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+        if($sslVersion != null) {
+            curl_setopt($ch, CURLOPT_SSLVERSION, $sslVersion);
+        }
         $data = curl_exec($ch);
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if($httpcode>=200 && $httpcode<300){
             return true;
-        } else {
-            return urlExists($url, 3);
+        }else{
+            if($sslVersion == null){
+                return urlExists($url, 1);
+            }
+            if($sslVersion == 1){
+                return urlExists($url, 3);
+            }
         }
     }
     if (function_exists ( 'get_headers')){
