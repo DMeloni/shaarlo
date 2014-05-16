@@ -231,7 +231,7 @@ ob_start();
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="disable" />
-							<input type="submit" value="Desactiver" class="bigbutton"/>
+							<input type="submit" value="Désactiver" class="bigbutton"/>
 							</form>
 				</div>												
 			</div>		
@@ -257,8 +257,8 @@ ob_start();
 							<br/>
 						<?php }?>					
 							<input type="hidden" name="action" value="add" />
-							<input type="submit" value="Rendre actif" class="bigbutton"/>
-							<input type="submit" name="supprimer" value="Supprimer à VIE" class="bigbutton"/>
+							<input type="submit" value="Activer" class="bigbutton"/>
+							<input type="submit" name="supprimer" value="Supprimer définitivement" class="bigbutton"/>
 							</form>
 				</div>												
 			</div>		
