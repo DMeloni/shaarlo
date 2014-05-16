@@ -10,9 +10,9 @@ Installation :
 
 *Access http://../shaarlo/
 
-*Schedule refresh.php (eg. crontab it) (wget cron, curl cron, ajax cron, dwarf cron, ovh scheduler ...)
+*Schedule refresh.php & refreshdiscuss.php (eg. crontab it) (wget cron, curl cron, ajax cron, dwarf cron, ovh scheduler ...)
 
-*Configure your shaarlo (edit config.php)
+*Configure your shaarlo (edit config.php and mod/mod.php)
 
 *Love life
 

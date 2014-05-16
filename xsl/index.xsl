@@ -94,7 +94,16 @@
 					</script>				
 					<script type="text/javascript" src="http://api.mywot.com/widgets/ratings.js"></script>
 				</xsl:if>
-				
+
+                <script>
+                    function extend(him) {
+                        console.log(him.parentNode.parentNode.childNodes[2]);
+                        him.parentNode.parentNode.childNodes[2].style.maxHeight = '10000px';
+                        him.style.display = 'none';
+                    }
+
+                </script>
+
 			</body>
 		</html>
     </xsl:template>
@@ -159,7 +168,14 @@
 				</xsl:if>				
 				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /></a>
 			</h2>
-			<div class="article-content">
+			<div>
+                <xsl:if test="string-length(description) &gt;= 1500">
+                    <xsl:attribute name="class">article-content extended</xsl:attribute>
+                </xsl:if>
+                <xsl:if test="string-length(description) &lt; 1500">
+                    <xsl:attribute name="class">article-content</xsl:attribute>
+                </xsl:if>
+
 				<xsl:if test="$is_secure = 'no' and $youtube = 'yes'">
 					<xsl:variable name="youtubevideoid">
 						<xsl:if test="substring-after(link, 'youtube.com') != ''" >
@@ -186,12 +202,20 @@
 					    </div>	
 					    <br/>
 					</xsl:if>							 				    
-				</xsl:if>			
-				<xsl:value-of select="description" disable-output-escaping="yes"/>
-				<xsl:if test="category != ''" >
-					<span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
 				</xsl:if>
+
+				<xsl:value-of select="description" disable-output-escaping="yes"/>
 			</div>
+            <div>
+                <xsl:if test="category != ''" >
+                    <span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
+                </xsl:if>
+            </div>
+            <xsl:if test="string-length(description) &gt;= 1500">
+                <div class="action-extend">
+                    <button onclick="extend(this)">...</button>
+                </div>
+            </xsl:if>
 		</div>    	
     </xsl:template>
     

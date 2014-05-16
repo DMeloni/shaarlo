@@ -90,21 +90,24 @@ for($j=0; $j < $nbStep; $j++){
 	 * Push the shaarli's id in tab
 	 */
 	$assocShaarliIdUrl = array();
+
 	foreach($rssListArrayed as $rssKey => $arrayedRss){
 		/*
 		 * Récupération des liens
 		*/
 		foreach($arrayedRss as $rssItem){
-			$guid = $rssItem['guid'];
+            $guid  = $rssItem['guid'];
 			$link = $rssItem['link'];
 			if($link == 'http://'){
 				$assocShaarliIdUrl[md5($guid)] = $guid;
 			}else{
 				$assocShaarliIdUrl[md5($guid)] = $link;
 			}
+
 		}
 	}
 	$rssContents = array();
+
 	foreach($rssListArrayed as $rssKey => $arrayedRss){
 		/*
 		 * Récupération des liens
@@ -189,24 +192,37 @@ for($j=0; $j < $nbStep; $j++){
 
 			$title = $rssItem['title'];
 
+
 			// Delete the Shaarli link and replace it by the 'real' link
-			if(array_key_exists($uniqRssKey, $assocShaarliIdUrl)){
-				$link = $assocShaarliIdUrl[$uniqRssKey];
-				$uniqRssKey = md5($assocShaarliIdUrl[$uniqRssKey]);
-			}
+
+
+            while(isset($assocShaarliIdUrl[$uniqRssKey]) && $uniqRssKey != md5($assocShaarliIdUrl[$uniqRssKey])){
+                $link = $assocShaarliIdUrl[$uniqRssKey];
+                $uniqRssKey = md5($assocShaarliIdUrl[$uniqRssKey]);
+            }
+
 
 			if(!array_key_exists($uniqRssKey, $rssContents)
 			){
-				$rssContents[$uniqRssKey] = array('toptopic' => false, 'link' => $link, 'description' => array($rssTimestamp => $description), 'descriptionDiff' => array($rssTimestamp => $descriptionDiff), 'title' => $title, 'date' => $rssTimestamp, 'category' => $category);
+				$rssContents[$uniqRssKey] = array('toptopic' => false,
+                    'link' => $link, 'description' => array($rssTimestamp => $description), 'descriptionDiff' => array($rssTimestamp => $descriptionDiff), 'title' => $title, 'date' => $rssTimestamp, 'category' => $category);
 			}else{
-				$rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
+                $rssContents[$uniqRssKey]['title'] = $title;
+                $rssContents[$uniqRssKey]['description'][$rssTimestamp] = $description;
 				$rssContents[$uniqRssKey]['descriptionDiff'][$rssTimestamp] = $descriptionDiff;
 				$rssContents[$uniqRssKey]['date'] = max($rssContents[$uniqRssKey]['date'], $rssTimestamp);
 				$rssContents[$uniqRssKey]['toptopic'] = true;
-                $rssContents[$uniqRssKey]['category'] .= ',' . $category;
+                if($rssContents[$uniqRssKey]['category'] != ''
+                && $category != ''
+                ){
+                    $rssContents[$uniqRssKey]['category'] .= ',';
+                }
+                $rssContents[$uniqRssKey]['category'] .= $category;
+
 			}
 		}
 	}
+
 	// Obtient une liste de colonnes
 	$dateToSort = array();
 	foreach ($rssContents as $key => $row) {
