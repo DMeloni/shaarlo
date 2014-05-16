@@ -132,7 +132,7 @@
 					<xsl:variable name="toptopic">
 						<xsl:call-template name="substring-count">
 						  <xsl:with-param name="string" select="description" />
-						  <xsl:with-param name="substr" select="'ermalink'" />
+						  <xsl:with-param name="substr" select="'Permalink'" />
 						</xsl:call-template>
 					</xsl:variable>
 					article-title

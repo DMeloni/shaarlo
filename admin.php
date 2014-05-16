@@ -174,6 +174,21 @@ ob_start();
 		<link rel="shortcut icon" href="favicon.ico" />
 		<link rel="stylesheet" href="css/style.css" type="text/css" media="screen"/>
 		<link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="Shaarlo Feed" />
+        <script>
+            /* Merci Eric Marcus (Aout 2006)*/
+            function GereChkbox(conteneur, a_faire) {
+                var blnEtat=null;
+                var Chckbox = document.getElementById(conteneur).firstChild;
+                while (Chckbox!=null) {
+                    if (Chckbox.nodeName=="INPUT")
+                        if (Chckbox.getAttribute("type")=="checkbox") {
+                            blnEtat = (a_faire=='0') ? false : (a_faire=='1') ? true : (document.getElementById(Chckbox.getAttribute("id")).checked) ? false : true;
+                            document.getElementById(Chckbox.getAttribute("id")).checked=blnEtat;
+                        }
+                    Chckbox = Chckbox.nextSibling;
+                }
+            }
+        </script>
 	</head>
 	<body>
 		<div id="header"> 
@@ -212,7 +227,9 @@ ob_start();
 							<input type="submit" value="Ajouter" class="bigbutton"/>					
 					</form>			
 				</div>	
-			</div>	
+			</div>
+
+
 
 			<?php
 			if(!empty($rssList)){
@@ -223,16 +240,28 @@ ob_start();
 				</h2>
 
 				<div class="article-content">
-					<form action="admin.php" method="POST">				
-				<?php
-						foreach($rssList as $rssKey => $rssUrl){?>		
-							<input type="checkbox" name="rssKey[]" id="<?php echo str_replace(' ', '-', $rssKey); ?>" value="<?php echo $rssKey; ?>" />
-							<label for="<?php echo str_replace(' ', '-', $rssKey); ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '(<a href="'.$rssUrl.'" >'.$rssUrl. '</a>)'; ?></span></label>
-							<br/>
-						<?php }?>					
+					<form action="admin.php" method="POST">
+                        <input type="button" value="Tout cocher" onClick="GereChkbox('div_chck_actif','1');">
+                        <input type="button" value="Tout décocher" onClick="GereChkbox('div_chck_actif','0');">
+                        <input type="button" value="Inverser la sélection" onClick="GereChkbox('div_chck_actif','2');">
+                        <div id="div_chck_actif">
+				        <?php
+						foreach($rssList as $rssKey => $rssUrl){?>
+
+                                <input type="checkbox" name="rssKey[]" id="<?php echo str_replace(' ', '-', $rssKey); ?>" value="<?php echo $rssKey; ?>" />
+                                <label for="<?php echo str_replace(' ', '-', $rssKey); ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '(<a href="'.$rssUrl.'" >'.$rssUrl. '</a>)'; ?></span></label>
+                                <br/>
+
+						<?php }?>
+                        </div>
 							<input type="hidden" name="action" value="disable" />
-							<input type="submit" value="Désactiver" class="bigbutton"/>
-							</form>
+                            <input type="button" value="Tout cocher" onClick="GereChkbox('div_chck_actif','1');">
+                            <input type="button" value="Tout décocher" onClick="GereChkbox('div_chck_actif','0');">
+                            <input type="button" value="Inverser la sélection" onClick="GereChkbox('div_chck_actif','2');">
+                            <br>
+                            <br>
+                            <input type="submit" value="Désactiver" class="bigbutton"/>
+                    </form>
 				</div>												
 			</div>		
 			<?php
@@ -249,14 +278,24 @@ ob_start();
 				</h2>
 
 				<div class="article-content">
-					<form action="admin.php" method="POST">				
-				<?php
+					<form action="admin.php" method="POST">
+                        <input type="button" value="Tout cocher" onClick="GereChkbox('div_chck_desactif','1');">
+                        <input type="button" value="Tout décocher" onClick="GereChkbox('div_chck_desactif','0');">
+                        <input type="button" value="Inverser la sélection" onClick="GereChkbox('div_chck_desactif','2');">
+                        <div id="div_chck_desactif">
+				        <?php
 						foreach($disabledRssList as $rssKey => $rssUrl){?>		
 							<input type="checkbox" name="rssKey[]" id="<?php echo $rssUrl; ?>" value="<?php echo $rssUrl; ?>" />
 							<label for="<?php echo $rssUrl; ?>"><?php echo unMagicQuote($rssKey);?><span class="urlDetail"><?php echo '(<a href="'.$rssUrl.'" >'.$rssUrl. '</a>)'; ?></span></label>
 							<br/>
-						<?php }?>					
+                        <?php }?>
+                        </div>
 							<input type="hidden" name="action" value="add" />
+                            <input type="button" value="Tout cocher" onClick="GereChkbox('div_chck_desactif','1');">
+                            <input type="button" value="Tout décocher" onClick="GereChkbox('div_chck_desactif','0');">
+                            <input type="button" value="Inverser la sélection" onClick="GereChkbox('div_chck_desactif','2');">
+                            <br>
+                            <br>
 							<input type="submit" value="Activer" class="bigbutton"/>
 							<input type="submit" name="supprimer" value="Supprimer définitivement" class="bigbutton"/>
 							</form>
