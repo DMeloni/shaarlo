@@ -110,23 +110,23 @@ for($j=0; $j < $nbStep; $j++){
 		 * Récupération des liens
 		 */
 		$imgFavicon = '';
-		if(true === $ACTIVE_FAVICON ){
+		if('yes' === $ACTIVE_FAVICON ){
 			if(!is_dir(sprintf('%s/%s', $DATA_DIR, $FAVICON_DIR_NAME))){
 				mkdir(sprintf( '%s/%s', $DATA_DIR, $FAVICON_DIR_NAME));
-			}else{
-				$faviconPath = sprintf('%s/%s/%s.ico', $DATA_DIR, $FAVICON_DIR_NAME, $rssKey);
-				$shaarliUrl = explode('?', $guid);
-				$shaarliUrl = sprintf('%simages/favicon.ico', $shaarliUrl[0]);
-				if(urlExists($shaarliUrl)){
-					$favicon = @file_get_contents($shaarliUrl);
-					if(false !== $favicon){
-						file_put_contents($faviconPath, $favicon);
-					}
-				}
-				if(is_file($faviconPath)){
-					$imgFavicon = sprintf('<img alt="" width="16px" height="16px" src="%s" />', $faviconPath);
-				}
 			}
+
+            $faviconPath = sprintf('%s/%s/%s.ico', $DATA_DIR, $FAVICON_DIR_NAME, $rssKey);
+            $shaarliUrl = explode('?', $guid);
+            $shaarliUrl = sprintf('%simages/favicon.ico', $shaarliUrl[0]);
+            if(urlExists($shaarliUrl)){
+                $favicon = @file_get_contents($shaarliUrl);
+                if(false !== $favicon){
+                    file_put_contents($faviconPath, $favicon);
+                }
+            }
+            if(is_file($faviconPath)){
+                $imgFavicon = sprintf('<img alt="" width="16px" height="16px" src="%s" />', $faviconPath);
+            }
 		}
 
 		foreach($arrayedRss as $rssItem){
