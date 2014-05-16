@@ -203,6 +203,7 @@ for($j=0; $j < $nbStep; $j++){
 				$rssContents[$uniqRssKey]['descriptionDiff'][$rssTimestamp] = $descriptionDiff;
 				$rssContents[$uniqRssKey]['date'] = max($rssContents[$uniqRssKey]['date'], $rssTimestamp);
 				$rssContents[$uniqRssKey]['toptopic'] = true;
+                $rssContents[$uniqRssKey]['category'] .= ',' . $category;
 			}
 		}
 	}
@@ -226,6 +227,15 @@ for($j=0; $j < $nbStep; $j++){
 
 		$i++;
 
+        if(strpos($rssContent['category'], ',') > 0) {
+            $categoryArray = explode(',', $rssContent['category']);
+            natsort($categoryArray);
+            $categoryArray = array_unique($categoryArray);
+            $category = implode(',', $categoryArray);
+        }else{
+            $category = $rssContent['category'];
+        }
+
 		if('desc' === $COMMENT_SORTING){
 			ksort($rssContent['description']);
 			ksort($rssContent['descriptionDiff']);
@@ -242,7 +252,7 @@ for($j=0; $j < $nbStep; $j++){
 							<description>%s</description>
 							<category>%s</category>
 							</item>",
-				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>', htmlspecialchars($rssContent['category'])
+				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['description']) . ']]>', htmlspecialchars($category)
 				);
 		$shaarloRssDiff .= sprintf("<item>
 				<title>%s</title>
@@ -252,7 +262,7 @@ for($j=0; $j < $nbStep; $j++){
 				<description>%s</description>
 				<category>%s</category>
 				</item>",
-				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['descriptionDiff']) . ']]>', htmlspecialchars($rssContent['category'])
+				htmlspecialchars($rssContent['title']), htmlspecialchars($rssContent['link']), htmlspecialchars($rssContent['link']), date('r', $rssContent['date']), '<![CDATA[' . implode('<br/>', $rssContent['descriptionDiff']) . ']]>', htmlspecialchars($category)
 		);
 	}
 // 		// stop profiler
