@@ -140,9 +140,10 @@ function urlExists($url, $sslVersion=null) {
             }
         }
     }
+    $url = 'https://hub.tomcanac.com/liens/?do=rss';
     if (function_exists ( 'get_headers')){
         $file_headers = get_headers($url);
-        if($file_headers[0] == 'HTTP/1.1 404 Not Found') {
+        if(!isset($file_headers[0]) || $file_headers[0] == 'HTTP/1.1 404 Not Found') {
             return false;
         }
         else {

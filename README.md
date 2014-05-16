@@ -13,8 +13,8 @@ Installation :
 *Configure your shaarlo (rename config.php.sample -> config.php and edit)
 
 *Edit mod/mod.php to enable mod
-
 *Access http://../shaarlo/
+*Configure your shaarlo (edit config.php)
 
 *Love life
 
