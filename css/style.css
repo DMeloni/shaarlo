@@ -25,7 +25,10 @@ h1 a:hover{color:#444;}
 .article-title a{color:#111;text-decoration:none;}
 .toptopic a{color:#11C101;}
 .article-info{margin:0 0 1em 0;color:#999;}
-.article-content{font-family:Arial;}
+.article-content{font-family:Arial;overflow: hidden;}
+.extended{max-height: 9em;}
+.action-extend{text-align: center;margin-top:1em;}
+.action-extend button{width: 3em;height:2em;}
 .article img{max-width:900px;}
 .article .collapsed{display:none;}
 .shaaliste{font-weight:bold;}
@@ -42,4 +45,5 @@ td {padding:5px;}
 .h_iframe iframe {position:absolute;top:0;left:0;width:100%; height:100%;}
 @media (max-width: 600px) {html, body { width:100%;overflow:hidden;}.urlDetail{display:none;}.wrapper{width:18em;}#header{text-align:center;}h1{font-size:1em;text-align:center;}.article{margin-bottom:1em;}}
 .pagination .liens{float: right;}
+
 
