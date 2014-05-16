@@ -9,6 +9,7 @@
  * Show best tags on admin.php
 */
 include_once 'config.php';
+error_reporting(0);
 
 /*
  * Mod filter
