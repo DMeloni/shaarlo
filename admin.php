@@ -122,7 +122,7 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 						if(is_valid_rss($url) !== false){
 							$rssList[$label] = $url;
 							file_put_contents($rssListFile, json_encode($rssList));						
-							$serverMsg = "Flux validé ! ";
+							$serverMsg = "Flux valide !";
 
 							if(isset($disabledRssList[$label])){
 								unset($disabledRssList[$label]);
@@ -134,7 +134,7 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 							$serverMsg = "Le flux est non valide";
 						}
 					}else{
-							$serverMsg = "L'url est non valide";
+							$serverMsg = "URL non valide";
 					}
 					$flippedPotentialShaarlis = array_flip($potentialShaarlis);
 					if(in_array($url, $potentialShaarlis)){
@@ -220,7 +220,7 @@ ob_start();
 							<label for="new_title">Titre du flux</label>
 							<input type="text" id="new_title" name="label[]" />
 							<br/>
-							<label for="new_url">Url du flux</label>
+							<label for="new_url">URL du flux</label>
 							<input type="text" id="new_url" name="url[]" />				
 							<input type="hidden" name="action" value="add" />
 							<br/>
