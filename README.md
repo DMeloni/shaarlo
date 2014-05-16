@@ -8,11 +8,13 @@ Installation :
 
 *Give write permission to data/
 
+*Schedule refresh.php + refreshdiscuss.php (eg. crontab it) (wget cron, curl cron, ajax cron, dwarf cron, ovh scheduler ...)
+
+*Configure your shaarlo (rename config.php.sample -> config.php and edit)
+
+*Edit mod/mod.php to enable mod
+
 *Access http://../shaarlo/
-
-*Schedule refresh.php (eg. crontab it) (wget cron, curl cron, ajax cron, dwarf cron, ovh scheduler ...)
-
-*Configure your shaarlo (edit config.php)
 
 *Love life
 
