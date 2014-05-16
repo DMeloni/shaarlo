@@ -38,7 +38,8 @@
 					<a href="admin.php">Administration</a>
 					<a href="archive.php">Archive</a>
 					<a href="random.php">Aléatoire</a>
-					<!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>-->
+					<!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>
+                    <a href="opml.php?mod=opml">OPML</a>-->
 					<a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
@@ -61,7 +62,15 @@
 				</div>
 				<div id="content">
 					<xsl:value-of select="$mod_content_top" disable-output-escaping="yes"/>
-					<xsl:apply-templates select="/rss/channel/item"/>
+                    <xsl:if test="count(/rss/channel/item) = 0">
+                        <div class="article shaarli-youm-org">
+                            <h2 class="	article-title toptopic">Seul au monde</h2>
+					        Pas de nouveaux shaarliens :(
+                        </div>
+                    </xsl:if>
+                    <xsl:if test="count(/rss/channel/item) != 0">
+                        <xsl:apply-templates select="/rss/channel/item"/>
+                    </xsl:if>
 					<xsl:value-of select="$mod_content_bottom" disable-output-escaping="yes"/>					
 				</div>
                 <div class="pagination">
