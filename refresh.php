@@ -17,7 +17,7 @@ global $REFRESH_SLEEP, $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $SHAARLIS_FILE_
 
 header('Content-Type: text/html; charset=utf-8');
 for($j=0; $j < $nbStep; $j++){
-	$actualDate = date('Ymd');
+	$actualDate = date('Ymd';)!t
 	$actualDateFormat = date('d/m/Y');
 	$shaarloRss = $shaarloRssDiff = '<?xml version="1.0" encoding="utf-8"?>
 	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
