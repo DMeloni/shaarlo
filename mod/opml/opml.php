@@ -74,16 +74,16 @@ if(isset($_GET['mod']) && $_GET['mod'] === 'opml'){
 */
 $MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
 		<h2 class="article-title ">
-		<a title="Go to original place" href="">Module Opml</a>
+		<a title="Go to original place" href="">Module OPML</a>
 		</h2>
 		<div class="article-content">
 			<form action="" method="POST" enctype="multipart/form-data">    
 				<input type="hidden" name="MAX_FILE_SIZE" value="2097152">    
 				<input name="mod" type="hidden" value="opml" />
 				<input type="file" name="subscription"/>
-				<input type="submit" value="Charger" />
+				<input type="submit" value="Importer" />
 			</form>
-			<a href="?mod=opml">Sauvegarder</a>
+			<a href="?mod=opml">Exporter</a>
 		</div>
 	</div>');
 

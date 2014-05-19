@@ -174,7 +174,7 @@ if(!empty($potentialShaarlis)){
 				}
 			$MOD['admin.php_top'] .= '</table>		
 						<input type="hidden" name="action" value="add" />
-						<input type="submit" value="Ajouter les selectionnés" class="bigbutton"/>					
+						<input type="submit" value="Ajouter les flux sélectionnés" class="bigbutton"/>					
 					</form>
 				</div>	
 			</div>';
@@ -188,7 +188,7 @@ if(!empty($potentialShaarlis)){
 			</h2>
 			<div class="article-content">
 				<a href="admin.php?mod=proposition" title="Chercher des flux" class="refreshButton">&#10227;</a>&nbsp;
-				Pas de nouveaux flux :-( 
+				Pas de nouveaux flux trouvés :-( 
 			</div>
 		</div>';	
 }

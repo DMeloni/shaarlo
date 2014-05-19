@@ -91,11 +91,11 @@ if(!empty($rssList)){
 	*/
 	$MOD['admin.php_top'] .= '<div class="article shaarli-youm-org">
 			<h2 class="article-title ">
-			<a title="Go to original place" href="">Suppression des doublons shaarlis</a>
+			<a title="Go to original place" href="">Suppression des Shaarlis en double</a>
 			</h2>
 			<div class="article-content">
-				<a href="admin.php?mod=delete_duplicate_url" title="Supprimer des flux doublons" class="refreshButton">&#10227;</a>&nbsp;
-				Supprimer les doublons shaarlis ?
+				<a href="admin.php?mod=delete_duplicate_url" title="Supprimer des flux en double" class="refreshButton">&#10227;</a>&nbsp;
+				Supprimer les Shaarlis en double ?
 			</div>
 		</div>';	
 }

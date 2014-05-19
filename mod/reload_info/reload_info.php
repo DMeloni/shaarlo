@@ -33,11 +33,11 @@ if(is_file($currentRss)){
 
 $MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
 				<h2 class="article-title ">
-				<a title="Go to original place" href="">Info sur le dernier reload</a>
+				<a title="Go to original place" href="">Info sur le dernier rafraîchissement</a>
 				</h2>
 				<div class="article-content">
-					<span>Dernier reload le : %s</span>
+					<span>Dernière mise à jour le : %s</span>
 					<br/>
-					<a href="refresh.php?oneshoot=true">Forcer un reload</a>		
+					<a href="refresh.php?oneshoot=true">Forcer un rafraîchissement</a>		
 				</div>	
 			</div>', $mtimeLastReload);

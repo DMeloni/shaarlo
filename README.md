@@ -10,6 +10,8 @@ Installation :
 
 *Schedule refresh.php + refreshdiscuss.php (eg. crontab it) (wget cron, curl cron, ajax cron, dwarf cron, ovh scheduler ...)
 
+*Wiki : https://github.com/DMeloni/shaarlo/wiki/Cron
+
 *Configure your shaarlo (rename config.php.sample -> config.php and edit)
 
 *Edit mod/mod.php to enable mod
