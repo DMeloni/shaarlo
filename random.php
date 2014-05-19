@@ -85,7 +85,7 @@ foreach($items as $item){
 			htmlspecialchars($item['link']),
 			$item['pubDate'],
 			htmlspecialchars($item['description']),
-			$item['category']
+            htmlspecialchars($item['category'])
 	);
 }
 $shaarloRss .= '</channel></rss>';
