@@ -114,8 +114,8 @@ if(isset($_GET['q']) && !empty($_GET['q'])){
 				htmlspecialchars($item['title']), 
 				htmlspecialchars($item['link']), 
 				$item['pubDate'],
-				htmlspecialchars($item['description']), 
-				$item['category']
+				htmlspecialchars($item['description']),
+                htmlspecialchars($item['category'])
 		);	
 	}
 	$shaarloRss .= '</channel></rss>';
