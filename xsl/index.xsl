@@ -3,7 +3,8 @@
 
     <xsl:output method="html" encoding="UTF-8"
         omit-xml-declaration="yes" indent="no"/>
-    
+
+    <xsl:param name="nb_sessions" />
     <xsl:param name="is_secure" />
     <xsl:param name="wot" />
     <xsl:param name="youtube" />
@@ -16,6 +17,14 @@
     <xsl:param name="next_previous" />
     <xsl:param name="date_demain" />
     <xsl:param name="date_hier" />
+    <xsl:param name="when" />
+    <xsl:param name="sort" />
+    <xsl:param name="sortBy" />
+    <xsl:param name="date_from" />
+    <xsl:param name="date_to" />
+    <xsl:param name="date_actual" />
+
+
     
     <xsl:template match="/">
 		<html lang="fr">
@@ -41,6 +50,7 @@
 					<!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>
                     <a href="opml.php?mod=opml">OPML</a>-->
 					<a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
+                    <span id="compteur"><xsl:value-of select="$nb_sessions"/> personne(s) en ligne</span>
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
@@ -57,6 +67,53 @@
                                 <a href="?date={$date_demain}"> / Jour suivant</a>
                             </xsl:if>
                         </div>
+                        <div class="clear"/>
+                        <xsl:if test="$searchTerm = '' ">
+                            <div class="liens">
+                                <form action="index.php" method="GET">
+                                    <label for="sortBy">Trier par</label>
+                                    <select name="sortBy">
+                                        <option value="date">
+                                            <xsl:if test="$sortBy='date'">
+                                                <xsl:attribute name="selected">
+                                                    selected
+                                                </xsl:attribute>
+                                            </xsl:if>
+                                            Date</option>
+                                        <option value="popularity">
+                                            <xsl:if test="$sortBy='popularity'">
+                                                <xsl:attribute name="selected">
+                                                    selected
+                                                </xsl:attribute>
+                                            </xsl:if>
+                                            Popularité</option>
+                                    </select>
+                                    <label for="sort">Par ordre</label>
+                                    <select name="sort">
+                                        <option value="desc">
+                                            <xsl:if test="$sort='desc'">
+                                                <xsl:attribute name="selected">
+                                                    selected
+                                                </xsl:attribute>
+                                            </xsl:if>
+                                            Décroissant</option>
+                                        <option value="asc">
+                                            <xsl:if test="$sort='asc'">
+                                                <xsl:attribute name="selected">
+                                                    selected
+                                                </xsl:attribute>
+                                            </xsl:if>
+                                            Croissant</option>
+                                    </select>
+                                    <label for="from">Du</label>
+                                    <input name="from" type="date" value="{$date_from}"></input>
+                                    <label for="to">Au</label>
+                                    <input name="to" type="date" value="{$date_to}"></input>
+                                    <input type="submit" value="Trier" />
+                                </form>
+                            </div>
+                        </xsl:if>
+
                         <div class="clear"/>
                     </div>
 				</div>
@@ -128,23 +185,23 @@
 				</div>
 			</xsl:if>
 			<h2>
+                <xsl:variable name="toptopic">
+                    <xsl:call-template name="substring-count">
+                        <xsl:with-param name="string" select="description" />
+                        <xsl:with-param name="substr" select="'Permalink'" />
+                    </xsl:call-template>
+                </xsl:variable>
 				<xsl:attribute name="class">
-					<xsl:variable name="toptopic">
-						<xsl:call-template name="substring-count">
-						  <xsl:with-param name="string" select="description" />
-						  <xsl:with-param name="substr" select="'Permalink'" />
-						</xsl:call-template>
-					</xsl:variable>
 					article-title
 					<xsl:if test="$toptopic &gt; 1"> toptopic</xsl:if>	
 				</xsl:attribute> 
 						
 				<xsl:variable name="titrestring">
-	                 <xsl:value-of select="title" />				
+	                 <xsl:value-of select="title" />
 				</xsl:variable>
 								
 				<xsl:variable name="titleencoded">
-	                 <xsl:value-of select="php:function('urlencode', $titrestring)" />				
+	                 <xsl:value-of select="php:function('urlencode', $titrestring)" />
 				</xsl:variable>
 	        
 				<xsl:if test="$my_shaarli != ''" >
@@ -165,8 +222,8 @@
 				</xsl:if>
 				<xsl:if test="$my_respawn != ''" >
 					<a class="shaare" title="Sauvegarder" target="_blank" href='{$my_respawn}?q={link}'>☉</a>
-				</xsl:if>				
-				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /></a>
+				</xsl:if>
+				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /><xsl:if test="$toptopic &gt; 1"> [<xsl:value-of select="$toptopic" />]</xsl:if></a>
 			</h2>
 			<div>
                 <xsl:if test="string-length(description) &gt;= 1500">

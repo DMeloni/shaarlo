@@ -8,6 +8,7 @@ require_once 'fct/fct_sort.php';
 require_once 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_time.php';
+require_once 'fct/fct_indexation.php';
 
 error_reporting(0);
 $cache = 'index';
@@ -102,7 +103,7 @@ for($j=0; $j < $nbStep; $j++){
 				$assocShaarliIdUrl[md5($guid)] = $guid;
 			}else{
 				$assocShaarliIdUrl[md5($guid)] = $link;
-			}
+            }
 
 		}
 	}
@@ -160,24 +161,28 @@ for($j=0; $j < $nbStep; $j++){
             $link = str_replace('//?', '/?', $link);
 
 
-			$uniqRssKey = md5($link);
+            $uniqRssKey = md5($link);
+            $uniqHttpsRssKey = md5(str_replace('http://', 'https://', $link));
 
 			// Detect if another same link have an adding '/' character (last position)
 			if($link[strlen($link) - 1] !== '/'){
 				$slashLink = $link . '/';
 				$uniqSlashRssKey = md5($slashLink);
+                $uniqHttpsSlashRssKey = md5(str_replace('http://', 'https://', $slashLink));
 				if(!array_key_exists($uniqRssKey, $rssContents) && array_key_exists($uniqSlashRssKey, $rssContents)){
 					$link = $slashLink;
-					$uniqRssKey = md5($link);
-					$uniqRssKey = $uniqSlashRssKey;
+                    $uniqRssKey = $uniqSlashRssKey;
+                    $uniqHttpsRssKey = $uniqHttpsSlashRssKey;
 				}
 			}else{
 				$unSlashLink = substr($link, 0, strlen($link) - 1);
 				$uniqUnslashRssKey = md5($unSlashLink);
+                $uniqHttpsUnslashRssKey = md5(str_replace('http://', 'https://', $unSlashLink));
 				if(!array_key_exists($uniqRssKey, $rssContents) && array_key_exists($uniqUnslashRssKey, $rssContents)){
 					$link = $unSlashLink;
 					$uniqRssKey = $uniqUnslashRssKey;
-				}
+                    $uniqHttpsRssKey = $uniqHttpsUnslashRssKey;
+                }
 			}
 
 			/*
@@ -194,12 +199,23 @@ for($j=0; $j < $nbStep; $j++){
 
 
 			// Delete the Shaarli link and replace it by the 'real' link
-
+            // Detecte les doublons https
+            $uniqHttpsRssKey = md5(str_replace('http://', 'https://', $link));
+            if(isset($assocShaarliIdUrl[$uniqHttpsRssKey])){
+                $uniqRssKey = $uniqHttpsRssKey;
+            }
 
             while(isset($assocShaarliIdUrl[$uniqRssKey]) && $uniqRssKey != md5($assocShaarliIdUrl[$uniqRssKey])){
                 $link = $assocShaarliIdUrl[$uniqRssKey];
                 $uniqRssKey = md5($assocShaarliIdUrl[$uniqRssKey]);
+
+                // Detecte les doublons https
+                $uniqHttpsRssKey = md5(str_replace('http://', 'https://', $link));
+                if(isset($assocShaarliIdUrl[$uniqHttpsRssKey])){
+                    $uniqRssKey = $uniqHttpsRssKey;
+                }
             }
+
 
 
 			if(!array_key_exists($uniqRssKey, $rssContents)
@@ -222,7 +238,8 @@ for($j=0; $j < $nbStep; $j++){
 			}
 		}
 	}
-
+    //var_export($rssContents);
+    //exit();
 	// Obtient une liste de colonnes
 	$dateToSort = array();
 	foreach ($rssContents as $key => $row) {
@@ -316,6 +333,17 @@ for($j=0; $j < $nbStep; $j++){
 		return;
 	}
 // 	return;
+
+    /*
+     * Création de l'index from scratch
+     */
+    $indexationFile = sprintf('%s/%s', $DATA_DIR, $INDEXATION_FILE);
+    $rssListFile = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
+    $csv = buildIndexationFromScratch($rssListFile);
+    if($csv != ''){
+        file_put_contents($indexationFile, $csv);
+    }
+
 	sleep($REFRESH_SLEEP);
 }
 

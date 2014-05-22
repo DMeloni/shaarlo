@@ -19,6 +19,8 @@ function parseXsl($tpl,$xml,$pParams=array()){
     $xmlDoc=new DomDocument();
     $rc=$xmlDoc->loadXML($xml);
     if($rc==false){
+
+        var_export($xml);
         throw new Exception('Loading XML principal document via loadXML()',500);
     }
        // Création du processor

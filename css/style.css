@@ -11,6 +11,7 @@ h2{margin:0;}
 #page{width:1200px;margin:0 auto;}
 #top{color:#FFF;padding:10px 30px;}
 #header>a{color:#444;margin-left:1em;}
+#compteur{float:right;}
 h1 a,h1 a:visited{color:#665;text-decoration:none;}
 h1 a:hover{color:#444;}
 .shaare{font-size:1em;font-weight:normal;}
@@ -43,7 +44,7 @@ td {padding:5px;}
 .h_iframe        {position:relative;}
 .h_iframe .ratio {display:block;width:100%;height:auto;}
 .h_iframe iframe {position:absolute;top:0;left:0;width:100%; height:100%;}
-@media (max-width: 600px) {html, body { width:100%;overflow:hidden;}.urlDetail{display:none;}.wrapper{width:18em;}#header{text-align:center;}h1{font-size:1em;text-align:center;}.article{margin-bottom:1em;}}
+@media (max-width: 600px) {html, body { width:100%;overflow:hidden;}#compteur,.urlDetail{display:none;}.wrapper{width:18em;}#header{text-align:center;}h1{font-size:1em;text-align:center;}.article{margin-bottom:1em;}}
 .pagination .liens{float: right;}
 
 
