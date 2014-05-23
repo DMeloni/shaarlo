@@ -9,6 +9,9 @@ function countNbSessions() {
     $i = 0;
     $max_time = ini_get("session.gc_maxlifetime");
     while ($file_name = readdir($dir)) {
+        if($file_name == '.htaccess'){
+            continue;
+        }
         $file = $dir_name . "/" . $file_name;
         $lastvisit = filemtime($file);
         $difference = mktime() - $lastvisit;
