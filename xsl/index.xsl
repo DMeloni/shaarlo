@@ -54,6 +54,7 @@
 					<a href="random.php">Aléatoire</a>
 					<!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>
                     <a href="opml.php?mod=opml">OPML</a>-->
+
 					<a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
                     <span id="compteur"><xsl:value-of select="$nb_sessions"/> personne(s) en ligne</span>
 					<h1 id="top">
@@ -232,9 +233,7 @@
                                 extend(el);
                             });
                         }
-                        console.log(char);
-
-                        return false;
+                        return true;
                     }
 
                 </script>
