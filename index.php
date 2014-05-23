@@ -45,6 +45,9 @@ if ((int)$_GET['pop'] > 0) {
 /*
  * Affichage des articles sur une période demandée
  */
+if (isset($_GET['to'])) {
+    $filterOn = 'yes';
+}
 if (!isset($_GET['from']) && !isset($_GET['to'])) {
     $_GET['from'] = $_GET['to'] = date('Ymd');
 }
@@ -255,6 +258,7 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
             , 'my_shaarli' => $myShaarliUrl
             , 'no_description' => $_GET['nodesc']
             , 'my_respawn' => $myRespawnUrl
+            ,  'filter_on' => $filterOn
             , 'searchTerm' => $_GET['q']
             , 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'] . '_top')]));
         $index = sanitize_output($index);

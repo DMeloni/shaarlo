@@ -27,6 +27,7 @@
     <xsl:param name="limit" />
     <xsl:param name="min_limit" />
     <xsl:param name="no_description" />
+    <xsl:param name="filter_on" />
 
 
     
@@ -58,10 +59,27 @@
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
+                    <form method="GET" action="index.php" id="searchform">
+                        <xsl:if test="$filter_on = 'yes'">
+                            <xsl:attribute name="class">hidden</xsl:attribute>
+                        </xsl:if>
+                        <input id="searchbar" type="text" name="q" placeholder="Rechercher un article" value="{$searchTerm}"/>
+                        <input name="from" type="hidden" value="20130000"></input>
+                        <input name="to" type="hidden" value="90130000"></input>
+					</form>
+
+                    <xsl:if test="$filter_on = ''">
+                        <div class="options-extend">
+                            <button onclick="option_extend(this)">(+)</button>
+                        </div>
+                    </xsl:if>
                     <div class="pagination">
-                        <div>
+                        <div id="bloc-filtre">
+                            <xsl:if test="$filter_on = ''">
+                                <xsl:attribute name="class">hidden</xsl:attribute>
+                            </xsl:if>
                             <form action="index.php" method="GET">
-                                <fieldset>
+                                <fieldset id="fielset-filtrer">
                                     <legend>Filtrer les articles :</legend>
                                     <label for="sortBy">Mot clef</label>
                                     <input type="text" name="q" placeholder="shaarli,linux,..." value="{$searchTerm}"/>
@@ -173,9 +191,50 @@
 
                 <script>
                     function extend(him) {
-                        console.log(him.parentNode.parentNode.childNodes[2]);
                         him.parentNode.parentNode.childNodes[2].style.maxHeight = '10000px';
                         him.style.display = 'none';
+                    }
+                    function option_extend(him) {
+                        removeClass(document.getElementById('bloc-filtre'), 'hidden');
+                        addClass(document.getElementById('searchform'), 'hidden');
+                        addClass(him, 'hidden');
+                    }
+                    function removeClass(el, name)
+                    {
+                        if (hasClass(el, name)) {
+                            el.className=el.className.replace(new RegExp('(\\s|^)'+name+'(\\s|$)'),' ').replace(/^\s+|\s+$/g, '');
+                        }
+                    }
+                    function hasClass(el, name) {
+                        return new RegExp('(\\s|^)'+name+'(\\s|$)').test(el.className);
+                    }
+
+                    function addClass(el, name)
+                    {
+                        if (!hasClass(el, name)) { el.className += (el.className ? ' ' : '') +name; }
+                    }
+
+                    function getChar(event) {
+                        if (event.which == null) {
+                            return event.keyCode;
+                        } else if (event.which!=0 &amp;&amp; event.charCode!=0) {
+                            return event.which;
+                        } else {
+                            return null;
+                        }
+                    }
+
+                    document.onkeypress = function(event) {
+                        var char = getChar(event);
+                        if(char == '339') {
+                            var els = document.getElementsByClassName("button-extend");
+                            Array.prototype.forEach.call(els, function(el) {
+                                extend(el);
+                            });
+                        }
+                        console.log(char);
+
+                        return false;
                     }
 
                 </script>
@@ -292,7 +351,7 @@
                 </div>
                 <xsl:if test="string-length(description) &gt;= 1500 and $no_description = ''">
                     <div class="action-extend">
-                        <button onclick="extend(this)">...</button>
+                        <button class="button-extend" onclick="extend(this)">...</button>
                     </div>
                 </xsl:if>
             </div>
