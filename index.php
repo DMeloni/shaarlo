@@ -45,7 +45,7 @@ if ((int)$_GET['pop'] > 0) {
 /*
  * Affichage des articles sur une période demandée
  */
-if (isset($_GET['to'])) {
+if (isset($_GET['sort'])) {
     $filterOn = 'yes';
 }
 if (!isset($_GET['from']) && !isset($_GET['to'])) {
@@ -74,11 +74,20 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
     $to = $toDateTime->format('Ymd235959');
     $from = $fromDateTime->format('Ymd000000');
 
+    $limit = $MIN_FOUND_ITEM;
+    if (isset($_GET['limit']) && $_GET['limit'] > 0) {
+        $limit = (int)$_GET['limit'];
+    }
+    if ($limit > $MAX_FOUND_ITEM) {
+        $limit = $MAX_FOUND_ITEM;
+    }
+
     $indexationFile = sprintf('%s/%s', $DATA_DIR, $INDEXATION_FILE);
     $row = 1;
     $articles = array();
+    $linkAlreadyFound = array();
     if (($handle = fopen($indexationFile, "r")) !== FALSE) {
-        while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+        while (($data = fgetcsv($handle, 0, ";")) !== FALSE) {
             $dateTmp = $data['2'];
 
             // On sort si la date est supérieure à celle demandée
@@ -95,8 +104,30 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
                 continue;
             }
             $urlTmp = $data['4'];
+            $descriptionTmp = $data['5'];
+            $searchTerm = $_GET['q'];
+            $titreTmp = $data['7'];
+            $categoryTmp = $data['6'];
 
-            $articles[md5($urlTmp)] = array('file' => $data['0'], 'popularity' => $populariteTmp, 'url' => $urlTmp, 'date' => $data['2']);
+            if(isset($_GET['q']) && $_GET['q'] != ''){
+                $type = 'fulltext';
+                if (isset($_GET['type']) && $_GET['type'] === 'category') {
+                    $type = 'category';
+                }
+                if ((mb_stripos(strip_tags($descriptionTmp), ($searchTerm)) !== false && ('fulltext' === $type || 'description' == $type))
+                    || (mb_stripos($urlTmp, $searchTerm) !== false && ('fulltext' === $type || 'link' == $type))
+                    || (mb_stripos($titreTmp, $searchTerm) !== false && ('fulltext' === $type || 'title' == $type))
+                    || (mb_stripos($categoryTmp, $searchTerm) !== false && 'fulltext' === $type)
+                    || ((preg_match("#,$searchTerm,#", $categoryTmp) || preg_match("#^$searchTerm,#", $categoryTmp) /*Very ugly*/
+                    || preg_match("#,$searchTerm$#", $categoryTmp)) && 'category' === $type)) {
+                    if (!array_key_exists($urlTmp, $linkAlreadyFound)
+                        || $linkAlreadyFound[$urlTmp] < strlen($item['description'])) {
+                            $articles[md5($urlTmp)] = array('file' => $data['0'], 'popularity' => $populariteTmp, 'url' => $urlTmp, 'date' => $data['2']);
+                    }
+                }
+            }else{
+                $articles[md5($urlTmp)] = array('file' => $data['0'], 'popularity' => $populariteTmp, 'url' => $urlTmp, 'date' => $data['2']);
+            }
         }
         fclose($handle);
     }
@@ -121,13 +152,6 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
         $triPar[$key] = $row[$sortBy];
     }
 
-    $limit = $MIN_FOUND_ITEM;
-    if (isset($_GET['limit']) && $_GET['limit'] > 0) {
-        $limit = (int)$_GET['limit'];
-    }
-    if ($limit > $MAX_FOUND_ITEM) {
-        $limit = $MAX_FOUND_ITEM;
-    }
 
 // Sort the data with volume descending, edition ascending
 // Add $data as the last parameter, to sort by the common key
@@ -148,36 +172,11 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
         }
         $rssFileArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
         $linkAlreadyFound = array();
-        $type = 'fulltext';
-        if (isset($_GET['type']) && $_GET['type'] === 'category') {
-            $type = 'category';
-        }
+
         foreach ($rssFileArrayed as $item) {
             if (md5($item['link']) == $md5Url) {
-                // Module de recherche
-                if (isset($_GET['q']) && $_GET['q'] != '') {
-                    $searchTerm = $_GET['q'];
-                    if ((mb_stripos(strip_tags($item['description']), ($searchTerm)) !== false && ('fulltext' === $type || 'description' == $type))
-                        || (mb_stripos($item['link'], $searchTerm) !== false && ('fulltext' === $type || 'link' == $type))
-                        || (mb_stripos($item['title'], $searchTerm) !== false && ('fulltext' === $type || 'title' == $type))
-                        || (mb_stripos($item['category'], $searchTerm) !== false && 'fulltext' === $type)
-                        || ((preg_match("#,$searchTerm,#", $item['category']) || preg_match("#^$searchTerm,#", $item['category']) /*Very ugly*/
-                                || preg_match("#,$searchTerm$#", $item['category'])) && 'category' === $type)
-                    ) {
-                        if (!array_key_exists($item['link'], $linkAlreadyFound)
-                            || $linkAlreadyFound[$item['link']] < strlen($item['description'])
-                        ) {
-                            if (!array_key_exists($item['link'], $linkAlreadyFound)) {
-                                $foundCnt++;
-                            }
-                            $linkAlreadyFound[$item['link']] = strlen($item['description']);
-                            $found[$item['link']] = $item;
-                        }
-                    }
-                } else {
-                    $found[] = $item;
-                    $foundCnt++;
-                }
+                $found[] = $item;
+                $foundCnt++;
                 if (($foundCnt >= $limit) && ($toDateTime != $fromDateTime || isset($_GET['limit']))) {
                     break 2;
                 }

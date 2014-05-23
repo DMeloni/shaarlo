@@ -369,7 +369,7 @@
 		<xsl:param name="string"/>
 		<xsl:choose>
 			<xsl:when test="contains($string,',')">
-				<a href="index.php?q={substring-before($string,',')}&amp;type=category"><xsl:value-of select="substring-before($string,',')"/></a>,
+				<a href="index.php?q={substring-before($string,',')}&amp;type=category&amp;from=20000000&amp;to=30000000"><xsl:value-of select="substring-before($string,',')"/></a>,
 				<xsl:call-template name="split">
 					<xsl:with-param name="string">
 						<xsl:value-of select="substring-after($string,',')"/>
@@ -377,7 +377,7 @@
 				</xsl:call-template>
 			</xsl:when>
 			<xsl:otherwise>
-				<a href="index.php?q={$string}&amp;type=category"><xsl:value-of select="$string"/></a>
+				<a href="index.php?q={$string}&amp;type=category&amp;from=20000000&amp;to=30000000"><xsl:value-of select="$string"/></a>
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>

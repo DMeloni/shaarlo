@@ -8,10 +8,14 @@ require_once 'fct_rss.php';
 function buildIndexationFromScratch($archiveDir)
 {
     $rssListFile = scandir($archiveDir);
+    $rssListFile = array_reverse($rssListFile);
     $csv = '';
+
     foreach ($rssListFile as $rssFile) {
-//Traitement du fichier d'archive
-        $csv .= buildIndexation(sprintf('%s/%s', $archiveDir, $rssFile), $rssFile);
+        if($rssFile != '.' && $rssFile != '..'){
+            //Traitement du fichier d'archive
+            $csv .= buildIndexation(sprintf('%s/%s', $archiveDir, $rssFile), $rssFile);
+        }
     }
 
     return $csv;
@@ -37,7 +41,7 @@ function buildIndexation($filePath, $file)
             $date = new DateTime($article['pubDate']);
             $count = substr_count($article['description'], "Permalink");
             if ($count > 0) {
-                $csv .= sprintf('"%s";"%s";"%s";"%s";"%s"' . "\n", $file, $date->format('Ymd'), $date->format('YmdHis'), $count, $article['link']);
+                $csv .= sprintf('"%s";"%s";"%s";"%s";"%s";"%s";"%s";"%s"' . "\n", $file, $date->format('Ymd'), $date->format('YmdHis'), $count, $article['link'], str_replace('"', '\"', $article['description']), str_replace('"', '\"', $article['category']), str_replace('"', '\"', $article['title']));
             }
         }
     }
