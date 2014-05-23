@@ -23,6 +23,10 @@
     <xsl:param name="date_from" />
     <xsl:param name="date_to" />
     <xsl:param name="date_actual" />
+    <xsl:param name="filtre_popularite" />
+    <xsl:param name="limit" />
+    <xsl:param name="min_limit" />
+    <xsl:param name="no_description" />
 
 
     
@@ -54,25 +58,33 @@
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
-					<form method="GET" action="index.php">
-						<input id="searchbar" type="text" name="q" placeholder="Rechercher un article" value="{$searchTerm}"/>
-					</form>
-
                     <div class="pagination">
-                        <div class="liens">
-                            <xsl:if test="$date_hier">
-                                <a href="?date={$date_hier}">Jour précédent</a>
-                            </xsl:if>
-                            <xsl:if test="$date_demain">
-                                <a href="?date={$date_demain}"> / Jour suivant</a>
-                            </xsl:if>
-                        </div>
-                        <div class="clear"/>
-                        <xsl:if test="$searchTerm = '' ">
-                            <div class="liens">
-                                <form action="index.php" method="GET">
+                        <div>
+                            <form action="index.php" method="GET">
+                                <fieldset>
+                                    <legend>Filtrer les articles :</legend>
+                                    <label for="sortBy">Mot clef</label>
+                                    <input type="text" name="q" placeholder="shaarli,linux,..." value="{$searchTerm}"/>
+                                    <label for="from">Du</label>
+                                    <input id="from" name="from" type="date" value="{$date_from}"></input>
+                                    <label for="to">Au</label>
+                                    <input id="to" name="to" type="date" value="{$date_to}"></input>
+                                    <label for="pop">Popularité</label>
+                                    <input id="pop" name="pop" type="number" value="{$filtre_popularite}"></input>
+                                    <label for="limit">Limite</label>
+                                    <input id="limit" name="limit" type="number" >
+                                        <xsl:if test="$limit !=''">
+                                            <xsl:attribute name="value"><xsl:value-of select="$limit" /></xsl:attribute>
+                                        </xsl:if>
+                                        <xsl:if test="$limit =''">
+                                            <xsl:attribute name="value"><xsl:value-of select="$min_limit" /></xsl:attribute>
+                                        </xsl:if>
+                                    </input>
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Options de tri :</legend>
                                     <label for="sortBy">Trier par</label>
-                                    <select name="sortBy">
+                                    <select id="sortBy" name="sortBy">
                                         <option value="date">
                                             <xsl:if test="$sortBy='date'">
                                                 <xsl:attribute name="selected">
@@ -105,17 +117,21 @@
                                             </xsl:if>
                                             Croissant</option>
                                     </select>
-                                    <label for="from">Du</label>
-                                    <input name="from" type="date" value="{$date_from}"></input>
-                                    <label for="to">Au</label>
-                                    <input name="to" type="date" value="{$date_to}"></input>
-                                    <input type="submit" value="Trier" />
-                                </form>
-                            </div>
-                        </xsl:if>
-
+                                </fieldset>
+                                <input id="valider" type="submit" value="Valider" />
+                            </form>
+                        </div>
                         <div class="clear"/>
+                        <div class="liens">
+                            <xsl:if test="$date_hier">
+                                <a href="?from={$date_hier}">Jour précédent</a>
+                            </xsl:if>
+                            <xsl:if test="$date_demain">
+                                <a href="?from={$date_demain}"> / Jour suivant</a>
+                            </xsl:if>
+                        </div>
                     </div>
+                    <div class="clear"/>
 				</div>
 				<div id="content">
 					<xsl:value-of select="$mod_content_top" disable-output-escaping="yes"/>
@@ -130,18 +146,21 @@
                     </xsl:if>
 					<xsl:value-of select="$mod_content_bottom" disable-output-escaping="yes"/>					
 				</div>
-                <div class="pagination">
-                    <div class="liens">
-                        <xsl:if test="$date_hier">
-                            <a href="?date={$date_hier}">Jour précédent</a>
-                        </xsl:if>
-                        <xsl:if test="$date_demain">
-                            <a href="?date={$date_demain}"> / Jour suivant</a>
-                        </xsl:if>
+                <div class="clear"/>
+
+				<div id="footer">
+                    <div class="pagination">
+                        <div class="liens">
+                            <xsl:if test="$date_hier">
+                                <a href="?from={$date_hier}">Jour précédent</a>
+                            </xsl:if>
+                            <xsl:if test="$date_demain">
+                                <a href="?from={$date_demain}"> / Jour suivant</a>
+                            </xsl:if>
+                        </div>
+                        <div class="clear"/>
                     </div>
-                    <div class="clear"/>
-                </div>
-				<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
+                    <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments - <a href="https://github.com/DMeloni/shaarlo">sources on github</a></p></div>
 				
 				<xsl:if test="$is_secure = 'no' and $wot = 'yes'">
 					<script type="text/javascript">
@@ -166,114 +185,118 @@
     </xsl:template>
     
     <xsl:template match="item">
-		<div class="article shaarli-youm-org">
-			<xsl:if test="$next_previous = 'yes'">
-				<div style="font-size:2em;">
-					<a id="link{position()}" style="display:hidden;" href="#link{position()}" />
-					<xsl:if test="(position()-1) &gt; 0">
-						<a title="Lien précédent" style="text-decoration:none;" href="#link{position()-1}">&#171;</a>
-					</xsl:if>
-					<xsl:if test="(position()-1) &lt;= 0">
-						<a title="Aller au dernier lien" style="text-decoration:none;" href="#link{count(/rss/channel/item)}">&#171;</a>
-					</xsl:if>
-					<xsl:if test="(position()+1) &lt;= count(/rss/channel/item)">
-						<a title="Lien suivant" style="float:right;text-decoration:none;" href="#link{position()+1}">&#187;</a>
-					</xsl:if>
-					<xsl:if test="(position()+1) &gt; count(/rss/channel/item)">
-						<a title="Aller au premier lien" style="float:right;text-decoration:none;" href="#link1">&#187;</a>
-					</xsl:if>					
-				</div>
-			</xsl:if>
-			<h2>
-                <xsl:variable name="toptopic">
-                    <xsl:call-template name="substring-count">
-                        <xsl:with-param name="string" select="description" />
-                        <xsl:with-param name="substr" select="'Permalink'" />
-                    </xsl:call-template>
-                </xsl:variable>
-				<xsl:attribute name="class">
-					article-title
-					<xsl:if test="$toptopic &gt; 1"> toptopic</xsl:if>	
-				</xsl:attribute> 
-						
-				<xsl:variable name="titrestring">
-	                 <xsl:value-of select="title" />
-				</xsl:variable>
-								
-				<xsl:variable name="titleencoded">
-	                 <xsl:value-of select="php:function('urlencode', $titrestring)" />
-				</xsl:variable>
-	        
-				<xsl:if test="$my_shaarli != ''" >
-					<xsl:variable name="favourite">
-						<xsl:call-template name="substring-count">
-						  <xsl:with-param name="string" select="description" />
-						  <xsl:with-param name="substr" select="$my_shaarli" />
-						</xsl:call-template>
-					</xsl:variable>				
-					<a class="shaare" title="Partager sur Shaarli" target="_blank" href='{$my_shaarli}?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
-					<xsl:attribute name="class">
-						shaare
-						<xsl:if test="$favourite &gt;= 1"> favourite</xsl:if>					
-					</xsl:attribute>
-					<xsl:if test="$favourite &gt;= 1"> ★</xsl:if>
-					<xsl:if test="$favourite = 0"> ☆</xsl:if>	
-					</a>
-				</xsl:if>
-				<xsl:if test="$my_respawn != ''" >
-					<a class="shaare" title="Sauvegarder" target="_blank" href='{$my_respawn}?q={link}'>☉</a>
-				</xsl:if>
-				<a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /><xsl:if test="$toptopic &gt; 1"> [<xsl:value-of select="$toptopic" />]</xsl:if></a>
-			</h2>
-			<div>
-                <xsl:if test="string-length(description) &gt;= 1500">
-                    <xsl:attribute name="class">article-content extended</xsl:attribute>
+        <xsl:variable name="toptopic">
+            <xsl:call-template name="substring-count">
+                <xsl:with-param name="string" select="description" />
+                <xsl:with-param name="substr" select="'Permalink'" />
+            </xsl:call-template>
+        </xsl:variable>
+        <xsl:if test="$toptopic >= $filtre_popularite">
+            <div class="article shaarli-youm-org">
+                <xsl:if test="$next_previous = 'yes'">
+                    <div style="font-size:2em;">
+                        <a id="link{position()}" style="display:hidden;" href="#link{position()}" />
+                        <xsl:if test="(position()-1) &gt; 0">
+                            <a title="Lien précédent" style="text-decoration:none;" href="#link{position()-1}">&#171;</a>
+                        </xsl:if>
+                        <xsl:if test="(position()-1) &lt;= 0">
+                            <a title="Aller au dernier lien" style="text-decoration:none;" href="#link{count(/rss/channel/item)}">&#171;</a>
+                        </xsl:if>
+                        <xsl:if test="(position()+1) &lt;= count(/rss/channel/item)">
+                            <a title="Lien suivant" style="float:right;text-decoration:none;" href="#link{position()+1}">&#187;</a>
+                        </xsl:if>
+                        <xsl:if test="(position()+1) &gt; count(/rss/channel/item)">
+                            <a title="Aller au premier lien" style="float:right;text-decoration:none;" href="#link1">&#187;</a>
+                        </xsl:if>
+                    </div>
                 </xsl:if>
-                <xsl:if test="string-length(description) &lt; 1500">
-                    <xsl:attribute name="class">article-content</xsl:attribute>
-                </xsl:if>
+                <h2>
+                    <xsl:attribute name="class">
+                        article-title
+                        <xsl:if test="$toptopic &gt; 1"> toptopic</xsl:if>
+                    </xsl:attribute>
 
-				<xsl:if test="$is_secure = 'no' and $youtube = 'yes'">
-					<xsl:variable name="youtubevideoid">
-						<xsl:if test="substring-after(link, 'youtube.com') != ''" >
-							<xsl:if test="substring-before(substring-after(link, 'v='), '&amp;') != ''" >
-								<xsl:value-of select="substring-before(substring-after(link, 'v='), '&amp;')" />
-							</xsl:if>	
-							<xsl:if test="substring-after(link, 'v=') != ''" >
-								<xsl:value-of select="substring-after(link, 'v=')" />
-							</xsl:if>	
-							<xsl:if test="substring-after(link, 'v=') = ''" >
-								<xsl:if test="substring-before(substring-after(link, 'embed/'), '?') != ''" >
-									<xsl:value-of select="substring-before(substring-after(link, 'embed/'), '?')" />
-								</xsl:if>	
-							</xsl:if>											
-						</xsl:if>	
-					</xsl:variable>								
-					<xsl:if test="$youtubevideoid != ''" >
-					    <div class="wrapper">
-						    <div class="h_iframe">
-							<!-- a transparent image is preferable -->
-							<img class="ratio" src="css/transparent.png"/>
-							<iframe src="http://www.youtube.com/embed/{$youtubevideoid}" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
-						    </div>	
-					    </div>	
-					    <br/>
-					</xsl:if>							 				    
-				</xsl:if>
+                    <xsl:variable name="titrestring">
+                         <xsl:value-of select="title" />
+                    </xsl:variable>
 
-				<xsl:value-of select="description" disable-output-escaping="yes"/>
-			</div>
-            <div>
-                <xsl:if test="category != ''" >
-                    <span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
+                    <xsl:variable name="titleencoded">
+                         <xsl:value-of select="php:function('urlencode', $titrestring)" />
+                    </xsl:variable>
+
+                    <xsl:if test="$my_shaarli != ''" >
+                        <xsl:variable name="favourite">
+                            <xsl:call-template name="substring-count">
+                              <xsl:with-param name="string" select="description" />
+                              <xsl:with-param name="substr" select="$my_shaarli" />
+                            </xsl:call-template>
+                        </xsl:variable>
+                        <a class="shaare" title="Partager sur Shaarli" target="_blank" href='{$my_shaarli}?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
+                        <xsl:attribute name="class">
+                            shaare
+                            <xsl:if test="$favourite &gt;= 1"> favourite</xsl:if>
+                        </xsl:attribute>
+                        <xsl:if test="$favourite &gt;= 1"> ★</xsl:if>
+                        <xsl:if test="$favourite = 0"> ☆</xsl:if>
+                        </a>
+                    </xsl:if>
+                    <xsl:if test="$my_respawn != ''" >
+                        <a class="shaare" title="Sauvegarder" target="_blank" href='{$my_respawn}?q={link}'>☉</a>
+                    </xsl:if>
+                    <a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /><xsl:if test="$toptopic &gt; 1"> [<xsl:value-of select="$toptopic" />]</xsl:if></a>
+                </h2>
+                <div>
+                    <xsl:if test="string-length(description) &gt;= 1500">
+                        <xsl:attribute name="class">article-content extended</xsl:attribute>
+                    </xsl:if>
+                    <xsl:if test="string-length(description) &lt; 1500">
+                        <xsl:attribute name="class">article-content</xsl:attribute>
+                    </xsl:if>
+
+                    <xsl:if test="$is_secure = 'no' and $youtube = 'yes'">
+                        <xsl:variable name="youtubevideoid">
+                            <xsl:if test="substring-after(link, 'youtube.com') != ''" >
+                                <xsl:if test="substring-before(substring-after(link, 'v='), '&amp;') != ''" >
+                                    <xsl:value-of select="substring-before(substring-after(link, 'v='), '&amp;')" />
+                                </xsl:if>
+                                <xsl:if test="substring-after(link, 'v=') != ''" >
+                                    <xsl:value-of select="substring-after(link, 'v=')" />
+                                </xsl:if>
+                                <xsl:if test="substring-after(link, 'v=') = ''" >
+                                    <xsl:if test="substring-before(substring-after(link, 'embed/'), '?') != ''" >
+                                        <xsl:value-of select="substring-before(substring-after(link, 'embed/'), '?')" />
+                                    </xsl:if>
+                                </xsl:if>
+                            </xsl:if>
+                        </xsl:variable>
+                        <xsl:if test="$youtubevideoid != ''" >
+                            <div class="wrapper">
+                                <div class="h_iframe">
+                                <!-- a transparent image is preferable -->
+                                <img class="ratio" src="css/transparent.png"/>
+                                <iframe src="http://www.youtube.com/embed/{$youtubevideoid}" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+                                </div>
+                            </div>
+                            <br/>
+                        </xsl:if>
+                    </xsl:if>
+
+                    <xsl:if test="$no_description = ''">
+                        <xsl:value-of select="description" disable-output-escaping="yes"/>
+                    </xsl:if>
+                </div>
+                <div>
+                    <xsl:if test="category != ''" >
+                        <span class="article-tag">Tags : <xsl:apply-templates select="category"/></span>
+                    </xsl:if>
+                </div>
+                <xsl:if test="string-length(description) &gt;= 1500 and $no_description = ''">
+                    <div class="action-extend">
+                        <button onclick="extend(this)">...</button>
+                    </div>
                 </xsl:if>
             </div>
-            <xsl:if test="string-length(description) &gt;= 1500">
-                <div class="action-extend">
-                    <button onclick="extend(this)">...</button>
-                </div>
-            </xsl:if>
-		</div>    	
+        </xsl:if>
     </xsl:template>
     
 	<xsl:template match="category">
