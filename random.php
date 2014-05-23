@@ -3,8 +3,9 @@ include 'config.php';
 include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';
+require_once 'fct/fct_session.php';
 
-// error_reporting(0);
+error_reporting(0);
 
 
 global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD, $ACTIVE_WOT, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
@@ -89,11 +90,10 @@ foreach($items as $item){
 	);
 }
 $shaarloRss .= '</channel></rss>';
-
 /*
  * Index construction
  */
-$index = parseXsl('xsl/index.xsl', $shaarloRss, array('next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl));
+$index = parseXsl('xsl/index.xsl', $shaarloRss, array( 'no_description' => $_GET['nodesc'], 'nb_sessions' => countNbSessions(), 'filtre_popularite' => 0, 'next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl));
 $index = sanitize_output($index);
 echo $index;
 

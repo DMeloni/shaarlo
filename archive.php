@@ -101,7 +101,7 @@ if(file_exists($archiveFile) && filemtime($archiveFile) > $expire) {
 											foreach($rssCollumnsDay as $rowDays){?>
 											<tr>
 												<?php foreach($rowDays as $day){?>
-													<td><a href="index.php?date=<?php echo $year.$month.$day;?>" ><?php echo (int)$day;?></a></td>
+													<td><a href="index.php?from=<?php echo $year.$month.$day;?>" ><?php echo (int)$day;?></a></td>
 												<?php } 
 												for($j = 0; $j < (int)(7 - count($rowDays)) ; $j++){
 												?>
