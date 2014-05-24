@@ -22,10 +22,13 @@
     <xsl:param name="sortBy" />
     <xsl:param name="date_from" />
     <xsl:param name="date_to" />
+    <xsl:param name="max_date_to" />
     <xsl:param name="date_actual" />
     <xsl:param name="filtre_popularite" />
     <xsl:param name="limit" />
     <xsl:param name="min_limit" />
+    <xsl:param name="max_limit" />
+    
     <xsl:param name="no_description" />
     <xsl:param name="filter_on" />
 
@@ -87,11 +90,11 @@
                                     <label for="from">Du</label>
                                     <input id="from" name="from" type="date" value="{$date_from}"></input>
                                     <label for="to">Au</label>
-                                    <input id="to" name="to" type="date" value="{$date_to}"></input>
+                                    <input id="to" name="to" type="date" value="{$date_to}" max="{$max_date_to}"></input>
                                     <label for="pop">Popularité</label>
-                                    <input id="pop" name="pop" type="number" value="{$filtre_popularite}"></input>
+                                    <input id="pop" name="pop" type="number" value="{$filtre_popularite}" min="0"></input>
                                     <label for="limit">Limite</label>
-                                    <input id="limit" name="limit" type="number" >
+                                    <input id="limit" name="limit" type="number" min="0" max="{$max_limit}">
                                         <xsl:if test="$limit !=''">
                                             <xsl:attribute name="value"><xsl:value-of select="$limit" /></xsl:attribute>
                                         </xsl:if>
