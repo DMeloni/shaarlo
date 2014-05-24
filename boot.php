@@ -1,65 +1,69 @@
 <?php
-include 'config.php';
+error_reporting(0);
 include 'fct/fct_rss.php';
 include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
 include 'fct/fct_valid.php';
-error_reporting(0);
-header('Content-Type: text/html; charset=utf-8');
-
-$serverMsg = '';
-$rssList = array();
-global $DATA_DIR, $SHAARLIS_FILE_NAME;
-$rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
-
-$rssList = json_decode(file_get_contents($rssListFile), true);
-
-$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
-if(checkInstall() || is_file($indexFile)){
-	header('Location: index.php');
-}
-
-
-/*
- * Rights validation
- */
-if(!is_dir($DATA_DIR)){
-	if(!mkdir($DATA_DIR)){
-		$serverMsg = "Le dossier $DATA_DIR ne peut pas être créé";
-	}
-}
-if(!is_writable($DATA_DIR)){
-	$serverMsg = "Le dossier $DATA_DIR est non writable";
+    
+if(!is_file('config.php')){
+    $serverMsg = "Le fichier config.php doit être crée";
 }else{
-	if(!is_file($rssListFile) && !file_put_contents($rssListFile, json_encode(array()))){
-		$serverMsg = "Le fichier $rssListFile est non pushable";
-	}
-	if(!is_writable($rssListFile)){
-		$serverMsg = "Le fichier $rssListFile est non writable";
-	}	
-	$cacheDir  = sprintf('%s/%s', $DATA_DIR, $CACHE_DIR_NAME);
-	if(!is_dir($cacheDir)){
-		if(!mkdir($cacheDir)){
-			$serverMsg = "Le dossier $cacheDir ne peut pas être créé";
-		}
-	}
-	$archiveDir  = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
-	if(!is_dir($archiveDir)){
-		if(!mkdir($archiveDir)){
-			$serverMsg = "Le dossier $archiveDir ne peut pas être créé";
-		}
-	}	
-}
 
-$mods = get_loaded_extensions();
-if (!in_array('xsl',$mods)){
-	$serverMsg = "Le module xsl est obligatoire";
-}
-if (!in_array('mbstring',$mods)){
-	$serverMsg = "Le module mbstring est obligatoire";
-}
+    include 'config.php';
+    header('Content-Type: text/html; charset=utf-8');
 
+    $serverMsg = '';
+    $rssList = array();
+    global $DATA_DIR, $SHAARLIS_FILE_NAME;
+    $rssListFile = sprintf('%s/%s', $DATA_DIR, $SHAARLIS_FILE_NAME);
+
+    $rssList = json_decode(file_get_contents($rssListFile), true);
+
+    $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
+    if(checkInstall() || is_file($indexFile)){
+        header('Location: index.php');
+    }
+    /*
+     * Rights validation
+     */
+    if(!is_dir($DATA_DIR)){
+        if(!mkdir($DATA_DIR)){
+            $serverMsg = "Le dossier $DATA_DIR ne peut pas être créé";
+        }
+    }
+    include 'config.php';
+    if(!is_writable($DATA_DIR)){
+        $serverMsg = "Le dossier $DATA_DIR est non writable";
+    }else{
+        if(!is_file($rssListFile) && !file_put_contents($rssListFile, json_encode(array()))){
+            $serverMsg = "Le fichier $rssListFile est non pushable";
+        }
+        if(!is_writable($rssListFile)){
+            $serverMsg = "Le fichier $rssListFile est non writable";
+        }	
+        $cacheDir  = sprintf('%s/%s', $DATA_DIR, $CACHE_DIR_NAME);
+        if(!is_dir($cacheDir)){
+            if(!mkdir($cacheDir)){
+                $serverMsg = "Le dossier $cacheDir ne peut pas être créé";
+            }
+        }
+        $archiveDir  = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
+        if(!is_dir($archiveDir)){
+            if(!mkdir($archiveDir)){
+                $serverMsg = "Le dossier $archiveDir ne peut pas être créé";
+            }
+        }	
+    }
+
+    $mods = get_loaded_extensions();
+    if (!in_array('xsl',$mods)){
+        $serverMsg = "Le module xsl est obligatoire";
+    }
+    if (!in_array('mbstring',$mods)){
+        $serverMsg = "Le module mbstring est obligatoire";
+    }
+}
 
 /*
 * Add a new rss
