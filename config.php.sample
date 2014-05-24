@@ -1,6 +1,4 @@
 <?php
-ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/sessions');
-
 /*
  * Directorys
 */
@@ -8,6 +6,8 @@ $GLOBALS['DATA_DIR'] = 'data';
 $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive';
 $GLOBALS['FAVICON_DIR_NAME'] = 'favicon';
 $GLOBALS['CACHE_DIR_NAME'] = 'cache';
+$GLOBALS['SESSION_DIR_NAME'] = 'sessions';
+ini_set('session.save_path', sprintf('%s/%s', realpath ('.'), $SESSION_DIR_NAME));
 $GLOBALS['SHAARLIS_FILE_NAME'] = 'shaarli.txt';
 $GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt';
 $GLOBALS['POTENTIAL_SHAARLIS_FILE_NAME'] = 'potential_shaarli.txt';
