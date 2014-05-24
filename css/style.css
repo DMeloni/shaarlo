@@ -55,7 +55,7 @@ td {padding:5px;}
 #searchbar{height:2em;margin:0;padding:0;width:100%;text-align:center;}
 .hidden{display:none;}
 #searchform{margin:0px;}
-.wrapper         {width:40%;margin:0 auto;background:#FFF}
+.wrapper         {width:40%;margin:1em auto;background:#FFF}
 .h_iframe        {position:relative;}
 .h_iframe .ratio {display:block;width:100%;height:auto;}
 .h_iframe iframe {position:absolute;top:0;left:0;width:100%; height:100%;}
