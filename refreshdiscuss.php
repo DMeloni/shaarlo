@@ -328,12 +328,6 @@ for($j=0; $j < $nbStep; $j++){
 	$index = sanitize_output($index);
 	file_put_contents($indexFile, $index);
 
-	if(isset($_GET['oneshoot'])){
-		header('Location: index.php');
-		return;
-	}
-// 	return;
-
     /*
      * Création de l'index from scratch
      */
@@ -344,6 +338,10 @@ for($j=0; $j < $nbStep; $j++){
         file_put_contents($indexationFile, $csv);
     }
 
+	if(isset($_GET['oneshoot'])){
+		header('Location: index.php');
+		return;
+	}    
 	sleep($REFRESH_SLEEP);
 }
 
