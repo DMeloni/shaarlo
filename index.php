@@ -7,7 +7,7 @@ require_once 'fct/fct_session.php';
 
 error_reporting(1);
 
-global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
+global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MIN_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
 
 // Autoredirect on boot.php
 $indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
@@ -53,6 +53,7 @@ if (!isset($_GET['from']) && !isset($_GET['to'])) {
 }
 
 if (isset($_GET['from']) || isset($_GET['to'])) {
+    $dateActuelle = new DateTime();
     if (!isset($_GET['to'])) {
         $_GET['to'] = $_GET['from'];
     }
@@ -61,6 +62,9 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
     }
     try {
         $toDateTime = new DateTime($_GET['to']);
+        if($toDateTime->format('Ymd') > $dateActuelle->format('Ymd')){
+            $toDateTime = $dateActuelle;
+        }
     } catch (Exception $e) {
         $toDateTime = new DateTime();
     }
@@ -185,9 +189,10 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
     }
     $message = array('popularity' => 'Popularité', 'date' => 'Date', SORT_ASC => 'croissant', SORT_DESC => 'décroissant');
 
-    $dateActuelle = $fromDateTime;
     $dateDemain = '';
     $dateHier = '';
+    
+
     if (substr($from, 0, 4) == substr($from, 0, 4)) {
         $dateJMoins1 = new DateTime($from);
         $dateJMoins1->modify('-1 day');
@@ -199,7 +204,7 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
         }
     }
 
-    if ($fromDateTime != $toDateTime) {
+    if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
         $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';
     } else {
         $titre = 'Les discussions de Shaarli du ' . $fromDateTime->format('d/m/Y');
@@ -237,11 +242,17 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
         header('Content-Type: application/rss+xml; charset=utf-8');
         echo sanitize_output($shaarloRss);
     } else {
-
+    
+    $isSecure = 'no';
+    if(!empty($_SERVER['HTTPS'])) {
+        $isSecure = 'yes';
+    }
+    
         $index = parseXsl('xsl/index.xsl', $shaarloRss,
             array('sort' => $reversedSorts[$sort]
             , 'sortBy' => $sortBy
             , 'date_to' => $toDateTime->format('Y-m-d')
+            , 'max_date_to' => $dateActuelle->format('Y-m-d')
             , 'date_from' => $fromDateTime->format('Y-m-d')
             , 'date_actual' => $fromDateTime->format('\L\e d/m/Y')
             , 'nb_sessions' => countNbSessions()
@@ -249,6 +260,7 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
             , 'date_hier' => $dateHier
             , 'limit' => $limit
             , 'min_limit' => $MIN_FOUND_ITEM
+            , 'max_limit' => $MAX_FOUND_ITEM
             , 'filtre_popularite' => $filreDePopularite
             , 'next_previous' => $ACTIVE_NEXT_PREVIOUS
             , 'rss_url' => $SHAARLO_URL
@@ -257,8 +269,9 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
             , 'my_shaarli' => $myShaarliUrl
             , 'no_description' => $_GET['nodesc']
             , 'my_respawn' => $myRespawnUrl
-            ,  'filter_on' => $filterOn
+            , 'filter_on' => $filterOn
             , 'searchTerm' => $_GET['q']
+            , 'is_secure' => $isSecure
             , 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'] . '_top')]));
         $index = sanitize_output($index);
         header('Content-Type: text/html; charset=utf-8');
