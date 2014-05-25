@@ -68,7 +68,6 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
     } catch (Exception $e) {
         $toDateTime = new DateTime();
     }
-
     try {
         $fromDateTime = new DateTime($_GET['from']);
     } catch (Exception $e) {
@@ -90,16 +89,17 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
     $row = 1;
     $articles = array();
     $linkAlreadyFound = array();
+
     if (($handle = fopen($indexationFile, "r")) !== FALSE) {
         while (($data = fgetcsv($handle, 0, ";")) !== FALSE) {
             $dateTmp = $data['2'];
 
             // On sort si la date est supérieure à celle demandée
-            if ($dateTmp > $to) {
+            if ($dateTmp < $from) {
                 break;
             }
             // On continue tant que la date est inférieure à celle demandée
-            if ($dateTmp < $from) {
+            if ($dateTmp > $to) {
                 continue;
             }
 
@@ -135,6 +135,7 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
         }
         fclose($handle);
     }
+
 
     //Tri
     $sortBy = 'date';
