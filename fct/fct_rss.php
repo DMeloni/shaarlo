@@ -161,7 +161,11 @@ function is_valid_rss($url){
         return false;
     }
     $content = getRss($url);
+
+    $content = remove_utf8_bom($content);
+
     $xmlContent = getSimpleXMLElement($content);
+
     if($xmlContent !== false){
         $rssItems = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
         $firstItem = reset($rssItems);
@@ -179,6 +183,19 @@ function is_valid_rss($url){
     return false;
 }
 
+/**
+ * Supprime le BOM du fichier
+ *
+ * @param string $text : le contenu du fichier
+ *
+ * @return string : le meme contenu sans BOM
+ */
+function remove_utf8_bom($text)
+{
+    $bom = pack('H*','EFBBBF');
+    $text = preg_replace("/^$bom/", '', $text);
+    return $text;
+}
 
 /**
  * Fonction de création d'un objet SimpleXMLElement avec enregistrement des
@@ -201,6 +218,7 @@ function getSimpleXMLElement($xmlEntree, $namespaceParDefaut=false, $depuisFichi
             $xmlRetour = @(new SimpleXMLElement($xmlEntree, null, $boolDepuisFichier));
         }
     } catch (Exception $e) {
+        var_export($e);
         return false;
     }
     // Enregistrement des espaces de noms
