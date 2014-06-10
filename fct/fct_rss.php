@@ -83,6 +83,8 @@ function getRss($url, $sslVersion=null){
         return getRss($url, 3);
     }
 
+    $result = remove_utf8_bom($result);
+
     return $result;
 }
 
@@ -218,7 +220,6 @@ function getSimpleXMLElement($xmlEntree, $namespaceParDefaut=false, $depuisFichi
             $xmlRetour = @(new SimpleXMLElement($xmlEntree, null, $boolDepuisFichier));
         }
     } catch (Exception $e) {
-        var_export($e);
         return false;
     }
     // Enregistrement des espaces de noms
