@@ -1,7 +1,7 @@
 shaarlo
 =======
 
-Unified Shaarlis Rss 
+Unified Shaarlis RSS 
 
 Installation : 
 *Copy all files into ftp server (http server tested are apache2 & nginx)
