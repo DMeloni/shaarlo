@@ -7,7 +7,7 @@ include 'fct/fct_sort.php';
 include 'fct/fct_valid.php';
     
 if(!is_file('config.php')){
-    $serverMsg = "Le fichier config.php doit être crée";
+    $serverMsg = "Le fichier config.php n'existe pas ! Renommez config.php.sample en config.php et éditez-le !";
 }else{
 
     include 'config.php';
@@ -29,39 +29,39 @@ if(!is_file('config.php')){
      */
     if(!is_dir($DATA_DIR)){
         if(!mkdir($DATA_DIR)){
-            $serverMsg = "Le dossier $DATA_DIR ne peut pas être créé";
+            $serverMsg = "Le dossier $DATA_DIR ne peut pas être créé !";
         }
     }
     include 'config.php';
     if(!is_writable($DATA_DIR)){
-        $serverMsg = "Le dossier $DATA_DIR est non writable";
+        $serverMsg = "Le dossier $DATA_DIR n'est pas accessible en écriture !";
     }else{
         if(!is_file($rssListFile) && !file_put_contents($rssListFile, json_encode(array()))){
-            $serverMsg = "Le fichier $rssListFile est non pushable";
+            $serverMsg = "Le fichier $rssListFile n'est pas modifiable !";
         }
         if(!is_writable($rssListFile)){
-            $serverMsg = "Le fichier $rssListFile est non writable";
+            $serverMsg = "Le fichier $rssListFile n'est pas accessible en écriture !";
         }	
         $cacheDir  = sprintf('%s/%s', $DATA_DIR, $CACHE_DIR_NAME);
         if(!is_dir($cacheDir)){
             if(!mkdir($cacheDir)){
-                $serverMsg = "Le dossier $cacheDir ne peut pas être créé";
+                $serverMsg = "Le dossier $cacheDir ne peut pas être créé !";
             }
         }
         $archiveDir  = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
         if(!is_dir($archiveDir)){
             if(!mkdir($archiveDir)){
-                $serverMsg = "Le dossier $archiveDir ne peut pas être créé";
+                $serverMsg = "Le dossier $archiveDir ne peut pas être créé !";
             }
         }	
     }
 
     $mods = get_loaded_extensions();
     if (!in_array('xsl',$mods)){
-        $serverMsg = "Le module xsl est obligatoire";
+        $serverMsg = "Le module PHP xsl est obligatoire !";
     }
     if (!in_array('mbstring',$mods)){
-        $serverMsg = "Le module mbstring est obligatoire";
+        $serverMsg = "Le module PHP mbstring est obligatoire !";
     }
 }
 
@@ -85,7 +85,7 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 				$label = $assocUrlLabel[$url];
 			}
 			if(empty($label)){
-					$serverMsg = "Le nom du flux n'est pas valide";
+					$serverMsg = "Le nom du flux n'est pas valide !";
 			}
 			else
 			{
@@ -103,10 +103,10 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 						header("Location: refresh.php?oneshoot=true");
 						return;
 					}else{
-						$serverMsg = "Le flux est injoignable";
+						$serverMsg = "Le flux est injoignable !";
 					}
 				}else{
-						$serverMsg = "L'url est non valide";
+						$serverMsg = "L'URL n'est pas valide !";
 				}
 			}	
 		}
@@ -141,14 +141,14 @@ ob_start();
 			<?php }else{ ?>	
 			<div class="article shaarli-youm-org">
 				<h2 class="article-title ">
-				<a title="Go to original place" href="">Débuter avec un flux shaarli</a>
+				<a title="Go to original place" href="">Débuter avec un flux Shaarli</a>
 				</h2>
 				<div class="article-content">
 					<form action="boot.php" method="POST">				
-							<label for="label">Titre du flux</label>
+							<label for="label">Nom du flux</label>
 							<input type="text" name="label[]"></input>
 							<br/>
-							<label for="url">Url du flux</label>
+							<label for="url">URL du flux</label>
 							<input type="text" name="url[]" ></input>				
 							<input type="hidden" name="action" value="add"></input>
 							<br/>
