@@ -2,31 +2,31 @@
 /*
  * Directorys
 */
-$GLOBALS['DATA_DIR'] = 'data';
-$GLOBALS['ARCHIVE_DIR_NAME'] = 'archive';
-$GLOBALS['FAVICON_DIR_NAME'] = 'favicon';
-$GLOBALS['CACHE_DIR_NAME'] = 'cache';
-$GLOBALS['SESSION_DIR_NAME'] = 'sessions';
+$GLOBALS['DATA_DIR'] = 'data'; /* Nom du répertoire contenant les données récupérées */
+$GLOBALS['ARCHIVE_DIR_NAME'] = 'archive'; /* Nom du répertoire contenant les archives */
+$GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favisons */
+$GLOBALS['CACHE_DIR_NAME'] = 'cache'; /* Nom du répertoire de cache */
+$GLOBALS['SESSION_DIR_NAME'] = 'sessions'; /* Nom du répertoire de sessions */
 ini_set('session.save_path', sprintf('%s/%s', realpath ('.'), $SESSION_DIR_NAME));
-$GLOBALS['SHAARLIS_FILE_NAME'] = 'shaarli.txt';
-$GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt';
-$GLOBALS['POTENTIAL_SHAARLIS_FILE_NAME'] = 'potential_shaarli.txt';
+$GLOBALS['SHAARLIS_FILE_NAME'] = 'shaarli.txt'; /* Nom du fichier listant les Shaarlis actifs */
+$GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt'; /* Nom du fichier listant les Shaarlis désactivés */
+$GLOBALS['POTENTIAL_SHAARLIS_FILE_NAME'] = 'potential_shaarli.txt'; /* Nom du fichier listant les Shaarlis "potentiels" */
 $GLOBALS['INDEXATION_FILE'] = 'indexation.csv'; /* indexation file for filter */
-$GLOBALS['DELETED_SHAARLIS_FILE_NAME'] = 'deleted_shaarli.txt';
-$GLOBALS['NO_HTTPS_SHAARLIS_FILE_NAME'] = 'no_https_shaarli.txt';
-$GLOBALS['MY_SHAARLI_FILE_NAME'] = 'my_shaarli.txt';; /* your shaarli file name */
-$GLOBALS['MY_RESPAWN_FILE_NAME'] = 'my_respawn.txt';; /* your shaarli file name */
+$GLOBALS['DELETED_SHAARLIS_FILE_NAME'] = 'deleted_shaarli.txt'; /* Nom du fichier listant les Shaarlis supprimés (sauvegarde) */
+$GLOBALS['NO_HTTPS_SHAARLIS_FILE_NAME'] = 'no_https_shaarli.txt'; /* Nom du fichier listant les Shaarlis en http */
+$GLOBALS['MY_SHAARLI_FILE_NAME'] = 'my_shaarli.txt';; /* Nom du fichier contenant l'URL de votre Shaarli (https://github.com/sebsauvage/Shaarli) */
+$GLOBALS['MY_RESPAWN_FILE_NAME'] = 'my_respawn.txt';; /* Nom du fichier contenant l'URL de votre Respawn (https://github.com/broncowdd/respawn) */
 $GLOBALS['ARCHIVE_FILE_NAME'] = 'archive.html';
 $GLOBALS['CALENDAR_SORTING'] = 'desc';
 $GLOBALS['COMMENT_SORTING'] = 'desc'; /* sort url comment by date */
 $GLOBALS['MAX_FOUND_ITEM'] = 100; /* max item returned by search */
 $GLOBALS['MIN_FOUND_ITEM'] = 10; /* max item returned by search */
-$GLOBALS['ACTIVE_WOT'] = 'yes'; /* 'yes' active wot verif for shaared linked */
-$GLOBALS['ACTIVE_YOUTUBE'] = 'yes'; /* 'yes' active youtube embeded video */
+$GLOBALS['ACTIVE_WOT'] = 'yes'; /* 'yes' active WOT verif for shaared links */
+$GLOBALS['ACTIVE_YOUTUBE'] = 'yes'; /* 'yes' active youtube embedded videos */
 $GLOBALS['ACTIVE_NEXT_PREVIOUS'] = 'yes'; /* 'yes' active next/previous button : useful for mobile view*/
-$GLOBALS['ACTIVE_FAVICON'] = 'no'; /* 'yes' active shaarli favicon recuperation */
+$GLOBALS['ACTIVE_FAVICON'] = 'yes'; /* 'yes' active shaarli favicon recuperation */
 $GLOBALS['DATE_FORMAT'] = '\l\e d/m/Y \à H\h i\m s\s'; /* active date format */
-$GLOBALS['SHAARLO_URL'] = 'http://domaine.ext/shaarlo/'; /* your shaarlo's url (usefulfor the main RSS) */
+$GLOBALS['SHAARLO_URL'] = 'http://domaine.ext/shaarlo/'; /* your shaarlo's url (useful for the main RSS) */
 $GLOBALS['REFRESH_SLEEP'] = 60;
 
 require_once 'mod/mod.php';

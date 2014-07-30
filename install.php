@@ -22,15 +22,15 @@ $rssList = json_decode(file_get_contents($rssListFile), true);
  */
 
 if(!is_writable('cache')){
-	$serverMsg = "Le dossier cache est non writable";
+	$serverMsg = "Le dossier cache n'est pas accessible en écriture !";
 }
 
 if(!is_writable('data')){
-	$serverMsg = "Le dossier data est non writable";
+	$serverMsg = "Le dossier data n'est pas accessible en écriture !";
 }
 
 if(!is_writable('archive')){
-	$serverMsg = "Le dossier archive est non writable";
+	$serverMsg = "Le dossier archive n'est pas accessible en écriture !";
 }
 
 /*
@@ -65,13 +65,13 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 						file_put_contents($rssListFile, json_encode($rssList));						
 						header("Location: refresh.php?oneshoot=true");
 					}else{
-						$serverMsg = "Le flux est non valide";
+						$serverMsg = "Le flux n'est pas valide !";
 					}
 				}else{
-						$serverMsg = "L'url est non valide";
+						$serverMsg = "L'URL n'est pas valide !";
 				}
 			}	
-		}
+		} 
 	}
 }	
 
@@ -103,14 +103,14 @@ ob_start();
 			<?php }else{ ?>	
 			<div class="article shaarli-youm-org">
 				<h2 class="article-title ">
-				<a title="Go to original place" href="">Débuter avec un flux shaarli</a>
+				<a title="Go to original place" href="">Débuter avec un premier flux Shaarli</a>
 				</h2>
 				<div class="article-content">
 					<form action="install.php" method="POST">				
-							<label for="label">Titre du flux</label>
+							<label for="label">Nom du flux</label>
 							<input type="text" name="label[]"></input>
 							<br/>
-							<label for="url">Url du flux</label>
+							<label for="url">URL du flux</label>
 							<input type="text" name="url[]" ></input>				
 							<input type="hidden" name="action" value="add"></input>
 							<br/>
