@@ -1,11 +1,13 @@
 <?php
-ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/sessions');
-ini_set('session.use_cookies', 1);       // Use cookies to store session.
-ini_set('session.use_only_cookies', 1);  // Force cookies for session (phpsessionID forbidden in URL)
-ini_set('session.use_trans_sid', false); // Prevent php to use sessionID in URL if cookies are disabled.
-ini_set('session.cookie_domain', '.shaarli.fr');
-session_name('shaarli');
-session_start();
+
+ini_set("display_errors", 1);
+ini_set("track_errors", 1);
+ini_set("html_errors", 1);
+error_reporting(E_ALL);
+
+
+require_once 'config.php';
+
  // Returns a token.
 function getToken()
 {
@@ -13,13 +15,9 @@ function getToken()
     $_SESSION['tokens'][$rnd]=1;  // Store it on the server side.
     return $rnd;
 }   
-/*
-ini_set("display_errors", 1);
-ini_set("track_errors", 1);
-ini_set("html_errors", 1);
-error_reporting(E_ALL);
-*/
-include 'config.php';
+
+
+
 include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';

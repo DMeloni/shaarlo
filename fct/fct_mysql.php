@@ -6,12 +6,9 @@ ini_set("html_errors", 1);
 error_reporting(E_ALL);*/
 // Retour une objet mysqli
 function shaarliMyConnect() {
-    $server = 'xxx';
-    $user = 'xxx';
-    $password = 'xxx';
-    $dbName = 'xxx';
+    global $MYSQL_USER, $MYSQL_SERVER, $MYSQL_PASSWORD, $MYSQL_DB;
     
-    $mysqli = new mysqli($server, $user, $password, $dbName);
+    $mysqli = new mysqli($MYSQL_SERVER, $MYSQL_USER, $MYSQL_PASSWORD, $MYSQL_DB);
 
     /* check connection */
     if ($mysqli->connect_errno) {

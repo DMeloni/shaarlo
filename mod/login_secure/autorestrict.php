@@ -14,7 +14,6 @@
  * ajouter la sécurisation du $_POST (en cas d'usage d'une base de donnees)
  * 
 */	
-session_start();
 
 include_once 'config.php';
 

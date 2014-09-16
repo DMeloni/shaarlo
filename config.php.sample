@@ -11,6 +11,12 @@ session_name('shaarli');
 /*
  * Directorys
 */
+$GLOBALS['MYSQL_SERVER'] = 'shaarlimy.mysql.db'; /* Adresse du serveur mysql */
+$GLOBALS['MYSQL_USER'] = 'shaarlimy'; /* Utilisateur ayant les droits d'écriture */
+$GLOBALS['MYSQL_PASSWORD'] = 'password'; /* Mot de passe de l'utilisateur */
+$GLOBALS['MYSQL_DB'] = 'shaarlimy'; /* Nom de la base de données */
+$GLOBALS['salt']     = 'clef_salaison';/* Clef de salaison */
+
 $GLOBALS['DATA_DIR'] = 'data'; /* Nom du répertoire contenant les données récupérées */
 $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive'; /* Nom du répertoire contenant les archives */
 $GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favisons */
