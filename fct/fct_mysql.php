@@ -199,7 +199,13 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         //$orderBySQL = 'ORDER BY c ';
         $orderByPopularity = 'ORDER BY c ';
         $orderByPopularity .= $orderSQL;
-    }else {
+    }
+    elseif($orderBy == 'rand'){
+        //$orderBySQL = 'ORDER BY c ';
+        $orderByPopularity = 'ORDER BY RAND() ';
+        $orderByPopularity .= $orderSQL;
+    }
+    else {
         $limitSQLDate = $limitSQL;
         $orderBySQL = ' ORDER BY l.article_date ';
         $orderBySQL .= $orderSQL;

@@ -1,9 +1,9 @@
 <?php
 
-ini_set("display_errors", 1);
-ini_set("track_errors", 1);
-ini_set("html_errors", 1);
-error_reporting(E_ALL);
+//ini_set("display_errors", 1);
+//ini_set("track_errors", 1);
+//ini_set("html_errors", 1);
+//error_reporting(E_ALL);
 
 
 require_once 'config.php';
@@ -67,7 +67,7 @@ $sort = SORT_DESC;
 if (isset($_GET['sort']) && array_key_exists($_GET['sort'], $sorts)) {
     $sort = $sorts[$_GET['sort']];
 }
-$sortBys = array('pop');
+$sortBys = array('pop', 'rand');
 if (isset($_GET['sortBy']) && in_array($_GET['sortBy'], $sortBys)) {
     $sortBy = $_GET['sortBy'];
 }
@@ -180,6 +180,7 @@ foreach($articles as $article) {
                                           'date' => $articleDate,
                                           'category' => '',
                                           'pop' => $popularity,
+                                          'rand' => 0
                                           );
 
 }
@@ -196,7 +197,7 @@ if(is_array($found)) {
     // Add $data as the last parameter, to sort by the common key
     array_multisort($triPar, $sort, $found);
 }
-$message = array('popularity' => 'Popularité', 'date' => 'Date', SORT_ASC => 'croissant', SORT_DESC => 'décroissant');
+$message = array('pop' => 'Popularité', 'rand' => 'Random', 'date' => 'Date', SORT_ASC => 'croissant', SORT_DESC => 'décroissant');
 
 if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
     $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';

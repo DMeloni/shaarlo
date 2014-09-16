@@ -66,7 +66,7 @@
 			<body>
 				<div id="header">
 					<a href="index.php">Accueil</a>
-					<a href="random.php">Aléatoire</a>
+					<a href="index.php?sortBy=rand">Aléatoire</a>
                     <a href="my.php">My</a>
                     <a href="opml.php?mod=opml">OPML</a>
 
