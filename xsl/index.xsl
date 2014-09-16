@@ -31,8 +31,9 @@
     
     <xsl:param name="no_description" />
     <xsl:param name="filter_on" />
-
-
+    <xsl:param name="dotsies" />
+    <xsl:param name="username" />
+    <xsl:param name="token" />
     
     <xsl:template match="/">
 		<html lang="fr">
@@ -47,19 +48,32 @@
 				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 				<link rel="shortcut icon" href="favicon.ico" />
 				<link rel="stylesheet" href="css/style.css" type="text/css" media="screen"/>
-				<link rel="alternate" type="application/rss+xml" href="{$rss_url}?do=rss" title="Shaarlo Feed" />
-			</head>
+
+                <xsl:if test="$dotsies = 'yes'">
+                    <link rel="stylesheet" href="css/dotsies.css" type="text/css" media="screen"/>
+                    <style>
+                    * {font-family: Dotsies;}
+                    </style>
+                </xsl:if>
+                
+                <xsl:if test="not($username)">
+                    <link rel="alternate" type="application/rss+xml" href="{$rss_url}?do=rss" title="Shaarlo Feed" />
+                </xsl:if>
+                <xsl:if test="$username">
+                    <link rel="alternate" type="application/rss+xml" href="{$rss_url}?do=rss&amp;u={$username}" title="Shaarlo Feed" />
+                </xsl:if>
+                </head>
 			<body>
 				<div id="header">
 					<a href="index.php">Accueil</a>
-					<a href="admin.php">Administration</a>
-					<a href="archive.php">Archive</a>
 					<a href="random.php">Aléatoire</a>
-					<!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>
-                    <a href="opml.php?mod=opml">OPML</a>-->
+                    <a href="my.php">My</a>
+                    <a href="opml.php?mod=opml">OPML</a>
 
 					<a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
-                    <span id="compteur"><xsl:value-of select="$nb_sessions"/> personne(s) en ligne</span>
+                    <xsl:if test="$username">
+                        <span id="compteur"></span>
+                    </xsl:if>
 					<h1 id="top">
 						<a href="./index.php"><xsl:value-of select="/rss/channel/title"/></a>
 					</h1>
@@ -114,8 +128,8 @@
                                                 </xsl:attribute>
                                             </xsl:if>
                                             Date</option>
-                                        <option value="popularity">
-                                            <xsl:if test="$sortBy='popularity'">
+                                        <option value="pop">
+                                            <xsl:if test="$sortBy='pop'">
                                                 <xsl:attribute name="selected">
                                                     selected
                                                 </xsl:attribute>
@@ -146,19 +160,67 @@
                         <div class="clear"/>
                         <div class="liens">
                             <xsl:if test="$date_hier">
-                                <a href="?from={$date_hier}">Jour précédent</a>
+                                <a href="?from={$date_hier}&amp;to={$date_hier}235959">Jour précédent</a>
                             </xsl:if>
                             <xsl:if test="$date_demain">
-                                <a href="?from={$date_demain}"> / Jour suivant</a>
+                                <a href="?from={$date_demain}&amp;to={$date_demain}235959"> / Jour suivant</a>
                             </xsl:if>
                         </div>
                     </div>
                     <div class="clear"/>
 				</div>
+                <div id="dashboard_icon" >
+                    <xsl:if test="$username">
+                        <a href="#" class="connected" onclick="showDashboard()">@</a>
+                    </xsl:if>
+                    <xsl:if test="not($username)">
+                        <a href="#" onclick="showDashboard()">@</a>
+                    </xsl:if>
+                </div>
+                <div id="dashboard">
+                <xsl:if test="$username">
+                        <div>
+                            <h3>
+                                <a href="http://shaarli.fr/?u={$username}">@<xsl:value-of select="$username" disable-output-escaping="yes"/></a>
+                            </h3>
+                         </div>
+                         <div>    
+                            <ul>
+                                <li><a href="http://my.shaarli.fr/{$username}/">Mon shaarli</a></li>
+                                <li><a href="http://shaarli.fr/?u=shaarlo">Flux de @shaarlo</a></li>
+                            </ul>
+                         </div>
+                        <div>
+                            <ul>
+                                <li><a href="https://shaarli.fr/my/{$username}/?do=logouts">Se déconnecter</a></li>
+                            </ul>
+                        </div>
+                </xsl:if>
+                <xsl:if test="not($username)">
+                    <h4>Connexion/Création</h4>
+
+                    <form  method="POST" action="" name="loginform" id="loginform">
+                        <input id="pseudo" name="login" tabindex="1" type="text"  value="" placeholder="robocop, batman"/>
+                        <br/>
+                        <input name="password" tabindex="2" value="" type="password" placeholder="azerty"/>
+                        <br/>
+                        <input type="submit" value="Accès au compte" onclick="getMy();"/>
+                        <br/>
+                        <input name="longlastingsession" id="longlastingsession" tabindex="3" type="checkbox"/>
+                        <label for="longlastingsession"> Rester connecté</label>
+                        <input name="token" value="{$token}" type="hidden" />
+                        <input name="returnurl" value="https://www.shaarli.fr/index.php" type="hidden" /> 
+                    </form> 
+
+                </xsl:if>
+                    <div>
+                        <small><a href="#" onclick="hideDashboard()">x Fermer cette vilaine fenêtre</a></small>
+                    </div>
+                </div>
 				<div id="content">
 					<xsl:value-of select="$mod_content_top" disable-output-escaping="yes"/>
                     <xsl:if test="count(/rss/channel/item) = 0">
-                        <div class="article shaarli-youm-org">
+                        <div class="article">
                             <h2 class="	article-title toptopic">Seul au monde</h2>
 					        Pas de nouveaux shaarliens :(
                         </div>
@@ -194,6 +256,20 @@
 				</xsl:if>
 
                 <script>
+                    function getMy(){
+                        document.forms["loginform"].action = "https://www.shaarli.fr/my/" + document.getElementById('pseudo').value + "/";
+                        document.forms["loginform"].submit();
+                    }       
+                    function showDashboard(){
+                        document.getElementById('content').className = 'dashboarded';
+                        document.getElementById("dashboard_icon").style.display="none";
+                        document.getElementById("dashboard").style.display="block";
+                    }
+                    function hideDashboard(){
+                        document.getElementById('content').className = '';
+                        document.getElementById("dashboard_icon").style.display="block";
+                        document.getElementById("dashboard").style.display="none";
+                    }                    
                     function extend(him) {
                         him.parentNode.parentNode.childNodes[2].style.maxHeight = '10000px';
                         him.style.display = 'none';
@@ -240,7 +316,39 @@
                     }
 
                 </script>
-
+                <xsl:if test="$username">
+                    <script>
+                        function addAbo(that, id, action) {
+                            var r = new XMLHttpRequest(); 
+                            var params = "do="+action+"&amp;id=" + id;
+                            r.open("POST", "add.php", true); 
+                            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                            r.onreadystatechange = function () {
+                                if (r.readyState == 4) {
+                                    if(r.status == 200){
+                                        if(action == 'add') {
+                                            that.text = 'Se désabonner';
+                                            that.innerHTML = 'Se désabonner';
+                                            that.onclick = function () { addAbo(that, id, 'delete'); return false; };
+                                        }else {
+                                            that.text = 'Suivre';
+                                            that.innerHTML = 'Suivre';
+                                            that.onclick = function () { addAbo(that, id, 'add'); return false; };
+                                        }
+                                        return; 
+                                    }
+                                    else {
+                                        that.text = '-Erreur-';
+                                        return; 
+                                    }
+                                }
+                            }; 
+                            r.send(params);
+                        }
+                        
+                        
+                    </script>
+                </xsl:if>
 			</body>
 		</html>
     </xsl:template>
@@ -292,7 +400,7 @@
                               <xsl:with-param name="substr" select="$my_shaarli" />
                             </xsl:call-template>
                         </xsl:variable>
-                        <a class="shaare" title="Partager sur Shaarli" target="_blank" href='{$my_shaarli}?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
+                        <a class="shaare" title="Copier ce lien" target="_blank" href='https://www.shaarli.fr/my/{$username}/?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
                         <xsl:attribute name="class">
                             shaare
                             <xsl:if test="$favourite &gt;= 1"> favourite</xsl:if>
@@ -306,14 +414,15 @@
                     </xsl:if>
                     <a title="Go to original place" href="{link}" class="wot"><xsl:value-of select="title" /><xsl:if test="$toptopic &gt; 1"> [<xsl:value-of select="$toptopic" />]</xsl:if></a>
                 </h2>
-                <div>
+                <div>					
                     <xsl:if test="string-length(description) &gt;= 1500">
                         <xsl:attribute name="class">article-content extended</xsl:attribute>
                     </xsl:if>
                     <xsl:if test="string-length(description) &lt; 1500">
                         <xsl:attribute name="class">article-content</xsl:attribute>
                     </xsl:if>
-
+                    
+                    <!--<a title="Go to original place" href="{link}"><img src="./capture.php?url={link}" class="capture" width="240px" height="240px" /></a>-->
                     <xsl:if test="$is_secure = 'no' and $youtube = 'yes'">
                         <xsl:variable name="youtubevideoid">
                             <xsl:if test="substring-after(link, 'youtube.com') != ''" >

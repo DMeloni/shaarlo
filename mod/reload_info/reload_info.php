@@ -5,7 +5,7 @@
  * @author : DMeloni
  * no support : at your peril
  */
-include 'config.php';
+include_once 'config.php';
 
 /*
  * Mod filter

@@ -1,0 +1,62 @@
+@font-face {
+  font-family: 'Dotsies';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Wide';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Wide.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Connected';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Connected.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Training Wheels';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Training Wheels.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Context';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Context.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Context';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Context.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Striped';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Striped.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Roman';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Roman.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Dotsies Experimental';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Dotsies Experimental.ttf') format('truetype');
+}

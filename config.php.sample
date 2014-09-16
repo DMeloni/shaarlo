@@ -1,4 +1,13 @@
 <?php
+ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/sessions');
+
+ini_set('session.use_cookies', 1);       // Use cookies to store session.
+ini_set('session.use_only_cookies', 1);  // Force cookies for session (phpsessionID forbidden in URL)
+ini_set('session.use_trans_sid', false); // Prevent php to use sessionID in URL if cookies are disabled.
+ini_set('session.cookie_domain', '.shaarli.fr');
+
+session_name('shaarli');
+
 /*
  * Directorys
 */
@@ -7,7 +16,6 @@ $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive'; /* Nom du répertoire contenant les ar
 $GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favisons */
 $GLOBALS['CACHE_DIR_NAME'] = 'cache'; /* Nom du répertoire de cache */
 $GLOBALS['SESSION_DIR_NAME'] = 'sessions'; /* Nom du répertoire de sessions */
-ini_set('session.save_path', sprintf('%s/%s', realpath ('.'), $SESSION_DIR_NAME));
 $GLOBALS['SHAARLIS_FILE_NAME'] = 'shaarli.txt'; /* Nom du fichier listant les Shaarlis actifs */
 $GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt'; /* Nom du fichier listant les Shaarlis désactivés */
 $GLOBALS['POTENTIAL_SHAARLIS_FILE_NAME'] = 'potential_shaarli.txt'; /* Nom du fichier listant les Shaarlis "potentiels" */

@@ -47,10 +47,16 @@ define('XPATH_RSS_TITLE', '/rss/channel/title');
 
 define('XPATH_RSS_LINK', '/rss/channel/link');
 
+define('XPATH_RSS_LANGUAGE', '/rss/channel/language');
+
 define('XPATH_RSS_DESCRIPTION', '/rss/channel/description');
 
 define('XPATH_RSS_COPYRIGHT', '/rss/channel/copyright');
 
+define('XPATH_RSS_PUBDATE', '/rss/channel/item/pubDate');
+
+define('XPATH_RSS_CATEGORY', '/rss/channel/item/category');
+ 
 
 /*
  * Get a RSS
@@ -60,18 +66,36 @@ define('XPATH_RSS_COPYRIGHT', '/rss/channel/copyright');
  *
  */
 function getRss($url, $sslVersion=null){
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+    $ch = curl_init();
+    
+	$options = array(
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => false,
+        CURLOPT_AUTOREFERER => false,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 5,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        CURLOPT_ENCODING => 'gzip',
+        CURLOPT_HTTPHEADER => array(
+        'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0',
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language: fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3',
+        'Accept-Encoding: gzip, deflate',
+        'DNT: 1',
+        'Connection: keep-alive',
+        ),
+    );
+    
     if($sslVersion != null) {
-        curl_setopt($ch, CURLOPT_SSLVERSION, $sslVersion);
+        $options[CURLOPT_SSLVERSION] = $sslVersion;
     }
+        
+    curl_setopt_array($ch, $options);
 
     $result = curl_exec($ch);
     curl_close($ch);
@@ -115,22 +139,47 @@ function convertXmlToTableau($xml,$xpath){
 
 function urlExists($url, $sslVersion=null) {
     if (function_exists('curl_init')){
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
-        if($sslVersion != null) {
-            curl_setopt($ch, CURLOPT_SSLVERSION, $sslVersion);
-        }
-        $data = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        $ch = curl_init();
+        $options = array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => false,
+            CURLOPT_AUTOREFERER => false,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+            CURLOPT_ENCODING => 'gzip',
+            //CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0,
+            //CURLOPT_SSL_CIPHER_LIST => 'RC4-SHA',            
+            CURLOPT_HTTPHEADER => array(
+            'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0',
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language: fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3',
+            'Accept-Encoding: gzip, deflate',
+            'DNT: 1',
+            'Connection: keep-alive',
+            ),
+        );
 
+        if($sslVersion != null) {
+            $options[CURLOPT_SSLVERSION] = $sslVersion;
+        }
+        
+        curl_setopt_array($ch, $options);
+
+        //print_r(curl_errno($ch));
+
+        $data = curl_exec($ch);
+        //print_r(curl_getinfo($ch)); 
+        //print_r(curl_error($ch)); 
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        curl_close($ch);
+        //var_export($httpcode);
         if($httpcode>=200 && $httpcode<300){
             return true;
         }else{
@@ -138,11 +187,13 @@ function urlExists($url, $sslVersion=null) {
                 return urlExists($url, 1);
             }
             if($sslVersion == 1){
+                return urlExists($url, 2);
+            }
+            if($sslVersion == 2){
                 return urlExists($url, 3);
             }
         }
     }
-    $url = 'https://hub.tomcanac.com/liens/?do=rss';
     if (function_exists ( 'get_headers')){
         $file_headers = get_headers($url);
         if(!isset($file_headers[0]) || $file_headers[0] == 'HTTP/1.1 404 Not Found') {

@@ -8,17 +8,19 @@
 /*
  * Show best tags on admin.php
  */
-include 'config.php';
+include_once 'config.php';
 
 /*
  * Mod filter
 */
-$modActivedOnPages = array('admin.php');
+$modActivedOnPages = array('admin.php', 'activite.php');
 $path = $_SERVER['PHP_SELF'];
-$file = basename ($path);
-if(!in_array($file, $modActivedOnPages)){
+$currentPhpFile = basename ($path);
+
+if(!in_array($currentPhpFile, $modActivedOnPages)){
 	return ;
 }
+
 global $MOD, $DATA_DIR, $ARCHIVE_DIR_NAME;
 
 
@@ -64,13 +66,16 @@ if(count($categories) > 0){
 			$tags .=  '<a href="index.php?q='.$value.'&amp;type=category">' . $value . '</a> : ' . $frequency . "<br/>";
 		}
 	
-		if($i > 20){
+		if($i > 50){
 			break;
 		}
 		$i++;
 	}
-	
-	$MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
+	if(!isset($MOD[$currentPhpFile . '_top'])){
+        $MOD[$currentPhpFile . '_top'] = '';
+    }
+    
+	$MOD[$currentPhpFile . '_top'] .= sprintf('<div class="article shaarli-youm-org">
 					<h2 class="article-title ">
 					<a title="Go to original place" href="">Top Tags</a>
 					</h2>

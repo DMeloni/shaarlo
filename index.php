@@ -1,199 +1,256 @@
 <?php
+ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/sessions');
+ini_set('session.use_cookies', 1);       // Use cookies to store session.
+ini_set('session.use_only_cookies', 1);  // Force cookies for session (phpsessionID forbidden in URL)
+ini_set('session.use_trans_sid', false); // Prevent php to use sessionID in URL if cookies are disabled.
+ini_set('session.cookie_domain', '.shaarli.fr');
+session_name('shaarli');
+session_start();
+ // Returns a token.
+function getToken()
+{
+    $rnd = sha1(uniqid('',true).'_'.mt_rand().$GLOBALS['salt']);  // We generate a random string.
+    $_SESSION['tokens'][$rnd]=1;  // Store it on the server side.
+    return $rnd;
+}   
+/*
+ini_set("display_errors", 1);
+ini_set("track_errors", 1);
+ini_set("html_errors", 1);
+error_reporting(E_ALL);
+*/
 include 'config.php';
 include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';
-require_once 'fct/fct_session.php';
-
-error_reporting(1);
+require_once 'fct/fct_mysql.php';
 
 global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MIN_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
 
-// Autoredirect on boot.php
-$indexFile = sprintf('%s/%s/%s', $DATA_DIR, $CACHE_DIR_NAME, 'index.html');
 
-if (!checkInstall() && !is_file($indexFile)) {
-    header('Location: boot.php');
-    return;
+// Vérification de la clef
+// TODO
+
+$mysqli = shaarliMyConnect();
+
+$username = null;
+if (isset($_SESSION['username'])) {
+    $username = $_SESSION['username'];
 }
-
-
-$myShaarli = array();
-$myShaarliUrl = '';
-$myShaarliFile = sprintf('%s/%s', $DATA_DIR, $MY_SHAARLI_FILE_NAME);
-if (is_file($myShaarliFile)) {
-    $myShaarli = json_decode(file_get_contents($myShaarliFile), true);
-    $myShaarliUrl = reset($myShaarli);
+$q = null;
+if(!empty($_GET['q'])) {
+    $q = $_GET['q'];
 }
-
-$myRespawnUrl = array();
-$myRespawnUrl = '';
-$myRespawnFile = sprintf('%s/%s', $DATA_DIR, $MY_RESPAWN_FILE_NAME);
-if (is_file($myRespawnFile)) {
-    $myRespawn = json_decode(file_get_contents($myRespawnFile), true);
-    $myRespawnUrl = reset($myRespawn);
-}
-
-/*
- * Filtre sur la popularité
- */
-$filreDePopularite = 1;
-if ((int)$_GET['pop'] > 0) {
-    $filreDePopularite = (int)$_GET['pop'];
-}
-
-/*
- * Affichage des articles sur une période demandée
- */
+$filterOn = null;
 if (isset($_GET['sort'])) {
     $filterOn = 'yes';
 }
-if (!isset($_GET['from']) && !isset($_GET['to'])) {
-    $_GET['from'] = $_GET['to'] = date('Ymd');
+/*
+ * Filtre sur la popularité
+ */
+$filtreDePopularite = 0;
+if (isset($_GET['pop']) && (int)$_GET['pop'] > 0) {
+    $filtreDePopularite = (int)$_GET['pop'];
 }
 
-if (isset($_GET['from']) || isset($_GET['to'])) {
-    $dateActuelle = new DateTime();
-    if (!isset($_GET['to'])) {
-        $_GET['to'] = $_GET['from'];
-    }
-    if (!isset($_GET['from'])) {
-        $_GET['from'] = $_GET['to'];
-    }
-    try {
-        $toDateTime = new DateTime($_GET['to']);
-        if($toDateTime->format('Ymd') > $dateActuelle->format('Ymd')){
-            $toDateTime = $dateActuelle;
-        }
-    } catch (Exception $e) {
-        $toDateTime = new DateTime();
-    }
+// Limite
+$limit = $MIN_FOUND_ITEM;
+if (isset($_GET['limit']) && $_GET['limit'] > 0) {
+    $limit = (int)$_GET['limit'];
+}
+if ($limit > $MAX_FOUND_ITEM) {
+    $limit = $MAX_FOUND_ITEM;
+}
+//Tri
+$sortBy = 'date';
+$sorts = array('asc' => SORT_ASC, 'desc' => SORT_DESC);
+$reversedSorts = array_flip($sorts);
+$sort = SORT_DESC;
+if (isset($_GET['sort']) && array_key_exists($_GET['sort'], $sorts)) {
+    $sort = $sorts[$_GET['sort']];
+}
+$sortBys = array('pop');
+if (isset($_GET['sortBy']) && in_array($_GET['sortBy'], $sortBys)) {
+    $sortBy = $_GET['sortBy'];
+}
+
+$fromDateTime = new DateTime();
+$toDateTime = new DateTime();
+if (isset($_GET['do']) && $_GET['do'] === 'rss') {
+    $from = $to = null;
+}else{
+    $from = $fromDateTime->format('Ymd000000');
+    $to = $toDateTime->format('Ymd235959');
+}
+
+if (isset($_GET['from'])) {
     try {
         $fromDateTime = new DateTime($_GET['from']);
+        $from = $fromDateTime->format('Ymd000000');
     } catch (Exception $e) {
-        $fromDateTime = $toDateTime;
+        
     }
+}
 
-    $to = $toDateTime->format('Ymd235959');
-    $from = $fromDateTime->format('Ymd000000');
-
-    $limit = $MIN_FOUND_ITEM;
-    if (isset($_GET['limit']) && $_GET['limit'] > 0) {
-        $limit = (int)$_GET['limit'];
+if (isset($_GET['to'])) {
+    try {
+        $toDateTime = new DateTime($_GET['to']);
+        $to = $toDateTime->format('Ymd235959');
+    } catch (Exception $e) {
+        
     }
-    if ($limit > $MAX_FOUND_ITEM) {
-        $limit = $MAX_FOUND_ITEM;
+}
+
+if (isset($_GET['do']) && $_GET['do'] === 'rss') {
+    $usernameRecherche='shaarlo';
+}else{
+    $mesAbonnements = getAllAbonnements($mysqli, $username);
+
+    if(empty($mesAbonnements)) {
+        $usernameRecherche='shaarlo';
+    }else{
+        $usernameRecherche=$username;
     }
+}
+if(isset($_GET['u'])) {
+    $usernameRecherche=$_GET['u'];
+}
+$articles = getAllArticlesDuJour($mysqli, $usernameRecherche, $q, $filtreDePopularite, $sortBy, $sort, $from, $to, $limit);
 
-    $indexationFile = sprintf('%s/%s', $DATA_DIR, $INDEXATION_FILE);
-    $row = 1;
-    $articles = array();
-    $linkAlreadyFound = array();
-
-    if (($handle = fopen($indexationFile, "r")) !== FALSE) {
-        while (($data = fgetcsv($handle, 0, ";")) !== FALSE) {
-            $dateTmp = $data['2'];
-
-            // On sort si la date est supérieure à celle demandée
-            if ($dateTmp < $from) {
-                break;
-            }
-            // On continue tant que la date est inférieure à celle demandée
-            if ($dateTmp > $to) {
-                continue;
-            }
-
-            $populariteTmp = $data['3'];
-            if ($filreDePopularite >= ((int)$populariteTmp + 1)) {
-                continue;
-            }
-            $urlTmp = $data['4'];
-            $descriptionTmp = $data['5'];
-            $searchTerm = $_GET['q'];
-            $titreTmp = $data['7'];
-            $categoryTmp = $data['6'];
-
-            if(isset($_GET['q']) && $_GET['q'] != ''){
-                $type = 'fulltext';
-                if (isset($_GET['type']) && $_GET['type'] === 'category') {
-                    $type = 'category';
-                }
-                if ((mb_stripos(strip_tags($descriptionTmp), ($searchTerm)) !== false && ('fulltext' === $type || 'description' == $type))
-                    || (mb_stripos($urlTmp, $searchTerm) !== false && ('fulltext' === $type || 'link' == $type))
-                    || (mb_stripos($titreTmp, $searchTerm) !== false && ('fulltext' === $type || 'title' == $type))
-                    || (mb_stripos($categoryTmp, $searchTerm) !== false && 'fulltext' === $type)
-                    || ((preg_match("#,$searchTerm,#", $categoryTmp) || preg_match("#^$searchTerm,#", $categoryTmp) /*Very ugly*/
-                    || preg_match("#,$searchTerm$#", $categoryTmp)) && 'category' === $type)) {
-                    if (!array_key_exists($urlTmp, $linkAlreadyFound)
-                        || $linkAlreadyFound[$urlTmp] < strlen($item['description'])) {
-                            $articles[md5($urlTmp)] = array('file' => $data['0'], 'popularity' => $populariteTmp, 'url' => $urlTmp, 'date' => $data['2']);
-                    }
-                }
+// Regroupement des articles
+$found = array();
+foreach($articles as $article) {
+    $articleDateTime = new DateTime($article['article_date']);
+    
+    $rssTitre = $article['rss_titre'];
+    if(!empty($article['alias'])){
+        $rssTitre = $article['alias'];
+    }
+    
+    $followUrl = '';
+    
+    if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
+        if(isset($_SESSION['username'])) {
+            if(!isset($mesAbonnements[$article['id_rss']])) {
+                $followUrl = ' (<a href="#" onclick="javascript:addAbo(this,\'' . $article['id_rss'] . '\', \'add\');return false;">Suivre</a>)';
             }else{
-                $articles[md5($urlTmp)] = array('file' => $data['0'], 'popularity' => $populariteTmp, 'url' => $urlTmp, 'date' => $data['2']);
-            }
+                $followUrl = ' (<a href="#" onclick="javascript:addAbo(this,\'' . $article['id_rss'] . '\', \'delete\');return false;">Se désabonner</a>)';
+            }            
+        }else{
+            $followUrl = ' (<a href="my.php" title="Authentification nécessaire">Suivre</a>)';
         }
-        fclose($handle);
+    }
+    
+    $rssTitreAffiche = htmlspecialchars($rssTitre);
+    
+    if(strpos($article['article_uuid'], 'my.shaarli.fr') > 0) {
+        $rssTitreAffiche = '@' . $rssTitreAffiche;
+    }
+    
+    $shaarliBaseUrl = explode('?', $article['article_uuid']);
+    if(isset($shaarliBaseUrl[0])) {
+        $shaarliBaseUrl = $shaarliBaseUrl[0];
+        $rssTitreAffiche = sprintf('<a href="%s">%s</a>', $shaarliBaseUrl, $rssTitreAffiche);
     }
 
-
-    //Tri
-    $sortBy = 'date';
-    $sorts = array('asc' => SORT_ASC, 'desc' => SORT_DESC);
-    $reversedSorts = array_flip($sorts);
-    $sort = SORT_DESC;
-    if (isset($_GET['sort']) && array_key_exists($_GET['sort'], $sorts)) {
-        $sort = $sorts[$_GET['sort']];
+    if(!empty($article['alias_origin'])) {
+        if($rssTitre != $article['alias_origin']) {
+            $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['alias_origin']);
+        }
     }
-
-    $sortBys = array('popularity', 'date');
-    $sortBy = 'date';
-    if (isset($_GET['sortBy']) && in_array($_GET['sortBy'], $sortBys)) {
-        $sortBy = $_GET['sortBy'];
+    elseif(!empty($article['rss_titre_origin'])) {
+        $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['rss_titre_origin']);
     }
+    
+    
+    
+    $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', $article['article_description']));
 
+    
+    $popularity=0;
+    $articleDate = $article['article_date'];
+    if(isset($found[$article['id_commun']])) {
+        $description .= $found[$article['id_commun']]['description'];
+        $popularity = $found[$article['id_commun']]['pop'] + 1;
+        $articleDate = $found[$article['id_commun']]['date'];
+    }
+      
+    $found[$article['id_commun']] = array('description' => $description, 
+                                          'title' =>  $article['article_titre'], 
+                                          'link' => $article['article_url'],
+                                          'pubDate' => $articleDateTime->format(DateTime::RSS),
+                                          'date' => $articleDate,
+                                          'category' => '',
+                                          'pop' => $popularity,
+                                          );
+
+}
+/*
+var_export($found);
+echo $sort;
+echo $sortBy;*/
+if(is_array($found)) {
     // Obtain a list of columns
-    foreach ($articles as $key => $row) {
+    foreach ($found as $key => $row) {
         $triPar[$key] = $row[$sortBy];
     }
+    // Sort the data with volume descending, edition ascending
+    // Add $data as the last parameter, to sort by the common key
+    array_multisort($triPar, $sort, $found);
+}
+$message = array('popularity' => 'Popularité', 'date' => 'Date', SORT_ASC => 'croissant', SORT_DESC => 'décroissant');
 
-
-// Sort the data with volume descending, edition ascending
-// Add $data as the last parameter, to sort by the common key
-    array_multisort($triPar, $sort, $articles);
-
-    /*
-     * Récupération des flux
-     */
-    $found = array();
-    $archiveDir = sprintf('%s/%s', $DATA_DIR, $ARCHIVE_DIR_NAME);
-    $foundCnt = 0;
-    foreach ($articles as $md5Url => $article) {
-        $rssFile = file_get_contents(sprintf('%s/%s', $archiveDir, $article['file']));
-
-        $xmlContent = getSimpleXMLElement($rssFile);
-        if ($xmlContent === false) {
-            continue;
-        }
-        $rssFileArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
-        $linkAlreadyFound = array();
-
-        foreach ($rssFileArrayed as $item) {
-            if (md5($item['link']) == $md5Url) {
-                $found[] = $item;
-                $foundCnt++;
-                if (($foundCnt >= $limit) && ($toDateTime != $fromDateTime || isset($_GET['limit']))) {
-                    break 2;
-                }
-            }
-        }
+if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
+    $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';
+} else {
+    if(isset($usernameRecherche) && $usernameRecherche != 'shaarlo') {
+        $titre = 'Les discussions de @' .htmlentities($usernameRecherche). ' du ' . $fromDateTime->format('d/m/Y');
+    }else{
+        $titre = 'Les discussions de Shaarli du ' . $fromDateTime->format('d/m/Y');
     }
-    $message = array('popularity' => 'Popularité', 'date' => 'Date', SORT_ASC => 'croissant', SORT_DESC => 'décroissant');
+}
+
+// Création du flux rss
+    $shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
+	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+	  <channel>
+	    <title>'.$titre.'</title>
+	    <link>http://shaarli.fr/</link>
+	    <description>Shaarli Aggregators</description>
+	    <language>fr-fr</language>
+	    <copyright>http://shaarli.fr/</copyright>';
+foreach ($found as $item) {
+    $count = substr_count($item['description'], "Permalink");
+    if ($count < $filtreDePopularite) {
+        continue;
+    }
+    $shaarloRss .= sprintf("<item>
+                            <title>%s</title>
+                            <link>%s</link>
+                            <pubDate>%s</pubDate>
+                            <description>%s</description>
+                            <category>%s</category>
+                            </item>",
+        htmlspecialchars($item['title']),
+        htmlspecialchars($item['link']),
+        $item['pubDate'],
+        htmlspecialchars($item['description']),
+        htmlspecialchars($item['category'])
+    );
+}
+$shaarloRss .= '</channel></rss>';
+
+
+
+// Affichage
+if (isset($_GET['do']) && $_GET['do'] === 'rss') {
+    header('Content-Type: application/rss+xml; charset=utf-8');
+    echo sanitize_output($shaarloRss);
+} else {
 
     $dateDemain = '';
     $dateHier = '';
     
-
     if (substr($from, 0, 4) == substr($from, 0, 4)) {
         $dateJMoins1 = new DateTime($from);
         $dateJMoins1->modify('-1 day');
@@ -204,51 +261,25 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
             $dateDemain = $dateJPlus1->format('Ymd');
         }
     }
-
-    if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
-        $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';
-    } else {
-        $titre = 'Les discussions de Shaarli du ' . $fromDateTime->format('d/m/Y');
-    }
-    // Affichage
-    $shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
-	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-	  <channel>
-	    <title>' . $titre . '</title>
-	    <link>http://shaarli.fr/</link>
-	    <description>Shaarli Aggregators</description>
-	    <language>fr-fr</language>
-	    <copyright>http://shaarli.fr/</copyright>';
-    foreach ($found as $item) {
-        $count = substr_count($item['description'], "Permalink");
-        if ($count < $filreDePopularite) {
-            continue;
-        }
-        $shaarloRss .= sprintf("<item>
-								<title>%s</title>
-								<link>%s</link>
-								<pubDate>%s</pubDate>
-								<description>%s</description>
-								<category>%s</category>
-								</item>",
-            htmlspecialchars($item['title']),
-            htmlspecialchars($item['link']),
-            $item['pubDate'],
-            htmlspecialchars($item['description']),
-            htmlspecialchars($item['category'])
-        );
-    }
-    $shaarloRss .= '</channel></rss>';
-    if (isset($_GET['do']) && $_GET['do'] === 'rss') {
-        header('Content-Type: application/rss+xml; charset=utf-8');
-        echo sanitize_output($shaarloRss);
-    } else {
-    
+    $dateActuelle = new DateTime();
     $isSecure = 'no';
     if(!empty($_SERVER['HTTPS'])) {
         $isSecure = 'yes';
     }
+    $myShaarliUrl='';
+    if(isset($_SESSION['username'])){
+        $myShaarliUrl = htmlentities(sprintf('http://my.shaarli.fr/%s/', $_SESSION['username']));
+    }
     
+    $nodesc = null;
+    if(isset($_GET['nodesc'])) {
+        $nodesc = $_GET['nodesc'];
+    }
+    $nbSessions = null;
+    /*
+    $logStat = json_decode(file_get_contents('log/stat'));
+    $nbSessions = $logStat[0];
+    */
         $index = parseXsl('xsl/index.xsl', $shaarloRss,
             array('sort' => $reversedSorts[$sort]
             , 'sortBy' => $sortBy
@@ -256,29 +287,29 @@ if (isset($_GET['from']) || isset($_GET['to'])) {
             , 'max_date_to' => $dateActuelle->format('Y-m-d')
             , 'date_from' => $fromDateTime->format('Y-m-d')
             , 'date_actual' => $fromDateTime->format('\L\e d/m/Y')
-            , 'nb_sessions' => countNbSessions()
+            , 'nb_sessions' => $nbSessions
             , 'date_demain' => $dateDemain
             , 'date_hier' => $dateHier
             , 'limit' => $limit
             , 'min_limit' => $MIN_FOUND_ITEM
             , 'max_limit' => $MAX_FOUND_ITEM
-            , 'filtre_popularite' => $filreDePopularite
+            , 'filtre_popularite' => $filtreDePopularite
             , 'next_previous' => $ACTIVE_NEXT_PREVIOUS
             , 'rss_url' => $SHAARLO_URL
             , 'wot' => $ACTIVE_WOT
             , 'youtube' => $ACTIVE_YOUTUBE
             , 'my_shaarli' => $myShaarliUrl
-            , 'no_description' => $_GET['nodesc']
-            , 'my_respawn' => $myRespawnUrl
+            , 'no_description' => $nodesc
             , 'filter_on' => $filterOn
-            , 'searchTerm' => $_GET['q']
+            , 'searchTerm' => $q
             , 'is_secure' => $isSecure
-            , 'mod_content_top' => $MOD[basename($_SERVER['PHP_SELF'] . '_top')]));
+            , 'mod_content_top' => ''
+            , 'username' => $username
+            , 'token' => getToken()
+            )
+            );
         $index = sanitize_output($index);
         header('Content-Type: text/html; charset=utf-8');
         echo $index;
-    }
-
 }
-
 

@@ -3,7 +3,6 @@ include 'config.php';
 include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';
-require_once 'fct/fct_session.php';
 
 error_reporting(0);
 
@@ -62,7 +61,10 @@ for($i=0 ; $i < $nbDisplayedArticles ; $i++){
 	$item = $rssFileArrayed[$randomItem];
 	$items[] = $item;
 }
-
+    $nbSessions = null;    
+    if(isset($_SESSION['username'])){
+        $myShaarliUrl = htmlentities(sprintf('http://my.shaarli.fr/%s/', $_SESSION['username']));
+    }
 /*
  * Rss construction
  */
@@ -93,7 +95,7 @@ $shaarloRss .= '</channel></rss>';
 /*
  * Index construction
  */
-$index = parseXsl('xsl/index.xsl', $shaarloRss, array( 'no_description' => $_GET['nodesc'], 'nb_sessions' => countNbSessions(), 'filtre_popularite' => 0, 'next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl));
+$index = parseXsl('xsl/index.xsl', $shaarloRss, array( 'no_description' => $_GET['nodesc'], 'nb_sessions' => $nbSessions, 'filtre_popularite' => 0, 'next_previous' => $ACTIVE_NEXT_PREVIOUS, 'rss_url' => $SHAARLO_URL, 'wot' => $ACTIVE_WOT, 'my_shaarli' => $myShaarliUrl,  'my_respawn' => $myRespawnUrl));
 $index = sanitize_output($index);
 echo $index;
 
