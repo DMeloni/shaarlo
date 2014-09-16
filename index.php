@@ -180,7 +180,7 @@ foreach($articles as $article) {
                                           'date' => $articleDate,
                                           'category' => '',
                                           'pop' => $popularity,
-                                          'rand' => 0
+                                          'rand' => rand()
                                           );
 
 }

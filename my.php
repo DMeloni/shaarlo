@@ -114,11 +114,8 @@ if (!empty($_POST)) {
 <body>
     <div id="header">
         <a href="index.php">Accueil</a>
-        <a href="admin.php">Administration</a>
         <a href="random.php">Aléatoire</a>
         <a href="my.php">My</a>
-        <a href="opml.php?mod=opml">OPML</a>
-        <a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
         <h1 id="top"><a href="./my.php">Espace My</a></h1> 
     </div> 
 <div id="content">

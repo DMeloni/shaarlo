@@ -193,11 +193,7 @@ ob_start();
 	<body>
 		<div id="header"> 
 			<a href="index.php">Accueil</a>
-			<a href="admin.php">Administration</a>
-			<a href="archive.php">Archive</a>
 			<a href="random.php">Aléatoire</a>
-            <!--<a href="jappix/?r=shaarli@conference.dukgo.com" id="articuler">Articuler</a>
-            <a href="opml.php?mod=opml">OPML</a>-->
 			<h1 id="top"><a href="./admin.php">Administration</a></h1> 
 		</div>	
 			 

@@ -1,6 +1,12 @@
 <?php
 
+require_once('config.php');
 require_once('fct/fct_rss.php');
+
+ini_set("display_errors", 1);
+ini_set("track_errors", 1);
+ini_set("html_errors", 1);
+error_reporting(E_ALL);
 
 function compareDeuxDates($a, $b)
 {
@@ -14,7 +20,7 @@ function compareDeuxDates($a, $b)
 ?><!DOCTYPE html>
 <html lang="fr"> 
         <head>
-            <title>Shaarlo : My</title>
+            <title>Shaarlo : Messagerie</title>
             <meta charset="utf-8"/>
             <meta name="description" content="" />
             <meta name="author" content="" />
@@ -29,11 +35,8 @@ function compareDeuxDates($a, $b)
 <body>
     <div id="header">
         <a href="index.php">Accueil</a>
-        <a href="admin.php">Administration</a>
         <a href="random.php">Aléatoire</a>
         <a href="my.php">My</a>
-        <a href="opml.php?mod=opml">OPML</a>
-        <a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
         <h1 id="top"><a href="./my.php">Messagerie</a></h1> 
     </div> 
 <div id="content">
@@ -44,10 +47,11 @@ function compareDeuxDates($a, $b)
             if(!empty($_GET['limit'])) {
                 $limite = $_GET['limit']; 
             }
-            
+            global $SHAARLO_DOMAIN;
             if(!empty($_GET['url'])) {
                $urlEntities = htmlentities($_GET['url']);
-               $messagerie = @json_decode(remove_utf8_bom(@file_get_contents(sprintf('http://shaarli.fr/api.php?do=getMessagerieAboutUrl&url=%s&limit=%s', urlencode($_GET['url']), $limite))), true);
+               echo sprintf('http://%s/api.php?do=getMessagerieAboutUrl&url=%s&limit=%s', $SHAARLO_DOMAIN, urlencode($_GET['url']), $limite);
+               $messagerie = json_decode(remove_utf8_bom(file_get_contents(sprintf('http://%s/api.php?do=getMessagerieAboutUrl&url=%s&limit=%s', $SHAARLO_DOMAIN, urlencode($_GET['url']), $limite))), true);
            }
         ?>
         <h2 class=" article-title ">Afficher la messagerie autour d'un shaarli</h2>
