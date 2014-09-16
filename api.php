@@ -6,7 +6,10 @@ if (!isset($_GET['do'])) {
 
 set_time_limit(0);
 
+require_once('config.php');
 require_once('fct/fct_rss.php');
+
+global $SHAARLO_DOMAIN;
 
 /** 
 * Get the directory size 
@@ -64,7 +67,7 @@ if ($_GET['do'] === 'getMyShaarlistes') {
         
         $shaarliste = substr($my, strlen($pattern));
 
-        $listeDeShaarlistes[] = sprintf('http://my.shaarli.fr/%s/', $shaarliste);
+        $listeDeShaarlistes[] = sprintf('http://%s/my/%s/', $SHAARLO_DOMAIN, $shaarliste);
     }
     
     echo(utf8_encode(json_encode($listeDeShaarlistes)));
@@ -73,8 +76,8 @@ if ($_GET['do'] === 'getMyShaarlistes') {
 
 // Retourne la liste des url des shaarlis des shaarlistes de My
 if ($_GET['do'] === 'getAllShaarlistes') {    
-    $externalShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getExternalShaarlistes'), true));
-    $myShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getMyShaarlistes'), true));
+    $externalShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getExternalShaarlistes"), true));
+    $myShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getMyShaarlistes"), true));
 
     $allShaarlistes = array_merge($externalShaarlistes, $myShaarlistes);
 
@@ -92,7 +95,7 @@ if ($_GET['do'] === 'buildAllRss') {
     $uneJourneeEnSeconde = 24 * 60 * 60;
     $actualTimestamp = time();
     
-    $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getAllShaarlistes'), true));
+    $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
     foreach($allShaarlistes as $shaarliste) {
         $fluxName = md5($shaarliste);
         $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
@@ -245,8 +248,8 @@ function getInfoAboutUrl($url, $externalShaarlistes, $myShaarlistes, $cache = 't
 
 if ($_GET['do'] === 'getInfoAboutUrl') {
     
-    $externalShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getExternalShaarlistes'), true));
-    $myShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getMyShaarlistes'), true));
+    $externalShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getExternalShaarlistes"), true));
+    $myShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getMyShaarlistes"), true));
     
     $statDir = 'stats';
     $dataDir = 'data';
@@ -298,7 +301,7 @@ if ($_GET['do'] === 'getDiscussionAboutUrl') {
 
     $tableauDeDiscussions = array();
     
-    $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getAllShaarlistes'), true));
+    $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
 
 
     $pileUrl = array($url);
@@ -444,7 +447,7 @@ if ($_GET['do'] === 'getMessagerieAboutUrl') {
             continue;
         }
         
-        $discussion = json_decode(remove_utf8_bom(file_get_contents(sprintf('http://shaarli.fr/api.php?do=getDiscussionAboutUrl&url=%s', urlencode($rssItem['link'])))), true);
+        $discussion = json_decode(remove_utf8_bom(file_get_contents(sprintf("http://$SHAARLO_DOMAIN/api.php?do=getDiscussionAboutUrl&url=%s", urlencode($rssItem['link'])))), true);
         if(!is_array($discussion) || count($discussion) <= 1) {
             continue;
         }
@@ -475,12 +478,12 @@ if ($_GET['do'] === 'getInfoAboutAll') {
     }*/
     
     if( !is_file($statFile) || $cache == 'false') {
-        $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getAllShaarlistes'), true));
+        $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
         $infos = array();
         $time = microtime(true);
         $i = 0;
         foreach($allShaarlistes as $shaarliste) {
-            $infoAboutUrl = json_decode(remove_utf8_bom(file_get_contents(sprintf('http://shaarli.fr/api.php?do=getInfoAboutUrl&url=%s&cache=%s', $shaarliste, $cache))), true);
+            $infoAboutUrl = json_decode(remove_utf8_bom(file_get_contents(sprintf('http://%s/api.php?do=getInfoAboutUrl&url=%s&cache=%s', $SHAARLO_DOMAIN, $shaarliste, $cache))), true);
             
             if( ! is_array($infoAboutUrl)) {
                 continue;

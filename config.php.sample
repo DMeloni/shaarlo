@@ -17,6 +17,9 @@ $GLOBALS['MYSQL_PASSWORD'] = 'password'; /* Mot de passe de l'utilisateur */
 $GLOBALS['MYSQL_DB'] = 'shaarlimy'; /* Nom de la base de données */
 $GLOBALS['salt']     = 'clef_salaison';/* Clef de salaison */
 
+$GLOBALS['SHAARLO_DOMAIN'] = 'domaine.ext'; /* your shaarlo's domain */
+$GLOBALS['SHAARLO_URL'] = 'http://' . $GLOBALS['SHAARLO_DOMAIN'] .'/'; /* your shaarlo's url (usefulfor the main RSS) */
+
 $GLOBALS['DATA_DIR'] = 'data'; /* Nom du répertoire contenant les données récupérées */
 $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive'; /* Nom du répertoire contenant les archives */
 $GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favisons */
@@ -40,7 +43,6 @@ $GLOBALS['ACTIVE_YOUTUBE'] = 'yes'; /* 'yes' active youtube embedded videos */
 $GLOBALS['ACTIVE_NEXT_PREVIOUS'] = 'yes'; /* 'yes' active next/previous button : useful for mobile view*/
 $GLOBALS['ACTIVE_FAVICON'] = 'yes'; /* 'yes' active shaarli favicon recuperation */
 $GLOBALS['DATE_FORMAT'] = '\l\e d/m/Y \à H\h i\m s\s'; /* active date format */
-$GLOBALS['SHAARLO_URL'] = 'http://domaine.ext/shaarlo/'; /* your shaarlo's url (useful for the main RSS) */
 $GLOBALS['REFRESH_SLEEP'] = 60;
 
 require_once 'mod/mod.php';
