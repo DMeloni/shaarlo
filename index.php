@@ -99,6 +99,14 @@ if (isset($_GET['to'])) {
     }
 }
 
+// daily=tomorrow pour bloquer sur hier
+if (isset($_GET['daily']) && $_GET['daily'] == 'tomorrow' ) {
+    $today = new DateTime();
+    $tomorrow = $today->modify('-1 DAY');
+    $from = $tomorrow->format('Ymd000000');
+    $to = $tomorrow->format('Ymd235959');
+}
+
 if (isset($_GET['do']) && $_GET['do'] === 'rss') {
     $usernameRecherche='shaarlo';
 }else{
