@@ -92,10 +92,7 @@ if ($_GET['do'] === 'buildAllRss') {
     $dataDir = 'data';
 
     $uneJourneeEnSeconde = 1 * 30 * 60;
-ini_set("display_errors", 1);
-ini_set("track_errors", 1);
-ini_set("html_errors", 1);
-error_reporting(E_ALL);
+
     $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
     foreach($allShaarlistes as $shaarliste) {
         $urlSimplifiee = simplifieUrl($shaarliste);
@@ -111,8 +108,11 @@ error_reporting(E_ALL);
                 continue;
             }
         }
-
-        $rss = getRss(sprintf('%s%s', $shaarliste, $params));
+        if(strpos($shaarliste, '?') !== false) {
+            $rss = getRss($shaarliste);
+        } else {
+            $rss = getRss(sprintf('%s%s', $shaarliste, $params));
+        }
         if (!empty($rss)) {
             echo sprintf("%s - %s : nouveau \n", $fluxFile, $shaarliste);
             file_put_contents($fluxFile, $rss); 
@@ -476,11 +476,10 @@ if ($_GET['do'] === 'getMessagerieAboutUrl') {
 }
 
 if ($_GET['do'] === 'getInfoAboutAll') {
-    $statDir = 'stats';
     $dataDir = 'data';
     $fluxName = 'stats.json';
     
-    $statFile = sprintf('%s/%s/%s.json', $dataDir, $statDir, $fluxName);
+    $statFile = sprintf('%s/%s.json', $dataDir, $fluxName);
     
     $cache = 'true';
     if(isset($_GET['cache'])) {
@@ -493,20 +492,9 @@ if ($_GET['do'] === 'getInfoAboutAll') {
     }*/
     
     if( !is_file($statFile) || $cache == 'false') {
-        $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
-        $infos = array();
-        $time = microtime(true);
-        $i = 0;
-        foreach($allShaarlistes as $shaarliste) {
-            $infoAboutUrl = json_decode(remove_utf8_bom(file_get_contents(sprintf('http://%s/api.php?do=getInfoAboutUrl&url=%s&cache=%s', $SHAARLO_DOMAIN, $shaarliste, $cache))), true);
-            
-            if( ! is_array($infoAboutUrl)) {
-                continue;
-            }
-            $infos[] = $infoAboutUrl;
-            $i++;
-        }
-        
+        $mysqli = shaarliMyConnect();
+        $infos = selectAllShaarlistes($mysqli);
+
         if(is_array($infos)) {
             $stat = utf8_encode(json_encode($infos));
             file_put_contents($statFile, $stat);
