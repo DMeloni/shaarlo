@@ -12,12 +12,16 @@ if (isset($_SESSION['username'])) {
     //Ajoute un shaarli
     if($_POST['id']) {
         $mysqli = shaarliMyConnect();
+        var_export($_POST);
         
-        if(isset($_POST['do']) && $_POST['do'] == 'delete') {
-            deleteRss($mysqli, $_SESSION['username'], $_POST['id']);
-        }elseif(isset($_POST['do']) && $_POST['do'] == 'add') {
-            $monRss = creerMonRss($_SESSION['username'], $_POST['id'], $_SESSION['username']);
-            insertEntite($mysqli, 'mes_rss', $monRss);
+        if(isset($_POST['do']) && $_POST['do'] == 'bloquer') {
+            bloquerRss($mysqli, $_POST['id']);
+        }elseif(isset($_POST['do']) && $_POST['do'] == 'valider') {
+            validerRss($mysqli, $_POST['id']);
+        }elseif(isset($_POST['do']) && $_POST['do'] == 'bloquerLien') {
+            bloquerLien($mysqli, $_POST['id']);
+        }elseif(isset($_POST['do']) && $_POST['do'] == 'validerLien') {
+            validerLien($mysqli, $_POST['id']);
         }
         
         shaarliMyDisconnect($mysqli);

@@ -1,11 +1,5 @@
 <?php
-ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/sessions');
-ini_set('session.use_cookies', 1);       // Use cookies to store session.
-ini_set('session.use_only_cookies', 1);  // Force cookies for session (phpsessionID forbidden in URL)
-ini_set('session.use_trans_sid', false); // Prevent php to use sessionID in URL if cookies are disabled.
-ini_set('session.cookie_domain', '.shaarli.fr');
-session_name('shaarli');
-session_start();
+require_once('config.php');
 require_once('fct/fct_rss.php');
 require_once 'fct/fct_mysql.php';
 
@@ -32,13 +26,17 @@ function compareDeuxDates($a, $b)
 
 
 $myPath = 'my';
-$myDir = scandir($myPath);
+if(is_dir($myPath)){
+    $myDir = scandir($myPath);
+} else {
+    $myDir = array();
+}
 $pattern = 'data-7987213-';
 
 $dirDateTime = new DateTime();
 $listeDeShaarlistes = array();
-
-$infoAbout = json_decode(remove_utf8_bom(file_get_contents('https://www.shaarli.fr/api.php?do=getInfoAboutAll')), true);
+global $SHAARLO_URL;
+$infoAbout = json_decode(remove_utf8_bom(file_get_contents(sprintf('%s/api.php?do=getInfoAboutAll', $SHAARLO_URL))), true);
 $pubDate = $infoAbout['pubdate'];
 $infoAbout = $infoAbout['stat'];
 usort($infoAbout , "compareDeuxDates");
@@ -114,8 +112,11 @@ if (!empty($_POST)) {
 <body>
     <div id="header">
         <a href="index.php">Accueil</a>
+        <a href="admin.php">Administration</a>
         <a href="random.php">Aléatoire</a>
         <a href="my.php">My</a>
+        <a href="opml.php?mod=opml">OPML</a>
+        <a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
         <h1 id="top"><a href="./my.php">Espace My</a></h1> 
     </div> 
 <div id="content">
@@ -240,21 +241,8 @@ if (!empty($_POST)) {
                 <th><span>Dernière Maj</span></th>
                 <th><input type="checkbox" id="ChckboxAll" value="" onClick="GereChkbox();"></th>
                 <th><span>Titre</span></th>
-                <th><span>Mots clefs</span></th>
-                <th><span>Nb de liens</span></th>
-                <th><span>Popularité</span></th>
-                <th><span>Localisation</span></th>
-                <th>
-                <?php
-                    if(!is_null($mesAbonnements)) {
-                ?>
-                    <span>Abonnement</span>
-                <?php } else { ?>
-                    <span>Annuaire</span>
-                <?php
-                    }
-                ?>
-                </th>
+                <th><span>Nb de liens en cache</span></th>
+                <th><span>Abo</span></th>
             </thead>
             <tbody id="div_chck_actif">
             <?php
@@ -263,43 +251,26 @@ if (!empty($_POST)) {
                 $nbLiensMyShaarlistes = 0;
                 $nbLiensExternalShaarlistes = 0;
                 foreach ($infoAbout as $shaarliste) {
+                    
                     if($shaarliste['pubdateiso'] == '2011-09-14') {
                         continue;
                     }
-                    if ($shaarliste['nb_items'] <= 1) {
-                        continue;
-                    }
+
                     if ($shaarliste['title'] == 'le hollandais volant') {
                         continue;
                     }
-                    $pseudoShaarliste = null;
-                    if($shaarliste['my']){   
-                        $matches = array();
-                        preg_match_all('#/([^/.]+)/$#', $shaarliste['link'], $matches);
-                        if(isset($matches[1][0])){
-                            $pseudoShaarliste = $matches[1][0];
-                        }
-                    }                    
+                    $nbExternalShaarlistes ++;
+                    $pseudoShaarliste = null;              
                     ?><tr  <?php if(!is_null($username) && $pseudoShaarliste === $username) echo 'class="red"' ?> ><?php
                         ?><td><?php 
-                            echo $shaarliste['pubdateiso'];
+                            $majDate = new DateTime($shaarliste['pubdateiso']);
+                            echo $majDate->format('d/m/Y');
                         ?>
                         </td>
                         <td><input class="ChckboxShaarliste" name="checked[]" type="checkbox" value="<?php echo md5($shaarliste['link']);?>" /></td><?php   
                         ?><td><a href="<?php echo $shaarliste['link'];?>"><?php echo (htmlspecialchars($shaarliste['title']));?></a></td><?php    
                         ?><td><?php 
-                            $tagsAvecUnderscore = array_keys($shaarliste['tags']);
-                            $tags = array();
-                            foreach($tagsAvecUnderscore as $tag){
-                                $tags[] = substr($tag, 1, strlen($tag) - 1);
-                            }
-                            echo implode(', ', $tags);?></td><?php   
-                        ?><td><?php 
-                            if($shaarliste['my']){                        
-                                $nbLiensMyShaarlistes += $shaarliste['nb_items'];
-                            }else{
-                                $nbLiensExternalShaarlistes += $shaarliste['nb_items'];
-                            }                        
+                            $nbLiensExternalShaarlistes += $shaarliste['nb_items'];                    
                             if($shaarliste['nb_items'] >= 10000) {
                                 echo 'Maitre Shaarliste';
                             }
@@ -318,48 +289,31 @@ if (!empty($_POST)) {
                             echo sprintf(' (~%s liens)', $shaarliste['nb_items']);
                         ?>
                         </td>
-                        <td><span title="<?php echo implode("\n", $shaarliste['followers']); ?>" ><?php echo $shaarliste['nb_followers'];?></span></td>
-                        <td><?php 
-                        if($shaarliste['my']){
-                            echo 'Interne (My)';
-                            $nbMyShaarlistes++;
-                        } else {
-                            echo 'Externe';
-                            $nbExternalShaarlistes ++;
-                        }
-                        
-                        ?></td>
                         <td>
                         <?php
                             if(!is_null($mesAbonnements)) {
-                                $idRss =md5($shaarliste['url']);
+                                $idRss = $shaarliste['id'];
                                 if(!isset($mesAbonnements[$idRss])) {
                                     ?>
-                                    <a href="#" onclick="javascript:addAbo(this,'<?php echo md5($shaarliste['url']);?>', 'add');return false;">Suivre</a>
+                                    <a href="#" onclick="javascript:addAbo(this,'<?php echo ($shaarliste['id']);?>', 'add');return false;">Suivre</a>
                                     <?php
                                 } else {
                                     ?>
-                                    <a href="#" onclick="javascript:addAbo(this,'<?php echo md5($shaarliste['url']);?>', 'delete');return false;">Se désabonner</a>
+                                    <a href="#" onclick="javascript:addAbo(this,'<?php echo ($shaarliste['id']);?>', 'delete');return false;">Se désabonner</a>
                                     <?php
                                 }
                             } else {
-                            if($shaarliste['shaarlifr']){
-                                    echo 'shaarli.fr';
-                                } else {
-                                    echo 'global';
-                                }
+                                echo '...';
                             }
                         ?>
-                        </td>
+                        </td>                        
                     </tr>
             <?php }?>
             </tbody>
         </table>
-        <div>Nombre de shaarli externes : <?php echo $nbExternalShaarlistes;?></div>
-        <div>Nombre de shaarli internes (My) : <?php echo $nbMyShaarlistes;?></div>
+        <div>Nombre de shaarli : <?php echo $nbExternalShaarlistes;?></div>
         
-        <div>Nombre de liens externes : <?php echo $nbLiensExternalShaarlistes;?></div>
-        <div>Nombre de liens internes (My) : <?php echo $nbLiensMyShaarlistes;?></div>        
+        <div>Nombre de liens totaux : <?php echo $nbLiensExternalShaarlistes;?></div>
         <br/>
         <input type="submit" value="Créer un OPML" />
     </form>

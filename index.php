@@ -7,6 +7,7 @@
 
 
 require_once 'config.php';
+require_once 'fct/fct_session.php';
 
  // Returns a token.
 function getToken()
@@ -14,14 +15,13 @@ function getToken()
     $rnd = sha1(uniqid('',true).'_'.mt_rand().$GLOBALS['salt']);  // We generate a random string.
     $_SESSION['tokens'][$rnd]=1;  // Store it on the server side.
     return $rnd;
-}   
-
-
+}
 
 include 'fct/fct_valid.php';
 require_once 'fct/fct_xsl.php';
 require_once 'fct/fct_rss.php';
 require_once 'fct/fct_mysql.php';
+require_once('fct/fct_http.php');
 
 global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MIN_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
 
@@ -31,10 +31,31 @@ global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_I
 
 $mysqli = shaarliMyConnect();
 
+// Chargement de la configuration du shaarliste
+if(!is_null(get('shaarli'))) {
+    loadConfiguration(get('shaarli'));
+}
+
+if (!is_null(get('do')) && get('do') == 'logout') {
+    // or this would remove all the variables in the session, but not the session itself 
+     session_unset(); 
+     
+     // this would destroy the session variables 
+     session_destroy(); 
+}
+
+
 $username = null;
+$pseudo = null;
+$myshaarli = null;
 if (isset($_SESSION['username'])) {
     $username = $_SESSION['username'];
 }
+if (isset($_SESSION['pseudo'])) {
+    $pseudo = $_SESSION['pseudo'];
+    $myshaarli = $_SESSION['myshaarli'];
+}
+
 $q = null;
 if(!empty($_GET['q'])) {
     $q = $_GET['q'];
@@ -108,12 +129,11 @@ if (isset($_GET['daily']) && $_GET['daily'] == 'tomorrow' ) {
 }
 
 if (isset($_GET['do']) && $_GET['do'] === 'rss') {
-    $usernameRecherche='shaarlo';
+    $usernameRecherche='499f443cfd5481cc0a29db210ca208a5';
 }else{
     $mesAbonnements = getAllAbonnements($mysqli, $username);
-
     if(empty($mesAbonnements)) {
-        $usernameRecherche='shaarlo';
+        $usernameRecherche='499f443cfd5481cc0a29db210ca208a5';
     }else{
         $usernameRecherche=$username;
     }
@@ -197,6 +217,7 @@ var_export($found);
 echo $sort;
 echo $sortBy;*/
 if(is_array($found)) {
+    $triPar = array();
     // Obtain a list of columns
     foreach ($found as $key => $row) {
         $triPar[$key] = $row[$sortBy];
@@ -211,7 +232,8 @@ if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
     $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';
 } else {
     if(isset($usernameRecherche) && $usernameRecherche != 'shaarlo') {
-        $titre = 'Les discussions de @' .htmlentities($usernameRecherche). ' du ' . $fromDateTime->format('d/m/Y');
+        $shaarliste = getShaarliste($mysqli, $usernameRecherche);
+        $titre = 'Les discussions de @' .htmlentities($shaarliste['pseudo']). ' du ' . $fromDateTime->format('d/m/Y');
     }else{
         $titre = 'Les discussions de Shaarli du ' . $fromDateTime->format('d/m/Y');
     }
@@ -305,13 +327,14 @@ if (isset($_GET['do']) && $_GET['do'] === 'rss') {
             , 'rss_url' => $SHAARLO_URL
             , 'wot' => $ACTIVE_WOT
             , 'youtube' => $ACTIVE_YOUTUBE
-            , 'my_shaarli' => $myShaarliUrl
+            , 'my_shaarli' => $myshaarli
             , 'no_description' => $nodesc
             , 'filter_on' => $filterOn
             , 'searchTerm' => $q
             , 'is_secure' => $isSecure
             , 'mod_content_top' => ''
             , 'username' => $username
+            , 'pseudo' => $pseudo
             , 'token' => getToken()
             )
             );

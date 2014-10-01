@@ -1,10 +1,11 @@
 <?php
-/*
 ini_set("display_errors", 1);
 ini_set("track_errors", 1);
 ini_set("html_errors", 1);
-error_reporting(E_ALL);*/
+error_reporting(E_ALL);
 // Retour une objet mysqli
+require_once('fct/fct_session.php');
+
 function shaarliMyConnect() {
     global $MYSQL_USER, $MYSQL_SERVER, $MYSQL_PASSWORD, $MYSQL_DB;
     
@@ -36,8 +37,12 @@ function insertEntites($mysqli, $table, $entites) {
     if($mysqli === null) {
         return null;
     }
-    
+
     $premierArticle = reset($entites);
+    
+    if(!is_array($premierArticle)) {
+        return null;
+    }
     $clefsSQL = array_keys($premierArticle);
     
     $sql = array(); 
@@ -55,14 +60,15 @@ function insertEntites($mysqli, $table, $entites) {
     $requeteClefSQL = implode(', ', $clefsSQL);
     
     if($table == 'liens') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin) ', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss) ', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'rss') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE rss_titre=VALUES(rss_titre),date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
+    }elseif($table == 'shaarliste') {
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE pseudo=VALUES(pseudo),date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }else {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }
-    //echo $requeteSQL;
-    
+
     $mysqli->query($requeteSQL);
 }
 
@@ -89,11 +95,12 @@ function getIdRssOriginFromShaarliLink($mysqli, $link) {
 
     $link = explode('?', $link);
     $link = $link[0];
-    $linkSansHttps = md5(str_replace('https://', 'http://', $link));
-    $linkAvecHttps = md5(str_replace('http://', 'https://', $link));
+    $linkSimplifie = simplifieUrl($link);
+    $linkSansHttps = md5($linkSimplifie);
+    $linkAvecSlash = md5($linkSimplifie . '/' );
     
-    $query = sprintf("SELECT id FROM `rss` WHERE `id`='%s' OR `id`='%s'", $mysqli->real_escape_string($linkSansHttps), $mysqli->real_escape_string($linkAvecHttps));
-    if ($result = $mysqli->query($query)) {
+    $query = sprintf("SELECT id FROM `rss` WHERE `id`='%s' OR `id` = '%s' OR `url_simplifiee` LIKE '%s%s'", $linkAvecSlash, $linkSansHttps, $mysqli->real_escape_string($linkSimplifie), '%');
+   if ($result = $mysqli->query($query)) {
         if ($row = $result->fetch_assoc()) {
             return $row['id'];
         }
@@ -119,40 +126,52 @@ function creerArticle($id, $idCommun, $articleUrl, $urlSimplifie, $articleTitle,
             
     $article['date_update'] = date('YmdHis');
     
-    if($insertion === true) {
-        $article['date_insert'] = $article['date_update'];
-    }
+    $article['date_insert'] = $article['date_update'];
     
     return $article;
 }
 
-function creerRss($id, $titre, $url, $insertion = true) {
+function creerRss($id, $titre, $url, $urlSimplifiee, $active = 0) {
     
     $entite = array('id' => $id
                 ,'rss_titre' => $titre
                 ,'url' => $url
+                ,'active' => $active
+                ,'url_simplifiee' => $urlSimplifiee
             );
             
     $entite['date_update'] = date('YmdHis');
     
-    if($insertion === true) {
-        $entite['date_insert'] = $entite['date_update'];
-    }
+    $entite['date_insert'] = $entite['date_update'];
+
     
     return $entite;
 }
 
-function creerMonRss($username, $idRss, $insertion = true) {
+function creerMonRss($username, $idRss, $pseudo, $alias = '') {
     
     $entite = array('username' => $username
                 ,'id_rss' => $idRss
+                ,'pseudo' => $pseudo
+                ,'alias' => $alias
             );
             
     $entite['date_update'] = date('YmdHis');
     
-    if($insertion === true) {
-        $entite['date_insert'] = $entite['date_update'];
-    }
+    $entite['date_insert'] = $entite['date_update'];
+    
+    return $entite;
+}
+
+
+function creerShaarliste($username, $pseudo) {
+    
+    $entite = array('username' => $username
+                ,'pseudo' => $pseudo
+            );
+
+    $entite['date_update'] = date('YmdHis');
+    $entite['date_insert'] = $entite['date_update'];
     
     return $entite;
 }
@@ -162,7 +181,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     $matchSQL ='';
     if(!empty($fullText)) {
         $fullText = $mysqli->real_escape_string($fullText);
-        $matchSQL = " AND (MATCH (l.article_titre,l.article_description) AGAINST ('$fullText') OR l.article_uuid LIKE '%%" . $fullText . "%%' ) ";
+        $matchSQL = " AND l.article_url != 'http://' AND (MATCH (l.article_titre,l.article_description) AGAINST ('$fullText') OR l.article_uuid LIKE '%%" . $fullText . "%%' ) ";
     }
     if(isset($_GET['simulate'])) {
         echo $matchSQL;
@@ -221,10 +240,14 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         INNER JOIN (
             SELECT liens.id_commun, count(*) as c from liens INNER JOIN (
                 SELECT id_commun, count(*) as c FROM `liens` as l WHERE l.id_rss IN (
-                    SELECT id_rss from mes_rss AS m WHERE m.username='$username'
-                ) AND l.id_commun != 'dbd7790bcd23fde7607101ef6a633779' $matchSQL GROUP BY l.id_commun $orderBySQL $limitSQLDate
+                    SELECT id_rss from mes_rss AS m 
+                    JOIN rss ON m.id_rss = rss.id 
+                    WHERE m.username='$username' AND rss.active = '1'
+                ) AND l.active = '1' AND l.id_commun != 'dbd7790bcd23fde7607101ef6a633779' $matchSQL GROUP BY l.id_commun $orderBySQL $limitSQLDate
             ) AS jour ON jour.id_commun=liens.id_commun WHERE liens.id_rss IN (
-                    SELECT id_rss from mes_rss WHERE username='$username'
+                    SELECT id_rss from mes_rss AS m 
+                    JOIN rss ON m.id_rss = rss.id 
+                    WHERE m.username='$username' AND rss.active = '1'
                 ) group by liens.id_commun $havingSQL $orderByPopularity $limitSQL
         ) AS articles_du_jour ON liens.id_commun=articles_du_jour.id_commun 
         INNER JOIN rss ON liens.id_rss=rss.id 
@@ -235,6 +258,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         /*WHERE liens.id_rss IN (
                 SELECT id_rss from mes_rss AS m WHERE m.username='$username'
         ) */
+        WHERE rss.active = '1'
         GROUP BY liens.id 
         ORDER BY liens.article_date DESC");
     }
@@ -254,6 +278,8 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     return $articles;
 }
 
+
+
 function getAllAbonnements($mysqli, $username) {
     $entites = array();
 
@@ -268,9 +294,108 @@ function getAllAbonnements($mysqli, $username) {
     return $entites;
 }
 
+function getAllRssActifs($mysqli) {
+    $entites = array();
+
+    $query = sprintf("SELECT url FROM `rss` WHERE active=1");
+
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            $entites[] = $row['url'];
+        }
+    }
+
+    return $entites;
+}
+
+/**
+ * Indique si un id existe ou pas
+ */
+function idRssExists($mysqli, $urlSimplifiee) {
+    $entites = array();
+
+    $query = sprintf("SELECT id FROM `rss` WHERE url_simplifiee='%s'", $mysqli->real_escape_string($urlSimplifiee));
+    
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row['id'];
+        }
+    }
+
+    return null;
+}
+
+
+/**
+ * Indique si un id existe ou pas
+ */
+function getShaarliste($mysqli, $username) {
+    $entites = array();
+
+    $query = sprintf("SELECT * FROM `shaarliste` WHERE username='%s'", $mysqli->real_escape_string($username));
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row;
+        }
+    }
+
+    return null;
+}
 
 function deleteRss($mysqli, $username, $rssId) {
     $query = sprintf("DELETE FROM mes_rss WHERE username='%s' AND id_rss='%s'", $mysqli->real_escape_string($username), $mysqli->real_escape_string($rssId));
     $mysqli->query($query);
 }
+
+// Supprime tous les abonnements d'un utilisateur
+function deleteMesRss($mysqli, $username) {
+    $query = sprintf("DELETE FROM mes_rss WHERE username='%s'", $mysqli->real_escape_string($username));
+    $mysqli->query($query);
+}
+
+function selectAllShaarlistes($mysqli, $onlyActive = true){
+
+    $condActive = ' AND r.active = 1';
+    if(!$onlyActive) {
+        $condActive = '';
+    }
+    $query = sprintf("SELECT r.id, r.rss_titre as title, 
+    r.url as link,
+    r.date_update as pubdateiso,
+    r.active,
+    count(*) AS nb_items FROM `liens` as l LEFT JOIN rss as r ON l.id_rss = r.id where r.id IS NOT NULL $condActive group by id_rss");
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            $results[$row['id']] =  $row;
+        }
+    }
+
+    return $results;
+}
+
+
+function bloquerRss($mysqli, $rssId) {
+    $query = sprintf("UPDATE rss SET active=2 WHERE id='%s'", $mysqli->real_escape_string($rssId));
+    echo $query;
+    $mysqli->query($query);
+}
+
+function validerRss($mysqli, $rssId) {
+    $query = sprintf("UPDATE rss SET active=1 WHERE id='%s'", $mysqli->real_escape_string($rssId));
+    $mysqli->query($query);
+}
+
+function bloquerLien($mysqli, $rssId) {
+    $query = sprintf("UPDATE liens SET active=2 WHERE id='%s'", $mysqli->real_escape_string($rssId));
+    echo $query;
+    $mysqli->query($query);
+}
+
+function validerLien($mysqli, $rssId) {
+    $query = sprintf("UPDATE liens SET active=1 WHERE id='%s'", $mysqli->real_escape_string($rssId));
+    $mysqli->query($query);
+}
+
 

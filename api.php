@@ -8,6 +8,8 @@ set_time_limit(0);
 
 require_once('config.php');
 require_once('fct/fct_rss.php');
+require_once('fct/fct_mysql.php');
+require_once('fct/fct_session.php');
 
 global $SHAARLO_DOMAIN;
 
@@ -75,13 +77,9 @@ if ($_GET['do'] === 'getMyShaarlistes') {
 
 
 // Retourne la liste des url des shaarlis des shaarlistes de My
-if ($_GET['do'] === 'getAllShaarlistes') {    
-    $externalShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getExternalShaarlistes"), true));
-    $myShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getMyShaarlistes"), true));
-
-    $allShaarlistes = array_merge($externalShaarlistes, $myShaarlistes);
-
-    $allShaarlistes = array_unique($allShaarlistes);
+if ($_GET['do'] === 'getAllShaarlistes') {
+    $mysqli = shaarliMyConnect();
+    $allShaarlistes = getAllRssActifs($mysqli);
 
     echo json_encode($allShaarlistes);
 }
@@ -89,28 +87,34 @@ if ($_GET['do'] === 'getAllShaarlistes') {
 // Enregistre tous les flux rss
 if ($_GET['do'] === 'buildAllRss') {
     $params = '?do=rss&nb=all';
+    $params = '?do=rss';
     $fluxDir = 'flux';
     $dataDir = 'data';
 
-    $uneJourneeEnSeconde = 24 * 60 * 60;
-    $actualTimestamp = time();
-    
+    $uneJourneeEnSeconde = 1 * 30 * 60;
+ini_set("display_errors", 1);
+ini_set("track_errors", 1);
+ini_set("html_errors", 1);
+error_reporting(E_ALL);
     $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
     foreach($allShaarlistes as $shaarliste) {
-        $fluxName = md5($shaarliste);
+        $urlSimplifiee = simplifieUrl($shaarliste);
+        $fluxName = md5(($urlSimplifiee));
         $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 
         if(is_file($fluxFile)) {
-            $fluxFileTimestamp = filemtime ($fluxFile);
-            
-            // Dans le cas où le fichier est encore récent, on garde celui de la veille
-            /*if ($uneJourneeEnSeconde > ($actualTimestamp - $fluxFileTimestamp)) {
+            $lastvisit = @filemtime($fluxFile);
+            $difference = mktime() - $lastvisit;
+            // Dans le cas où le fichier est encore récent, on garde celui des 30 dernieres minutes
+            if ($difference < $uneJourneeEnSeconde) {
+                echo sprintf("%s - %s : recent \n", $fluxFile, $shaarliste);
                 continue;
-            }*/
+            }
         }
 
         $rss = getRss(sprintf('%s%s', $shaarliste, $params));
         if (!empty($rss)) {
+            echo sprintf("%s - %s : nouveau \n", $fluxFile, $shaarliste);
             file_put_contents($fluxFile, $rss); 
         }else{
            echo sprintf("%s - %s \n", $fluxFile, $shaarliste);
@@ -126,8 +130,19 @@ function getInfoAboutUrl($url, $externalShaarlistes, $myShaarlistes, $cache = 't
     $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 
     $rss ='';
+       
+    if (is_file($fluxFile)) {
+        $lastvisit = @filemtime($fluxFile);
+        $difference = mktime() - $lastvisit;
+        $max_time = 60 * 30; // Un flux rss est valide 30 minutes
+        if ($difference < $max_time) {
+           $cache = 'true';
+        }
+    }
+
     if( !is_file($fluxFile) || $cache== 'false' ) {
-        $params = '?do=rss&nb=all';
+        //$params = '?do=rss&nb=all';
+        $params = '?do=rss';
         $urlExploded = explode('?', $_GET['url']);
         $rss = getRss(sprintf('%s%s', $urlExploded[0], $params));
         if(!empty($rss)) {
@@ -140,7 +155,7 @@ function getInfoAboutUrl($url, $externalShaarlistes, $myShaarlistes, $cache = 't
 
     $xmlContent = getSimpleXMLElement($rss);
     if( ! $xmlContent instanceof SimpleXMLElement){
-        exit(1);
+        return null;
     }
     
     $list = $xmlContent->xpath(XPATH_RSS_TITLE);

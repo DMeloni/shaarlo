@@ -181,37 +181,29 @@
                 <xsl:if test="$username">
                         <div>
                             <h3>
-                                <a href="http://shaarli.fr/?u={$username}">@<xsl:value-of select="$username" disable-output-escaping="yes"/></a>
+                                <a href="?u={$username}">@<xsl:value-of select="$pseudo" disable-output-escaping="yes"/></a>
                             </h3>
                          </div>
                          <div>    
                             <ul>
-                                <li><a href="http://my.shaarli.fr/{$username}/">Mon shaarli</a></li>
-                                <li><a href="http://shaarli.fr/?u=shaarlo">Flux de @shaarlo</a></li>
+                                <li><a href="{$my_shaarli}/">Mon shaarli</a></li>
+                                <li><a href="?u=499f443cfd5481cc0a29db210ca208a5">Flux de @Shaarlo</a></li>
                             </ul>
                          </div>
                         <div>
                             <ul>
-                                <li><a href="https://shaarli.fr/my/{$username}/?do=logouts">Se déconnecter</a></li>
+                                <li><a href="?do=logout">Se déconnecter</a></li>
                             </ul>
                         </div>
                 </xsl:if>
                 <xsl:if test="not($username)">
-                    <h4>Connexion/Création</h4>
-
-                    <form  method="POST" action="" name="loginform" id="loginform">
-                        <input id="pseudo" name="login" tabindex="1" type="text"  value="" placeholder="robocop, batman"/>
+                    <h4>Connecter mon shaarli</h4>
+ 
+                    <form  method="POST" action="?" name="loadform" id="loadform">
+                        <input id="shaarli" name="shaarli" tabindex="1" type="text"  value="" placeholder="http://domain.ext/shaarli"/>
                         <br/>
-                        <input name="password" tabindex="2" value="" type="password" placeholder="azerty"/>
-                        <br/>
-                        <input type="submit" value="Accès au compte" onclick="getMy();"/>
-                        <br/>
-                        <input name="longlastingsession" id="longlastingsession" tabindex="3" type="checkbox"/>
-                        <label for="longlastingsession"> Rester connecté</label>
-                        <input name="token" value="{$token}" type="hidden" />
-                        <input name="returnurl" value="https://www.shaarli.fr/index.php" type="hidden" /> 
-                    </form> 
-
+                        <input type="submit" value="Charger ma conf"/>
+                    </form>
                 </xsl:if>
                     <div>
                         <small><a href="#" onclick="hideDashboard()">x Fermer cette vilaine fenêtre</a></small>
@@ -346,6 +338,33 @@
                             r.send(params);
                         }
                         
+                        function validerLien(that, id, action) {
+                            var r = new XMLHttpRequest(); 
+                            var params = "do="+action+"&amp;id=" + id;
+                            r.open("POST", "valide.php", true); 
+                            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                            r.onreadystatechange = function () {
+                                if (r.readyState == 4) {
+                                    if(r.status == 200){
+                                        if(action == 'valider') {
+                                            that.text = 'Bloquer';
+                                            that.innerHTML = 'Bloquer';
+                                            that.onclick = function () { validerLien(that, id, 'bloquerLien'); return false; };
+                                        }else {
+                                            that.text = 'Valider';
+                                            that.innerHTML = 'Valider';
+                                            that.onclick = function () { validerLien(that, id, 'validerLien'); return false; };
+                                        }
+                                        return; 
+                                    }
+                                    else {
+                                        that.text = '-Erreur-';
+                                        return; 
+                                    }
+                                }
+                            }; 
+                            r.send(params);
+                        }              
                         
                     </script>
                 </xsl:if>
@@ -400,7 +419,7 @@
                               <xsl:with-param name="substr" select="$my_shaarli" />
                             </xsl:call-template>
                         </xsl:variable>
-                        <a class="shaare" title="Copier ce lien" target="_blank" href='https://www.shaarli.fr/my/{$username}/?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
+                        <a class="shaare" title="Copier ce lien" target="_blank" href='{$my_shaarli}/?post={link}&amp;source=bookmarklet&amp;title={$titleencoded}'>
                         <xsl:attribute name="class">
                             shaare
                             <xsl:if test="$favourite &gt;= 1"> favourite</xsl:if>
@@ -408,7 +427,7 @@
                         <xsl:if test="$favourite &gt;= 1"> ★</xsl:if>
                         <xsl:if test="$favourite = 0"> ☆</xsl:if>
                         </a>
-                    </xsl:if>
+                    </xsl:if> 
                     <xsl:if test="$my_respawn != ''" >
                         <a class="shaare" title="Sauvegarder" target="_blank" href='{$my_respawn}?q={link}'>☉</a>
                     </xsl:if>

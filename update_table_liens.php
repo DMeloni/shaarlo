@@ -3,34 +3,61 @@
 require_once 'config.php';
 require_once 'fct/fct_rss.php';
 require_once 'fct/fct_mysql.php';
+require_once 'fct/fct_http.php';
+require_once 'fct/fct_session.php';
 
 error_reporting(true);
 // Vérification de la clef
 // TODO
 
 
+global $SHAARLO_DOMAIN;
 
 $mysqli = shaarliMyConnect();
 
 $dataDir = 'data';
+$pidFile = 'cache/updateTableLiens.pid';
+
 $fluxDir = 'flux';
 $maxArticlesParInsert = 100;
-$allShaarlistes = json_decode(remove_utf8_bom(file_get_contents('http://shaarli.fr/api.php?do=getAllShaarlistes')), true);
+$allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes")), true);
 $infos = array();
 $time = microtime(true);
 $i = 0;
 
+
+if (is_file($pidFile) && is_null(get('force'))) {
+    $lastvisit = @filemtime($pidFile);
+    $difference = mktime() - $lastvisit;
+    $max_time = 60; // On ne peut lancer le script qu'une fois par minute
+    if ($difference < $max_time) {
+        die('lancement deja en cours');
+    } else {
+        @unlink($pidFile);
+        file_put_contents($pidFile, date('YmdHis'));
+    }   
+} else {
+    file_put_contents($pidFile, date('YmdHis'));
+}
+
 $shaarlistes = array();
 foreach($allShaarlistes as $url) {
-    echo $url ;
-    $fluxName = md5(urldecode($url));
+    $urlRssSimplifiee = simplifieUrl($url);
+    //echo $url ;
+    $fluxName = md5(($urlRssSimplifiee));
     $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 
     if (is_file($fluxFile)) {
+            if (!is_null(get('force'))) {
+                echo "Traitement  de : " . $fluxFile;
+            }
+            
         $content = file_get_contents($fluxFile);
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
-            echo ' -  flux foireux' . '<br/>';
+            if (!is_null(get('force'))) {
+                echo "flux foireux : " . $fluxFile;
+            }
             continue;
         }
         
@@ -38,7 +65,7 @@ foreach($allShaarlistes as $url) {
         
         $titre = (string)$list[0];
         
-        $shaarlistes[] = creerRss($fluxName, $titre, $url);
+        $shaarlistes[] = creerRss($fluxName, $titre, $url, $urlRssSimplifiee, 1);
         
         $rssListArrayed= convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
         foreach($rssListArrayed as $rssItem) {
@@ -81,21 +108,24 @@ foreach($allShaarlistes as $url) {
             
             $articleDate = date('YmdHis', $rssTimestamp);
             
+
             $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin);
 
+            
             if (count($articles) > $maxArticlesParInsert) {
                 insertArticles($mysqli, $articles);
                 $articles = array();
             }
         }
-    } else{
-        echo ' -  pas de flux';
-    }
+    } 
+    //else{
+    //    echo ' -  pas de flux';
+    //}
     
     insertArticles($mysqli, $articles);
     $articles = array();
     
-    echo '<br>';
+    //echo '<br>';
 }
 
 insertEntites($mysqli, 'rss', $shaarlistes);
