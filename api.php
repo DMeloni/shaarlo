@@ -481,15 +481,14 @@ if ($_GET['do'] === 'getInfoAboutAll') {
     
     $statFile = sprintf('%s/%s.json', $dataDir, $fluxName);
     
+    $cache = 'false';
+    
+    /*
     $cache = 'true';
     if(isset($_GET['cache'])) {
         $cache = $_GET['cache'];
-    }
-    
-    /*
-    if($cache == 'false') {
-        @file_get_contents('http://shaarli.fr/logan.php');
     }*/
+
     
     if( !is_file($statFile) || $cache == 'false') {
         $mysqli = shaarliMyConnect();

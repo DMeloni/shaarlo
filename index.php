@@ -129,11 +129,11 @@ if (isset($_GET['daily']) && $_GET['daily'] == 'tomorrow' ) {
 }
 
 if (isset($_GET['do']) && $_GET['do'] === 'rss') {
-    $usernameRecherche='499f443cfd5481cc0a29db210ca208a5';
+    $usernameRecherche='faa615913d3c84ce1ad0d6b86b53a4f5';
 }else{
     $mesAbonnements = getAllAbonnements($mysqli, $username);
     if(empty($mesAbonnements)) {
-        $usernameRecherche='499f443cfd5481cc0a29db210ca208a5';
+        $usernameRecherche='faa615913d3c84ce1ad0d6b86b53a4f5';
     }else{
         $usernameRecherche=$username;
     }
@@ -167,6 +167,15 @@ foreach($articles as $article) {
         }
     }
     
+    // L'admin peut bloquer un lien
+    if (isAdmin()) {
+        if($article['active'] === '1') {
+           $followUrl = ' (<a href="#" onclick="javascript:validerLien(this,\'' . $article['id'] . '\', \'bloquerLien\');return false;">Censurer ce lien</a>)';
+        } else {
+           $followUrl = ' (<a href="#" onclick="javascript:validerLien(this,\'' . $article['id'] . '\', \'validerLien\');return false;">Débloquer ce lien</a>)';
+        }
+    }
+    
     $rssTitreAffiche = htmlspecialchars($rssTitre);
     
     if(strpos($article['article_uuid'], 'my.shaarli.fr') > 0) {
@@ -188,10 +197,15 @@ foreach($articles as $article) {
         $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['rss_titre_origin']);
     }
     
-    
-    
-    $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', $article['article_description']));
 
+    // Si le lien est actif ou si l'administrateur est connecté
+    // Le message est affiché en clair
+    if($article['active'] === '1' ||  isAdmin()) {
+        $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', $article['article_description']));
+    } else {
+        // Si le message a été censuré, on affiche un message
+        $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', '<span title="Ce contenu ne correspond pas aux règles de ce site web.">-- Commentaire censuré --</span>'));  
+    }
     
     $popularity=0;
     $articleDate = $article['article_date'];

@@ -37,7 +37,9 @@ function insertEntites($mysqli, $table, $entites) {
     if($mysqli === null) {
         return null;
     }
-
+    if(!is_array($entites)) {
+        return null;
+    }
     $premierArticle = reset($entites);
     
     if(!is_array($premierArticle)) {
@@ -64,7 +66,7 @@ function insertEntites($mysqli, $table, $entites) {
     }elseif($table == 'rss') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE rss_titre=VALUES(rss_titre),date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'shaarliste') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE pseudo=VALUES(pseudo),date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE pseudo=VALUES(pseudo),date_update=VALUES(date_update),url=VALUES(url)', $table, $requeteClefSQL, implode(',', $sql));
     }else {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }
@@ -164,10 +166,11 @@ function creerMonRss($username, $idRss, $pseudo, $alias = '') {
 }
 
 
-function creerShaarliste($username, $pseudo) {
+function creerShaarliste($username, $pseudo, $url) {
     
     $entite = array('username' => $username
                 ,'pseudo' => $pseudo
+                ,'url' => $url
             );
 
     $entite['date_update'] = date('YmdHis');
@@ -180,7 +183,8 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     $articles = array();
     $matchSQL ='';
     if(!empty($fullText)) {
-        $fullText = $mysqli->real_escape_string($fullText);
+        $fullText = $mysqli->real_escape_string(urldecode($fullText));
+        $fullText = str_replace('%', '', $fullText);
         $matchSQL = " AND l.article_url != 'http://' AND (MATCH (l.article_titre,l.article_description) AGAINST ('$fullText') OR l.article_uuid LIKE '%%" . $fullText . "%%' ) ";
     }
     if(isset($_GET['simulate'])) {

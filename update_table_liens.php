@@ -1,4 +1,8 @@
 <?php
+ini_set("display_errors", 1);
+ini_set("track_errors", 1);
+ini_set("html_errors", 1);
+error_reporting(E_ALL);
 // include 'auto_restrict.php';
 require_once 'config.php';
 require_once 'fct/fct_rss.php';
@@ -6,7 +10,6 @@ require_once 'fct/fct_mysql.php';
 require_once 'fct/fct_http.php';
 require_once 'fct/fct_session.php';
 
-error_reporting(true);
 // Vérification de la clef
 // TODO
 
@@ -41,6 +44,7 @@ if (is_file($pidFile) && is_null(get('force'))) {
 }
 
 $shaarlistes = array();
+$articles = array();
 foreach($allShaarlistes as $url) {
     $urlRssSimplifiee = simplifieUrl($url);
     //echo $url ;
@@ -51,7 +55,7 @@ foreach($allShaarlistes as $url) {
             if (!is_null(get('force'))) {
                 echo "Traitement  de : " . $fluxFile;
             }
-            
+        
         $content = file_get_contents($fluxFile);
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
@@ -63,6 +67,10 @@ foreach($allShaarlistes as $url) {
         
         $list = $xmlContent->xpath(XPATH_RSS_TITLE);
         
+        if(!isset($list[0])) {
+            continue;
+        }
+
         $titre = (string)$list[0];
         
         $shaarlistes[] = creerRss($fluxName, $titre, $url, $urlRssSimplifiee, 1);
@@ -79,7 +87,7 @@ foreach($allShaarlistes as $url) {
 			$guid = $rssItem['guid'];
             $title = $rssItem['title'];
             $description = $rssItem['description'];
-            $id = md5($guid);
+            $id = md5(simplifieUrl($guid));
             
             $linkSansHttp  = str_replace('http://', '', $link);
             $linkSansHttps = str_replace('https://', '', $linkSansHttp);
@@ -92,7 +100,9 @@ foreach($allShaarlistes as $url) {
             $nbBoucles = 0;
             $lienSource = $link;
             $idRssOrigin = null;
-            while(preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)) {
+            while ( preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)
+                || preg_match('#\?id=[0-9]{14}$#', $lienSource)
+            ) {
                 $retourGetId = getIdCommunFromShaarliLink($mysqli, $lienSource);
                 if($idRssOrigin === null) {
                     $idRssOrigin = getIdRssOriginFromShaarliLink($mysqli, $lienSource);
@@ -131,3 +141,4 @@ foreach($allShaarlistes as $url) {
 insertEntites($mysqli, 'rss', $shaarlistes);
     
 shaarliMyDisconnect($mysqli);
+@unlink($pidFile);

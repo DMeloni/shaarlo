@@ -91,7 +91,7 @@ function loadConfiguration($url) {
     $mysqli = shaarliMyConnect();
     
     // Création en base du shaarliste
-    $shaarliste = creerShaarliste($username, $pseudo);
+    $shaarliste = creerShaarliste($username, $pseudo, $url);
     insertEntite($mysqli, 'shaarliste', $shaarliste);
         
     // Maj sql
