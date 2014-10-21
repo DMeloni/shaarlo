@@ -107,7 +107,7 @@ function loadConfiguration($url) {
             $idRss = md5($urlSimplifiee);
             
             // L'id rss n'existe pas encore
-            if (true || null === ($idRss = idRssExists($mysqli, $urlSimplifiee))) {
+            if (null === ($idRss = idRssExists($mysqli, $urlSimplifiee))) {
                 $idRss =  md5($urlSimplifiee);
 
                 // Telechargement de l'icone et sauvegarde
