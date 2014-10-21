@@ -1,4 +1,4 @@
-html{font-family: "Trebuchet MS",Verdana,Arial,Helvetica,sans-serif;background:#CCC;color:#111;font-size:62.5%;}
+html{font-family: "Trebuchet MS",Verdana,Arial,Helvetica,sans-serif;background:#F0F6FF;color:#111;font-size:62.5%;}
 body{margin:0;padding:0;font-size:14px;line-height:1.5em;}
 a, .options-extend button{color:#3465A4;}
 a:hover, .options-extend button:hover{color:#4398C9;}
@@ -19,7 +19,7 @@ h1 a,h1 a:visited{text-decoration:none;}
 #sidebar div{padding:1em 30px;}
 #sidebar h2{color:#665;}
 #sidebar ul{list-style:none;padding:0;margin:1em 0;}
-#content, #dashboard,#dashboard_icon{background:#EEE;border-top:1px solid #4398C9;border-left:1px solid #4398C9;border-right:1px solid #4398C9;border-radius:3px;}
+#content, #dashboard,#dashboard_icon{background:#FFF;border-top:1px solid #4398C9;border-left:1px solid #4398C9;border-right:1px solid #4398C9;border-radius:3px;}
 .article{overflow: hidden;padding:30px;color:#111;border-bottom:1px solid #bbb;}
 .article h2 a{text-decoration:none;}
 fieldset{float:left;min-height:3.5em;}
@@ -38,6 +38,8 @@ input:focus{background:#EEE;color:#3465A4;border-color:#3465A4;}
 .article a{color:#3465A4}
 .article b a{text-decoration:none;}
 .article a:hover{color:#4398C9}
+.entete-avatar{border:1px #CCC solid;float:left}
+.entete-pseudo{display:block;margin-top:1em;margin-left: 4em;font-size: 16px;}
 .toptopic a{color:#11A101;}
 .important{color:#115101;}
 .red{color:#810101;font-weight:bold;}

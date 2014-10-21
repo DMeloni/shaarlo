@@ -4,6 +4,8 @@ require_once('fct/fct_crypt.php');
 require_once('fct/fct_http.php');
 require_once('fct/fct_markdown.php');
 require_once('fct/fct_mysql.php');
+require_once('fct/Favicon/DataAccess.php');
+require_once('fct/Favicon/Favicon.php');
 
 /**
  * Retourne le nombre de sessions ouvertes (OVH)
@@ -87,7 +89,7 @@ function loadConfiguration($url) {
             }
         }
     }
-    
+    $favicon = new \Favicon\Favicon();
     $mysqli = shaarliMyConnect();
     
     // Création en base du shaarliste
@@ -105,9 +107,35 @@ function loadConfiguration($url) {
             $idRss = md5($urlSimplifiee);
             
             // L'id rss n'existe pas encore
-            if (null === ($idRss = idRssExists($mysqli, $urlSimplifiee))) {
+            if (true || null === ($idRss = idRssExists($mysqli, $urlSimplifiee))) {
                 $idRss =  md5($urlSimplifiee);
+
+                // Telechargement de l'icone et sauvegarde
+                $pathIco = sprintf('img/favicon/%s.gif', $idRss);
+                $pathGif = sprintf('img/favicon/%s.ico', $idRss);
+                if(!is_file($pathIco) && !is_file($pathGif)) {
+                    $urlFavicon = $favicon->get($param['value']);
+                    if (false !== ($favico = @file_get_contents($urlFavicon))) {
+                        $tmpIco = sprintf('img/favicon/%s', 'tmp');
+                        file_put_contents($tmpIco, $favico);
+                        if (exif_imagetype($tmpIco) == IMAGETYPE_GIF 
+                        ) {
+                            rename($tmpIco,sprintf('img/favicon/%s.gif', $idRss));
+                        }
+                        elseif (exif_imagetype($tmpIco) == IMAGETYPE_ICO 
+                        ) {
+                            rename($tmpIco,sprintf('img/favicon/%s.ico', $idRss));
+                        }
+                    } else {
+                        //Fichier foireux
+                        $faviconPath = 'img/favicon/63a61a22845f07c89e415e5d98d5a0f5.ico';
+                        copy($faviconPath, sprintf('img/favicon/%s.ico', $idRss));
+                    }
+                        
+                }
+                
                 $rss = creerRss($idRss, 'sans titre', $param['value'], $urlSimplifiee, 1);
+                
                 insertEntite($mysqli, 'rss', $rss);
             }
 

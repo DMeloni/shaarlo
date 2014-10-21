@@ -1,0 +1,8 @@
+resources/cache/*
+resources/tests/cache/*
+!.gitkeep
+index.php
+
+### Composer ###
+composer.phar
+vendor/

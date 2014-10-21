@@ -64,7 +64,7 @@ function insertEntites($mysqli, $table, $entites) {
     if($table == 'liens') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss) ', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'rss') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE rss_titre=VALUES(rss_titre),date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'shaarliste') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE pseudo=VALUES(pseudo),date_update=VALUES(date_update),url=VALUES(url)', $table, $requeteClefSQL, implode(',', $sql));
     }else {
@@ -133,13 +133,14 @@ function creerArticle($id, $idCommun, $articleUrl, $urlSimplifie, $articleTitle,
     return $article;
 }
 
-function creerRss($id, $titre, $url, $urlSimplifiee, $active = 0) {
+function creerRss($id, $titre, $url, $urlSimplifiee, $active = 0, $urlFavicon='') {
     
     $entite = array('id' => $id
                 ,'rss_titre' => $titre
                 ,'url' => $url
                 ,'active' => $active
                 ,'url_simplifiee' => $urlSimplifiee
+                ,'url_favicon' => $urlFavicon
             );
             
     $entite['date_update'] = date('YmdHis');

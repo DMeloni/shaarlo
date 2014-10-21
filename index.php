@@ -197,11 +197,32 @@ foreach($articles as $article) {
         $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['rss_titre_origin']);
     }
     
-
+    
     // Si le lien est actif ou si l'administrateur est connecté
     // Le message est affiché en clair
     if($article['active'] === '1' ||  isAdmin()) {
-        $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', $article['article_description']));
+        $img = '';
+        if(!(isset($_GET['do']))) {
+            $faviconPath = 'img/favicon/63a61a22845f07c89e415e5d98d5a0f5.ico';
+            
+            $faviconGifPath = sprintf('img/favicon/%s.gif', $article['id_rss']);
+            if(is_file($faviconGifPath)) {
+               $faviconPath = $faviconGifPath;
+            } else {
+                $faviconIcoPath = sprintf('img/favicon/%s.ico', $article['id_rss']);
+                if(is_file($faviconIcoPath)) {
+                   $faviconPath = $faviconIcoPath;
+                }
+            }
+            $img = sprintf('<a href="%s"><img class="entete-avatar" width="50" height="50" src="%s"/></a>', $shaarliBaseUrl, sprintf('%s/%s', $SHAARLO_URL, $faviconPath));
+        }
+        $description = sprintf('%s<span class="entete-pseudo"><b>%s</b>, le %s </span><br/> %s %s<br/><br/>', 
+            $img, 
+            $rssTitreAffiche, 
+            date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), 
+            str_replace('<br>', '<br/>', $article['article_description']),
+            $followUrl
+       );
     } else {
         // Si le message a été censuré, on affiche un message
         $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', '<span title="Ce contenu ne correspond pas aux règles de ce site web.">-- Commentaire censuré --</span>'));  
