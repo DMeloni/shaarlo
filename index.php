@@ -214,7 +214,7 @@ foreach($articles as $article) {
                    $faviconPath = $faviconIcoPath;
                 }
             }
-            $img = sprintf('<a href="%s"><img class="entete-avatar" width="50" height="50" src="%s"/></a>', $shaarliBaseUrl, sprintf('%s/%s', $SHAARLO_URL, $faviconPath));
+            $img = sprintf('<a href="%s"><img class="entete-avatar" width="32" height="32" src="%s"/></a>', $shaarliBaseUrl, sprintf('%s/%s', $SHAARLO_URL, $faviconPath));
         }
         $description = sprintf('%s<span class="entete-pseudo"><b>%s</b>, le %s </span><br/> %s %s<br/><br/>', 
             $img, 
