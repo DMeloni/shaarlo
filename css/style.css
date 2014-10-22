@@ -38,8 +38,8 @@ input:focus{background:#EEE;color:#3465A4;border-color:#3465A4;}
 .article a{color:#3465A4}
 .article b a{text-decoration:none;}
 .article a:hover{color:#4398C9}
-.entete-avatar{border:1px #CCC solid;float:left}
-.entete-pseudo{display: block;margin-top: 0.5em;margin-left: 2.5em;font-size: 15px;}
+.entete-avatar{display: inline-block;vertical-align: middle;}
+.entete-pseudo{display: inline-block;vertical-align: middle;margin-left: 0.5em;font-size: 15px;}
 .toptopic a{color:#11A101;}
 .important{color:#115101;}
 .red{color:#810101;font-weight:bold;}

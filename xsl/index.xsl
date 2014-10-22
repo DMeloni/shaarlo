@@ -47,7 +47,7 @@
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 				<link rel="shortcut icon" href="favicon.ico" />
-				<link rel="stylesheet" href="css/style.css?v=2" type="text/css" media="screen"/>
+				<link rel="stylesheet" href="css/style.css?v=3" type="text/css" media="screen"/>
 
                 <xsl:if test="$dotsies = 'yes'">
                     <link rel="stylesheet" href="css/dotsies.css" type="text/css" media="screen"/>
