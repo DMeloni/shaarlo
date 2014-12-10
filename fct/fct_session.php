@@ -45,7 +45,8 @@ function loadConfiguration($url) {
     $clefProfil = 'Mon Profil';
     $clefAbonnement = 'Mes abonnements';
     $clefsAutorises = array($clefProfil, $clefAbonnement);
-    $pseudo = md5($url);
+    $urlShaarlisteSimplifiee = simplifieUrl($url);
+    $pseudo = md5($urlShaarlisteSimplifiee);
     
     // Récupération du message dans shaarli
     $tagConfiguration = 'shaarlo_configuration_v1';
@@ -79,7 +80,7 @@ function loadConfiguration($url) {
 
     $configuration = markdownToArray($description, $clefsAutorises);
     
-    $username = md5($url);
+    $username = md5($urlShaarlisteSimplifiee);
         
     // Maj sql
     if(!empty($configuration)) {
@@ -99,7 +100,7 @@ function loadConfiguration($url) {
     // Maj sql
     if(!empty($configuration[$clefAbonnement])) {
         deleteMesRss($mysqli, $username);
-        $configuration[$clefAbonnement][] = array('key' => $pseudo, 'value' => $url);
+        $configuration[$clefAbonnement][] = array('key' => $pseudo, 'value' => $urlShaarlisteSimplifiee);
         foreach($configuration[$clefAbonnement] as $param) {
             $urlSimplifiee = str_replace('https://', '', $param['value']);
             $urlSimplifiee = str_replace('http://', '', $urlSimplifiee);
@@ -148,6 +149,7 @@ function loadConfiguration($url) {
     }
     
     if (!empty($pseudo)) {
+        $_SESSION = array();
         $_SESSION['username'] = $username;
         $_SESSION['pseudo'] = $pseudo;
         $_SESSION['myshaarli'] = $url;

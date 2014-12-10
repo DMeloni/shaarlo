@@ -5,21 +5,23 @@ ini_set('session.use_cookies', 1);       // Use cookies to store session.
 ini_set('session.use_only_cookies', 1);  // Force cookies for session (phpsessionID forbidden in URL)
 ini_set('session.use_trans_sid', false); // Prevent php to use sessionID in URL if cookies are disabled.
 ini_set('session.cookie_domain', '.shaarli.fr');
+ini_set('session.cookie_lifetime', 12 * 60 * 60);
 
 session_name('shaarli');
 
 /*
+ * Mysql db access
+ */
+$GLOBALS['MYSQL_SERVER'] = 'shaarli.mysql.db'; /* Adresse du serveur mysql */
+$GLOBALS['MYSQL_USER'] = 'shaarliuser'; /* Utilisateur ayant les droits d'écriture */
+$GLOBALS['MYSQL_PASSWORD'] = 'xxx'; /* Mot de passe de l'utilisateur */
+$GLOBALS['MYSQL_DB'] = 'shaarlidb'; /* Nom de la base de données */
+$GLOBALS['salt']     = 'toto';/* Clef de salaison */
+
+/*
  * Directorys
 */
-$GLOBALS['MYSQL_SERVER'] = 'shaarlimy.mysql.db'; /* Adresse du serveur mysql */
-$GLOBALS['MYSQL_USER'] = 'shaarlimy'; /* Utilisateur ayant les droits d'écriture */
-$GLOBALS['MYSQL_PASSWORD'] = 'password'; /* Mot de passe de l'utilisateur */
-$GLOBALS['MYSQL_DB'] = 'shaarlimy'; /* Nom de la base de données */
-$GLOBALS['salt']     = 'clef_salaison';/* Clef de salaison */
-
-$GLOBALS['SHAARLO_DOMAIN'] = 'domaine.ext'; /* your shaarlo's domain */
-$GLOBALS['SHAARLO_URL'] = 'http://' . $GLOBALS['SHAARLO_DOMAIN'] .'/'; /* your shaarlo's url (usefulfor the main RSS) */
-
+$GLOBALS['SHAARLO_DOMAIN'] = 'shaarli.fr'; /* your shaarlo's domain */
 $GLOBALS['DATA_DIR'] = 'data'; /* Nom du répertoire contenant les données récupérées */
 $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive'; /* Nom du répertoire contenant les archives */
 $GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favisons */
@@ -31,8 +33,6 @@ $GLOBALS['POTENTIAL_SHAARLIS_FILE_NAME'] = 'potential_shaarli.txt'; /* Nom du fi
 $GLOBALS['INDEXATION_FILE'] = 'indexation.csv'; /* indexation file for filter */
 $GLOBALS['DELETED_SHAARLIS_FILE_NAME'] = 'deleted_shaarli.txt'; /* Nom du fichier listant les Shaarlis supprimés (sauvegarde) */
 $GLOBALS['NO_HTTPS_SHAARLIS_FILE_NAME'] = 'no_https_shaarli.txt'; /* Nom du fichier listant les Shaarlis en http */
-$GLOBALS['MY_SHAARLI_FILE_NAME'] = 'my_shaarli.txt';; /* Nom du fichier contenant l'URL de votre Shaarli (https://github.com/sebsauvage/Shaarli) */
-$GLOBALS['MY_RESPAWN_FILE_NAME'] = 'my_respawn.txt';; /* Nom du fichier contenant l'URL de votre Respawn (https://github.com/broncowdd/respawn) */
 $GLOBALS['ARCHIVE_FILE_NAME'] = 'archive.html';
 $GLOBALS['CALENDAR_SORTING'] = 'desc';
 $GLOBALS['COMMENT_SORTING'] = 'desc'; /* sort url comment by date */
@@ -43,6 +43,7 @@ $GLOBALS['ACTIVE_YOUTUBE'] = 'yes'; /* 'yes' active youtube embedded videos */
 $GLOBALS['ACTIVE_NEXT_PREVIOUS'] = 'yes'; /* 'yes' active next/previous button : useful for mobile view*/
 $GLOBALS['ACTIVE_FAVICON'] = 'yes'; /* 'yes' active shaarli favicon recuperation */
 $GLOBALS['DATE_FORMAT'] = '\l\e d/m/Y \à H\h i\m s\s'; /* active date format */
+$GLOBALS['SHAARLO_URL'] = 'http://domaine.ext/shaarlo/'; /* your shaarlo's url (useful for the main RSS) */
 $GLOBALS['REFRESH_SLEEP'] = 60;
 
 require_once 'mod/mod.php';

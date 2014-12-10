@@ -110,15 +110,23 @@ if (!empty($_POST)) {
             </script>
         </head> 
 <body>
-    <div id="header">
-        <a href="index.php">Accueil</a>
-        <a href="admin.php">Administration</a>
-        <a href="random.php">Aléatoire</a>
-        <a href="my.php">My</a>
-        <a href="opml.php?mod=opml">OPML</a>
-        <a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a>
-        <h1 id="top"><a href="./my.php">Espace My</a></h1> 
-    </div> 
+    <div class="menu">
+        <h1>
+            <a href="/"><img class="logo hidden-on-smartphone" src="img/logo.png" height="40" width="36" /></a>
+            <a href="./my.php">Espace My</a>
+        </h1> 
+        <ul>
+            <li><a href="index.php">Accueil</a></li>
+            <li><a href="index.php?sortBy=rand&amp;from=2000-09-16">Aléatoire</a></li>
+            <li><a href="my.php">My</a></li>
+            <li><a href="opml.php?mod=opml">OPML</a></li>
+
+            <!--<li><a href="https://nexen.mkdir.fr/shaarli-river/" id="river">Shaarli River</a></li>-->
+            <xsl:if test="$username">
+                <span id="compteur"></span>
+            </xsl:if>
+        </ul>
+    </div>
 <div id="content">
 <?php 
     $username = null;
@@ -195,7 +203,8 @@ if (!empty($_POST)) {
             <ul>
                 <li><span>Gratuit</span></li>
                 <li><span>Hébergement mutualisé (OVH) (<a href="http://www.ovh.com/fr/support/contrats/Conditions-generales-hebergement-mutualise.pdf">CG</a>)</span></li>
-            </ul>        
+            </ul>  
+            Vous pouvez également passer par un <a href="http://shaarferme.etudiant-libre.fr.nf/index.php">Shaarly community</a>.         
         </div>
     <?php } ?>
     <div class="article shaarli-youm-org"> 
@@ -224,6 +233,9 @@ if (!empty($_POST)) {
         <div>
             Ou accéder au <a href="https://github.com/DMeloni/shaarlo">code source de shaarlo</a><br />
             Ou celui du <a href="https://github.com/DMeloni/shaarli">shaarli multicomptes</a><br />
+        </div>
+        <div>
+        Ou accéder à une base de données assez vaste des shaarlis actuellement disponible via <a href="https://ecirtam.net/links/?jV9nnA">Oros</a>
         </div>
     </div>
 <div class="article shaarli-youm-org">

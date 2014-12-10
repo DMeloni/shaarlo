@@ -8,6 +8,7 @@
 
 require_once 'config.php';
 require_once 'fct/fct_session.php';
+include_once('fct/fct_capture.php');
 
  // Returns a token.
 function getToken()
@@ -56,14 +57,17 @@ if (isset($_SESSION['pseudo'])) {
     $myshaarli = $_SESSION['myshaarli'];
 }
 
-$q = null;
-if(!empty($_GET['q'])) {
-    $q = $_GET['q'];
+/*
+ * Lock du menu
+ */
+$menuLocked = false;
+if (isset($_SESSION['lock']['state']) ) {
+    if ($_SESSION['lock']['state'] == 'lock') {
+        $menuLocked = true;
+    }
 }
-$filterOn = null;
-if (isset($_GET['sort'])) {
-    $filterOn = 'yes';
-}
+ 
+
 /*
  * Filtre sur la popularité
  */
@@ -71,6 +75,24 @@ $filtreDePopularite = 0;
 if (isset($_GET['pop']) && (int)$_GET['pop'] > 0) {
     $filtreDePopularite = (int)$_GET['pop'];
 }
+
+$q = null;
+$afficherMessagerie = false;
+if(!empty($_GET['q'])) {
+    $q = $_GET['q'];
+    // Affichage de la messagerie du shaarliste 
+    $matches = array();
+    if (preg_match_all('#^shaarli:([0-9a-f]{32})$#', urldecode($q), $matches) === 1) {
+        $afficherMessagerie = true;
+        $filtreDePopularite = 2;
+        $titrePageMessagerie = sprintf('Messagerie de %s', getRssTitleFromId($mysqli, $matches[1][0]));
+    }
+}
+$filterOn = null;
+if (isset($_GET['sort'])) {
+    $filterOn = 'yes';
+}
+
 
 // Limite
 $limit = $MIN_FOUND_ITEM;
@@ -120,20 +142,20 @@ if (isset($_GET['to'])) {
     }
 }
 
+$today = new DateTime();
 // daily=tomorrow pour bloquer sur hier
 if (isset($_GET['daily']) && $_GET['daily'] == 'tomorrow' ) {
-    $today = new DateTime();
     $tomorrow = $today->modify('-1 DAY');
     $from = $tomorrow->format('Ymd000000');
     $to = $tomorrow->format('Ymd235959');
 }
 
 if (isset($_GET['do']) && $_GET['do'] === 'rss') {
-    $usernameRecherche='faa615913d3c84ce1ad0d6b86b53a4f5';
+    $usernameRecherche='196e3006151883482e97250f4f1e8eb8';
 }else{
     $mesAbonnements = getAllAbonnements($mysqli, $username);
     if(empty($mesAbonnements)) {
-        $usernameRecherche='faa615913d3c84ce1ad0d6b86b53a4f5';
+        $usernameRecherche='196e3006151883482e97250f4f1e8eb8';
     }else{
         $usernameRecherche=$username;
     }
@@ -149,10 +171,6 @@ foreach($articles as $article) {
     $articleDateTime = new DateTime($article['article_date']);
     
     $rssTitre = $article['rss_titre'];
-    if(!empty($article['alias'])){
-        $rssTitre = $article['alias'];
-    }
-    
     $followUrl = '';
     
     if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
@@ -183,26 +201,29 @@ foreach($articles as $article) {
     }
     
     $shaarliBaseUrl = explode('?', $article['article_uuid']);
+    
+    //ajout de l'icone de messagerie ssi non mode rss
+    $iconeMessagerie = '';
+    if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
+        $iconeMessagerie = sprintf('<a href="?q=shaarli%%3A%s"><img class="display-inline-block-text-bottom  opacity-7" width="15" height="15" src="img/mail.gif"></a>', $article['id_rss']);
+    }
+        
     if(isset($shaarliBaseUrl[0])) {
         $shaarliBaseUrl = $shaarliBaseUrl[0];
-        $rssTitreAffiche = sprintf('<a href="%s">%s</a>', $shaarliBaseUrl, $rssTitreAffiche);
+        $rssTitreAffiche = sprintf('<a href="%s">%s</a> %s', $shaarliBaseUrl, $rssTitreAffiche, $iconeMessagerie);
     }
 
-    if(!empty($article['alias_origin'])) {
-        if($rssTitre != $article['alias_origin']) {
-            $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['alias_origin']);
-        }
-    }
-    elseif(!empty($article['rss_titre_origin'])) {
+    if(isset($found[$article['id_commun']]) && !empty($article['rss_titre_origin'])) {
         $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['rss_titre_origin']);
-    }
+    } 
     
     
     // Si le lien est actif ou si l'administrateur est connecté
     // Le message est affiché en clair
     if($article['active'] === '1' ||  isAdmin()) {
         $img = '';
-        if(!(isset($_GET['do']))) {
+        //ajout de l'icone d'avatar ssi non mode rss
+        if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
             $faviconPath = 'img/favicon/63a61a22845f07c89e415e5d98d5a0f5.ico';
             
             $faviconGifPath = sprintf('img/favicon/%s.gif', $article['id_rss']);
@@ -214,28 +235,46 @@ foreach($articles as $article) {
                    $faviconPath = $faviconIcoPath;
                 }
             }
-            $img = sprintf('<a href="%s"><img class="entete-avatar" width="16" height="16" src="%s"/></a>', $shaarliBaseUrl, sprintf('%s/%s', $SHAARLO_URL, $faviconPath));
+            $img = sprintf('<a href="%s"><img class="entete-avatar" width="16" height="16" src="%s"/></a>', $shaarliBaseUrl, sprintf('%s', $faviconPath));
         }
-        $description = sprintf('%s<span class="entete-pseudo"><b>%s</b>, le %s </span><br/> %s %s<br/><br/>', 
+        if($articleDateTime->format('Ymd') == $today->format('Ymd')) {
+            $dateAffichee = date('H:i', $articleDateTime->getTimestamp());
+        } else {
+            $dateAffichee = date('d/m/Y', $articleDateTime->getTimestamp());
+        }
+
+        
+        $description = sprintf('%s<span class="entete-pseudo"><b>%s</b> <span class="opacity-3">%s</span> </span><br/> %s %s<br/><br/>', 
             $img, 
             $rssTitreAffiche, 
-            date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), 
+            $dateAffichee, 
             str_replace('<br>', '<br/>', $article['article_description']),
             $followUrl
        );
     } else {
         // Si le message a été censuré, on affiche un message
-        $description = sprintf("<b>%s</b>, le %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', '<span title="Ce contenu ne correspond pas aux règles de ce site web.">-- Commentaire censuré --</span>'));  
+        $description = sprintf("<b>%s</b> %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', '<span title="Ce contenu ne correspond pas aux règles de ce site web.">-- Commentaire censuré --</span>'));  
     }
     
+    if($articleDateTime->format('Ymd') == $today->format('Ymd')) {
+        $derniereDateMaj = $articleDateTime->format('H:i');
+    } else {
+        $derniereDateMaj = $articleDateTime->format('d/m');
+    }
+    $dernierAuteur = $article['rss_titre'];
     $popularity=0;
     $articleDate = $article['article_date'];
     if(isset($found[$article['id_commun']])) {
         $description .= $found[$article['id_commun']]['description'];
         $popularity = $found[$article['id_commun']]['pop'] + 1;
         $articleDate = $found[$article['id_commun']]['date'];
+        $dernierAuteur = $found[$article['id_commun']]['dernier_auteur'];
+        $faviconPath = $found[$article['id_commun']]['dernier_auteur_favicon'];
+        $derniereDateMaj = $found[$article['id_commun']]['derniere_date_maj'];
     }
-      
+    
+
+    
     $found[$article['id_commun']] = array('description' => $description, 
                                           'title' =>  $article['article_titre'], 
                                           'link' => $article['article_url'],
@@ -243,10 +282,102 @@ foreach($articles as $article) {
                                           'date' => $articleDate,
                                           'category' => '',
                                           'pop' => $popularity,
-                                          'rand' => rand()
+                                          'rand' => rand(),
+                                          'dernier_auteur' => $dernierAuteur,
+                                          'dernier_auteur_favicon' => $faviconPath,
+                                          'derniere_date_maj' => $derniereDateMaj
                                           );
 
 }
+
+/*
+* Récupération du "meilleur" article du jour
+*/
+$isToday = true;
+if(!isset($_GET['q'])) {
+    if(isset($_GET['from'])) {
+        $dateDeLaVeille = new DateTime($_GET['from']);
+        //$dateDeLaVeille->modify('-1 day');
+        $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd000000'));
+        $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd235959'));
+        $isToday = false;
+    } else {
+        $dateDeLaVeille = new DateTime();
+        if(isset($_GET['veille'])) {
+            $dateDeLaVeille = new DateTime($_GET['veille']);
+            $isToday = false;
+        }
+        
+        // Selection de la date du meilleur article
+        if ($dateDeLaVeille->format('H') < 10 ) {
+            // Si l'heure actuelle est avant 10h, on récupère l'article de la veille de 21h à minuit
+            $dateDeLaVeille->modify('-1 day');
+            $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd210000'));
+            $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd235959'));
+        } elseif ($dateDeLaVeille->format('H') < 13 ) {
+            // Si l'heure actuelle est avant 13h, on récupère l'article du jour de minuit à 10h
+            $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd000000'));
+            $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd095959'));
+        } elseif ($dateDeLaVeille->format('H') < 16 ) {
+            // Si l'heure actuelle est avant 16h, on récupère l'article du jour de 10h à 13h
+            $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd100000'));
+            $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd125959'));
+        } elseif ($dateDeLaVeille->format('H') < 19 ) {
+            // Si l'heure actuelle est avant 19h, on récupère l'article du jour de 13h à 16h
+            $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd130000'));
+            $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd155959'));
+        } elseif ($dateDeLaVeille->format('H') < 21 ) {
+            // Si l'heure actuelle est avant 21h, on récupère l'article du jour de 16h à 19h
+            $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd160000'));
+            $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd185959'));
+        } else {
+            // Sinon on récupère l'article du jour de 19h à 21h
+            $dateTimeFrom = new DateTime($dateDeLaVeille->format('Ymd190000'));
+            $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd205959'));
+        }
+    }
+    
+    $meilleursArticlesDuJour =  getMeilleursArticlesDuJour($mysqli, $dateTimeFrom, $dateTimeTo);
+    $meilleursArticlesDuJourRss  = '';
+    foreach ($meilleursArticlesDuJour as $meilleurArticleDuJour) {
+            //Récupération d'une capture d'écran du site
+            $imgMiniCapturePath = captureUrl($meilleurArticleDuJour['article_url'], $meilleurArticleDuJour['id_commun'], 450, 450, true);
+            
+            $faviconPath = 'img/favicon/63a61a22845f07c89e415e5d98d5a0f5.ico';
+
+            $faviconGifPath = sprintf('img/favicon/%s.gif', $meilleurArticleDuJour['id_rss']);
+            if(is_file($faviconGifPath)) {
+               $faviconPath = $faviconGifPath;
+            } else {
+                $faviconIcoPath = sprintf('img/favicon/%s.ico', $meilleurArticleDuJour['id_rss']);
+                if(is_file($faviconIcoPath)) {
+                   $faviconPath = $faviconIcoPath;
+                }
+            }
+            $avatar = sprintf('<a href="%s"><img class="entete-avatar" width="16" height="16" src="%s"/></a>', $meilleurArticleDuJour['url'], sprintf('%s', $faviconPath));
+            
+            $meilleursArticlesDuJourRss .= sprintf("<best>
+                                <title>%s</title>
+                                <link>%s</link>
+                                <pubDate>%s</pubDate>
+                                <description>%s</description>
+                                <url_image>%s</url_image>
+                                <rss_titre>%s</rss_titre>
+                                <avatar>%s</avatar>
+                                <rss_url>%s</rss_url>
+                                </best>",
+            htmlspecialchars($meilleurArticleDuJour['article_titre']),
+            htmlspecialchars($meilleurArticleDuJour['article_url']),
+            $meilleurArticleDuJour['date_insert'],
+            htmlspecialchars($meilleurArticleDuJour['article_description']),
+            $imgMiniCapturePath,
+            htmlspecialchars($meilleurArticleDuJour['rss_titre']),
+            htmlspecialchars($avatar),
+            htmlspecialchars($meilleurArticleDuJour['url'])
+        );
+    }
+}
+
 /*
 var_export($found);
 echo $sort;
@@ -263,45 +394,97 @@ if(is_array($found)) {
 }
 $message = array('pop' => 'Popularité', 'rand' => 'Random', 'date' => 'Date', SORT_ASC => 'croissant', SORT_DESC => 'décroissant');
 
-if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
-    $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';
-} else {
-    if(isset($usernameRecherche) && $usernameRecherche != 'shaarlo') {
-        $shaarliste = getShaarliste($mysqli, $usernameRecherche);
-        $titre = 'Les discussions de @' .htmlentities($shaarliste['pseudo']). ' du ' . $fromDateTime->format('d/m/Y');
-    }else{
-        $titre = 'Les discussions de Shaarli du ' . $fromDateTime->format('d/m/Y');
-    }
+$extended = false;
+if (count($found) > 1) {
+    $extended = true;
 }
 
+if($afficherMessagerie) {
+    $titre = $titrePageMessagerie;
+}else{
+    if ($fromDateTime->format('Ymd') != $toDateTime->format('Ymd')) {
+        $titre = 'Du ' . $fromDateTime->format('d/m/Y') . ' au  ' . $toDateTime->format('d/m/Y') . ' - Tri par :  ' . $message[$sortBy] . ' (' . $message[$sort] . ')';
+    } else {
+        if(isset($usernameRecherche) && $usernameRecherche != 'shaarlo') {
+            $shaarliste = getShaarliste($mysqli, $usernameRecherche);
+            $titre = 'Les discussions de @' .htmlentities($shaarliste['pseudo']). ' du ' . $fromDateTime->format('d/m/Y');
+        }else{
+            $titre = 'Les discussions de Shaarli du ' . $fromDateTime->format('d/m/Y');
+        }
+    }
+}
 // Création du flux rss
     $shaarloRss = '<?xml version="1.0" encoding="utf-8"?>
-	<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-	  <channel>
-	    <title>'.$titre.'</title>
-	    <link>http://shaarli.fr/</link>
-	    <description>Shaarli Aggregators</description>
-	    <language>fr-fr</language>
-	    <copyright>http://shaarli.fr/</copyright>';
-foreach ($found as $item) {
+    <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+      <channel>
+        <title>'.$titre.'</title>
+        <link>http://shaarli.fr/</link>
+        <description>Shaarli Aggregators</description>
+        <language>fr-fr</language>
+        <copyright>http://shaarli.fr/</copyright>';
+foreach ($found as $idCommun => $item) {
     $count = substr_count($item['description'], "Permalink");
     if ($count < $filtreDePopularite) {
         continue;
     }
-    $shaarloRss .= sprintf("<item>
-                            <title>%s</title>
-                            <link>%s</link>
-                            <pubDate>%s</pubDate>
-                            <description>%s</description>
-                            <category>%s</category>
-                            </item>",
-        htmlspecialchars($item['title']),
-        htmlspecialchars($item['link']),
-        $item['pubDate'],
-        htmlspecialchars($item['description']),
-        htmlspecialchars($item['category'])
-    );
+    if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
+        if(isset($_SESSION['ireadit']['id'][$idCommun])) {
+            $readClass = 'read';
+        } else {
+            $readClass = 'not-read';
+        }
+        
+        $imgMiniCapturePath = captureUrl($item['link'], $idCommun, 200, 200);
+        
+        $shaarloRss .= sprintf("<item>
+                                <title>%s</title>
+                                <link>%s</link>
+                                <pubDate>%s</pubDate>
+                                <description>%s</description>
+                                <category>%s</category>
+                                <read_class>%s</read_class>
+                                <id_commun>%s</id_commun>
+                                <url_image>%s</url_image>
+                                <popularity>%s</popularity>
+                                <dernier_auteur>%s</dernier_auteur>
+                                <dernier_auteur_favicon>%s</dernier_auteur_favicon>
+                                <derniere_date_maj>%s</derniere_date_maj>
+                                </item>",
+            htmlspecialchars($item['title']),
+            htmlspecialchars($item['link']),
+            $item['pubDate'],
+            htmlspecialchars($item['description']),
+            htmlspecialchars($item['category']),
+            $readClass,
+            $idCommun,
+            $imgMiniCapturePath,
+            $item['pop'],
+            htmlspecialchars($item['dernier_auteur']),
+            htmlspecialchars($item['dernier_auteur_favicon']),
+            htmlspecialchars($item['derniere_date_maj'])
+        );
+    } else {
+        $shaarloRss .= sprintf("<item>
+                                <title>%s</title>
+                                <link>%s</link>
+                                <pubDate>%s</pubDate>
+                                <description>%s</description>
+                                <category>%s</category>
+                                </item>",
+            htmlspecialchars($item['title']),
+            htmlspecialchars($item['link']),
+            $item['pubDate'],
+            htmlspecialchars($item['description']),
+            htmlspecialchars($item['category'])
+        );
+    }
 }
+
+//Ajout des meilleurs articles au fil
+if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
+    $shaarloRss .= $meilleursArticlesDuJourRss;
+}
+
 $shaarloRss .= '</channel></rss>';
 
 
@@ -371,6 +554,10 @@ if (isset($_GET['do']) && $_GET['do'] === 'rss') {
             , 'username' => $username
             , 'pseudo' => $pseudo
             , 'token' => getToken()
+            , 'isToday' => $isToday
+            , 'afficher_messagerie' => $afficherMessagerie
+            , 'extended' => $extended 
+            , 'menu_locked' => $menuLocked
             )
             );
         $index = sanitize_output($index);

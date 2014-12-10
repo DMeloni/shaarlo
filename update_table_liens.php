@@ -9,7 +9,8 @@ require_once 'fct/fct_rss.php';
 require_once 'fct/fct_mysql.php';
 require_once 'fct/fct_http.php';
 require_once 'fct/fct_session.php';
-
+include_once('fct/fct_capture.php');
+ 
 // Vérification de la clef
 // TODO
 
@@ -80,7 +81,7 @@ foreach($allShaarlistes as $url) {
 			$link = $rssItem['link'];
             $rssTimestamp = strtotime($rssItem['pubDate']);
             $articleDateJour = date('Ymd', $rssTimestamp);
-            if($articleDateJour !== date('Ymd') && !isset($_GET['full'])) {
+            if($articleDateJour !== date('Ymd') && $articleDateJour !== '20141106' && !isset($_GET['full'])) {
                 continue;
             }
             
@@ -101,7 +102,7 @@ foreach($allShaarlistes as $url) {
             $lienSource = $link;
             $idRssOrigin = null;
             while ( preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)
-                || preg_match('#\?id=[0-9]{14}$#', $lienSource)
+                || preg_match('#\id=[0-9]{14}$#', $lienSource)
             ) {
                 $retourGetId = getIdCommunFromShaarliLink($mysqli, $lienSource);
                 if($idRssOrigin === null) {
@@ -116,9 +117,12 @@ foreach($allShaarlistes as $url) {
                 }
             }
             
-            $articleDate = date('YmdHis', $rssTimestamp);
+            // Creation miniature
+            captureUrl($link, $idCommun, 200, 200, true);
+            captureUrl($link, $idCommun, 256, 256, true);
+            captureUrl($link, $idCommun, 450, 450, true);
             
-
+            $articleDate = date('YmdHis', $rssTimestamp);
             $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin);
 
             

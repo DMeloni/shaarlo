@@ -65,9 +65,11 @@ function insertEntites($mysqli, $table, $entites) {
     if($table == 'liens') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss) ', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'rss') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update), rss_titre=VALUES(rss_titre)', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'shaarliste') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE pseudo=VALUES(pseudo),date_update=VALUES(date_update),url=VALUES(url)', $table, $requeteClefSQL, implode(',', $sql));
+    }elseif($table == 'liens_clic') {
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE nb_clic=nb_clic+1,date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql)); 
     }else {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }
@@ -181,14 +183,75 @@ function creerShaarliste($username, $pseudo, $url) {
     return $entite;
 }
 
+function creerLiensClic($idCommun) {
+    $entite = array('id_commun' => $idCommun);
+
+    $entite['nb_clic'] = 1;
+    $entite['date_update'] = date('YmdHis');
+    $entite['date_insert'] = $entite['date_update'];
+    
+    return $entite;
+}
+
+function getMeilleursArticlesDuJour($mysqli, $dateTimeFrom, $dateTimeTo, $limit=1) {
+    $query = sprintf('SELECT * 
+        FROM liens 
+        JOIN (SELECT `id_commun` 
+                FROM `liens_clic` 
+                WHERE `date_insert`>="%s" AND `date_insert`<="%s"  
+                ORDER BY `nb_clic` DESC LIMIT %s
+              ) AS id_meilleur_lien 
+        ON liens.id_commun = id_meilleur_lien.id_commun 
+        JOIN rss ON rss.id = liens.id_rss 
+        ORDER BY liens.date_insert ASC limit 1'
+        , $dateTimeFrom->format('YmdH0000')
+        , $dateTimeTo->format('YmdH5959')
+        , $limit
+        );
+
+    $articles = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            $articles[$row['id_commun']] = $row;
+        }
+    }
+
+    return $articles;
+}
+
+
 function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popularite=0, $orderBy = null, $order='desc', $from=null, $to=null, $limit=null) {
     $articles = array();
     $matchSQL ='';
     if(!empty($fullText)) {
         $fullText = $mysqli->real_escape_string(urldecode($fullText));
-        $fullText = str_replace('%', '', $fullText);
-        $matchSQL = " AND l.article_url != 'http://' AND (MATCH (l.article_titre,l.article_description) AGAINST ('$fullText') OR l.article_uuid LIKE '%%" . $fullText . "%%' ) ";
+        
+        // Recherche d'un id commun en particulier
+        $matches = array();
+        if (preg_match_all('#^id:([0-9a-f]{32})$#', $fullText, $matches) === 1) {
+            $fullText = $matches[1][0]; 
+            $matchSQL = " AND l.id_commun = '" . $fullText . "'";
+            $limit=null;
+            $from=null;
+            $to=null; 
+        }elseif (preg_match_all('#^shaarli:([0-9a-f]{32})$#', $fullText, $matches) === 1) {
+            //Recherche d'un shaarliste en particulier
+            $fullText = $matches[1][0]; 
+            $matchSQL = " AND l.id_rss = '" . $fullText . "'";
+            $limit=null;
+            $from=null;
+            $to=null; 
+        }
+        // Recherche d'un lien en particulier
+        elseif (strpos($fullText, 'http') === 0) {
+            $matchSQL = " AND l.article_url = '" . $fullText . "'";
+        } else {
+        // Recherche fulltext
+            $fullText = str_replace('%', '', $fullText);
+            $matchSQL = " AND l.article_url != 'http://' AND (MATCH (l.article_titre,l.article_description) AGAINST ('$fullText') OR l.article_uuid LIKE '%%" . $fullText . "%%') ";
+        }
     }
+    
     if(isset($_GET['simulate'])) {
         echo $matchSQL;
     }    
@@ -236,9 +299,6 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         $orderBySQL .= $orderSQL;
     }
     
-    
-
-    
     $username = $mysqli->real_escape_string($username);
     
     if(!is_null($username)) {
@@ -249,7 +309,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
                     SELECT id_rss from mes_rss AS m 
                     JOIN rss ON m.id_rss = rss.id 
                     WHERE m.username='$username' AND rss.active = '1'
-                ) AND l.active = '1' AND l.id_commun != 'dbd7790bcd23fde7607101ef6a633779' $matchSQL GROUP BY l.id_commun $orderBySQL $limitSQLDate
+                ) AND l.active = '1' AND l.id_commun != 'd41d8cd98f00b204e9800998ecf8427e' $matchSQL GROUP BY l.id_commun $orderBySQL $limitSQLDate
             ) AS jour ON jour.id_commun=liens.id_commun WHERE liens.id_rss IN (
                     SELECT id_rss from mes_rss AS m 
                     JOIN rss ON m.id_rss = rss.id 
@@ -342,6 +402,21 @@ function getShaarliste($mysqli, $username) {
     if ($result = $mysqli->query($query)) {
         while ($row = $result->fetch_assoc()) {
             return $row;
+        }
+    }
+
+    return null;
+}
+/**
+ * Retourne le titre d'un shaarli en fonction de son id
+ */
+function getRssTitleFromId($mysqli, $idRss) {
+    $entites = array();
+
+    $query = sprintf("SELECT rss_titre FROM `rss` WHERE id='%s'", $mysqli->real_escape_string($idRss));
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row['rss_titre'];
         }
     }
 
