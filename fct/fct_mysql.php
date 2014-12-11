@@ -302,7 +302,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     $username = $mysqli->real_escape_string($username);
 
     if(!is_null($username)) {
-        $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin from liens
+        $query = sprintf("SELECT liens.*, rss.rss_titre, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin from liens
         INNER JOIN (
             SELECT liens.id_commun, count(*) as c from liens INNER JOIN (
                 SELECT id_commun, count(*) as c FROM `liens` as l WHERE l.id_rss IN (
