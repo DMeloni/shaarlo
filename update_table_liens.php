@@ -10,7 +10,7 @@ require_once 'fct/fct_mysql.php';
 require_once 'fct/fct_http.php';
 require_once 'fct/fct_session.php';
 include_once('fct/fct_capture.php');
- 
+
 // Vérification de la clef
 // TODO
 
@@ -20,7 +20,7 @@ global $SHAARLO_DOMAIN;
 $mysqli = shaarliMyConnect();
 
 $dataDir = 'data';
-$pidFile = 'cache/updateTableLiens.pid';
+$pidFile = 'data/cache/updateTableLiens.pid';
 
 $fluxDir = 'flux';
 $maxArticlesParInsert = 100;
@@ -39,7 +39,7 @@ if (is_file($pidFile) && is_null(get('force'))) {
     } else {
         @unlink($pidFile);
         file_put_contents($pidFile, date('YmdHis'));
-    }   
+    }
 } else {
     file_put_contents($pidFile, date('YmdHis'));
 }
@@ -56,7 +56,7 @@ foreach($allShaarlistes as $url) {
             if (!is_null(get('force'))) {
                 echo "Traitement  de : " . $fluxFile;
             }
-        
+
         $content = file_get_contents($fluxFile);
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
@@ -65,17 +65,17 @@ foreach($allShaarlistes as $url) {
             }
             continue;
         }
-        
+
         $list = $xmlContent->xpath(XPATH_RSS_TITLE);
-        
+
         if(!isset($list[0])) {
             continue;
         }
 
         $titre = (string)$list[0];
-        
+
         $shaarlistes[] = creerRss($fluxName, $titre, $url, $urlRssSimplifiee, 1);
-        
+
         $rssListArrayed= convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
         foreach($rssListArrayed as $rssItem) {
 			$link = $rssItem['link'];
@@ -84,12 +84,12 @@ foreach($allShaarlistes as $url) {
             if($articleDateJour !== date('Ymd') && $articleDateJour !== '20141106' && !isset($_GET['full'])) {
                 continue;
             }
-            
+
 			$guid = $rssItem['guid'];
             $title = $rssItem['title'];
             $description = $rssItem['description'];
             $id = md5(simplifieUrl($guid));
-            
+
             $linkSansHttp  = str_replace('http://', '', $link);
             $linkSansHttps = str_replace('https://', '', $linkSansHttp);
             $urlSimplifie = $linkSansHttps;
@@ -116,33 +116,33 @@ foreach($allShaarlistes as $url) {
                     break;
                 }
             }
-            
+
             // Creation miniature
             captureUrl($link, $idCommun, 200, 200, true);
             captureUrl($link, $idCommun, 256, 256, true);
             captureUrl($link, $idCommun, 450, 450, true);
-            
+
             $articleDate = date('YmdHis', $rssTimestamp);
             $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin);
 
-            
+
             if (count($articles) > $maxArticlesParInsert) {
                 insertArticles($mysqli, $articles);
                 $articles = array();
             }
         }
-    } 
+    }
     //else{
     //    echo ' -  pas de flux';
     //}
-    
+
     insertArticles($mysqli, $articles);
     $articles = array();
-    
+
     //echo '<br>';
 }
 
 insertEntites($mysqli, 'rss', $shaarlistes);
-    
+
 shaarliMyDisconnect($mysqli);
 @unlink($pidFile);
