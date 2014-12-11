@@ -48,7 +48,7 @@ $shaarlistes = array();
 $articles = array();
 foreach($allShaarlistes as $url) {
     $urlRssSimplifiee = simplifieUrl($url);
-    //echo $url ;
+    echo $url . "<br/>";
     $fluxName = md5(($urlRssSimplifiee));
     $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 

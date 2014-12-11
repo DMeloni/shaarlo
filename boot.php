@@ -5,7 +5,7 @@ include 'fct/fct_cache.php';
 include 'fct/fct_file.php';
 include 'fct/fct_sort.php';
 include 'fct/fct_valid.php';
-    
+
 if(!is_file('config.php')){
     $serverMsg = "Le fichier config.php n'existe pas ! Renommez config.php.sample en config.php et éditez-le !";
 }else{
@@ -41,7 +41,7 @@ if(!is_file('config.php')){
         }
         if(!is_writable($rssListFile)){
             $serverMsg = "Le fichier $rssListFile n'est pas accessible en écriture !";
-        }	
+        }
         $cacheDir  = sprintf('%s/%s', $DATA_DIR, $CACHE_DIR_NAME);
         if(!is_dir($cacheDir)){
             if(!mkdir($cacheDir)){
@@ -53,7 +53,7 @@ if(!is_file('config.php')){
             if(!mkdir($archiveDir)){
                 $serverMsg = "Le dossier $archiveDir ne peut pas être créé !";
             }
-        }	
+        }
     }
 
     $mods = get_loaded_extensions();
@@ -92,15 +92,15 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 				if (filter_var($url, FILTER_VALIDATE_URL)) { // Vérifie si la chaine ressemble à une URL
 					// Url shaarli format
 					$url = explode('?', $url);
-					
+
 					// Posted link is eg : http://xxx/?azerty or http://xxx/
 					$url = $url[0] . '?do=rss';
 
-					// Valid Shaarli ? 
+					// Valid Shaarli ?
 					if(is_valid_rss($url) !== false){
 						$rssList[$label] = $url;
-						file_put_contents($rssListFile, json_encode($rssList));						
-						header("Location: refresh.php?oneshoot=true");
+						file_put_contents($rssListFile, json_encode($rssList));
+						header("Location: api.php?buildAllRss=true");
 						return;
 					}else{
 						$serverMsg = "Le flux est injoignable !";
@@ -108,14 +108,14 @@ if(!empty($_POST) && $_POST['action'] == 'add' && empty($_POST['supprimer'])){
 				}else{
 						$serverMsg = "L'URL n'est pas valide !";
 				}
-			}	
+			}
 		}
 	}
-}	
+}
 
 ob_start();
 ?><!DOCTYPE html>
-<html lang="fr"> 
+<html lang="fr">
 	<head>
 		<title>Shaarlo</title>
 		<meta charset="utf-8"/>
@@ -130,39 +130,38 @@ ob_start();
 		<link rel="alternate" type="application/rss+xml" href="http://shaarli.fr/rss" title="Shaarlo Feed" />
 	</head>
 	<body>
-		<div id="header"> 
-			<h1 id="top"><a href="./boot.php">Installation</a></h1> 
-		</div> 
+		<div id="header">
+			<h1 id="top"><a href="./boot.php">Installation</a></h1>
+		</div>
 		<div id="content">
 			<?php if (!empty($serverMsg)) { ?>
 			<div class="article shaarli-youm-org">
-				<h2 class="article-title "><?php echo $serverMsg;?></h2>				
-			</div>			
-			<?php }else{ ?>	
+				<h2 class="article-title "><?php echo $serverMsg;?></h2>
+			</div>
+			<?php }else{ ?>
 			<div class="article shaarli-youm-org">
 				<h2 class="article-title ">
 				<a title="Go to original place" href="">Débuter avec un flux Shaarli</a>
 				</h2>
 				<div class="article-content">
-					<form action="boot.php" method="POST">				
+					<form action="boot.php" method="POST">
 							<label for="label">Nom du flux</label>
 							<input type="text" name="label[]"></input>
 							<br/>
 							<label for="url">URL du flux</label>
-							<input type="text" name="url[]" ></input>				
+							<input type="text" name="url[]" ></input>
 							<input type="hidden" name="action" value="add"></input>
 							<br/>
-							<input type="submit" value="Ajouter" class="bigbutton"/>					
-					</form>			
-				</div>	
-			</div>	
+							<input type="submit" value="Ajouter" class="bigbutton"/>
+					</form>
+				</div>
+			</div>
 			<?php }?>
 		</div>
 		<div id="footer"> <p>Please contact <a href="mailto:contact@shaarli.fr">me</a> for any comments</p> </div>
 	</body>
-</html><?php 
+</html><?php
 $page = ob_get_contents();
-ob_end_clean(); 
+ob_end_clean();
 $page = sanitize_output($page);
 echo $page;
-

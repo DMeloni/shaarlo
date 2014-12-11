@@ -15,7 +15,8 @@ require_once 'fct/fct_rss.php';
 global $DATA_DIR, $SHAARLIS_FILE_NAME;
 $allFlux = array();
 
-if(((function_exists('is_ok') && is_ok()) || !function_exists('is_ok') ) && isset($_POST['mod']) && $_POST['mod'] === 'opml' && !empty($_FILES['subscription']['tmp_name'])){
+if(((function_exists('is_ok') && is_ok()) || !function_exists('is_ok') ) 
+   && isset($_POST['mod']) && $_POST['mod'] === 'opml' && !empty($_FILES['subscription']['tmp_name'])){
     $xmlDoc=new DomDocument();
     $rc=@($xmlDoc->loadXML(file_get_contents($_FILES['subscription']['tmp_name'])));
     if($rc==false){
@@ -29,6 +30,7 @@ if(((function_exists('is_ok') && is_ok()) || !function_exists('is_ok') ) && isse
         }
         $rssList = array_merge($rssList, $allFlux);
         file_put_contents($rssListFile, json_encode($rssList));
+        header("Location: api.php?buildAllRss=true");
     }
 }
 /*
@@ -51,10 +53,10 @@ if(isset($_GET['mod']) && $_GET['mod'] === 'opml'){
             $subscription .=  sprintf('<outline text="%s" title="%s" type="rss" xmlUrl="%s" htmlUrl="%s"/>', $rssLabel, $rssLabel, $rssUrl, $rssUrl);
         }
         $subscription .= '</body></opml>';
-        
+
         $opmlFileTmp = sprintf('%s/opml', $DATA_DIR);
         file_put_contents($opmlFileTmp, $subscription);
-        
+
         header("Content-disposition: attachment; filename=subscriptions.xml");
         header("Content-Type: application/xml");
         header("Content-Transfer-Encoding: xml\n"); // Surtout ne pas enlever le \n
@@ -64,7 +66,7 @@ if(isset($_GET['mod']) && $_GET['mod'] === 'opml'){
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0, public");
         header("Expires: 0");
         readfile($opmlFileTmp);
-        
+
         unlink($opmlFileTmp);
         exit;
     }
@@ -78,8 +80,8 @@ $MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
         <a title="Go to original place" href="">Module OPML</a>
         </h2>
         <div class="article-content">
-            <form action="" method="POST" enctype="multipart/form-data">    
-                <input type="hidden" name="MAX_FILE_SIZE" value="2097152">    
+            <form action="" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="MAX_FILE_SIZE" value="2097152">
                 <input name="mod" type="hidden" value="opml" />
                 <input type="file" name="subscription"/>
                 <input type="submit" value="Importer" />
@@ -87,4 +89,3 @@ $MOD['admin.php_top'] .= sprintf('<div class="article shaarli-youm-org">
             <a href="?mod=opml">Exporter</a>
         </div>
     </div>');
-
