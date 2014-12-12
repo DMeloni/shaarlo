@@ -152,7 +152,7 @@ td {padding:5px;}
 .h_iframe        {position:relative;}
 .h_iframe .ratio {display:block;width:100%;height:auto;}
 .h_iframe iframe {position:absolute;top:0;left:0;width:100%; height:100%;}
-@media (max-width: 600px) {html, body { width:100%;overflow:hidden;}#compteur,.urlDetail{display:none;}.wrapper{width:18em;}#header{text-align:center;}h1{font-size:1em;text-align:center;}.article{margin-bottom:1em;}}
+@media (max-width: 600px) {html, body { width:100%;}#compteur,.urlDetail{display:none;}.wrapper{width:18em;}#header{text-align:center;}h1{font-size:1em;text-align:center;}.article{margin-bottom:1em;}}
 .pagination .liens{float: right;}
 img.capture {float: right;}
 table tr:nth-child(even) {background: #DDD}
