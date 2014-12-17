@@ -24,4 +24,6 @@
     {else}
         <link rel="alternate" type="application/rss+xml" href="{$rss_url}?do=rss" title="Shaarlo Feed" />
     {/if}
+    <script src="./inc/scripts.js" type="text/javascript"></script>
+
 </head>
