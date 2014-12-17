@@ -9,12 +9,12 @@ TODO:
    * Ajout d'une gestion des flux en mauvais format utilisation de simplepie ? ou autre ?
    * Amélioration du code gérant la récupération des flux
    * Remplacer la partie XSl par un moteur de template
-        [x] Ajout du moteur de template RainTPL3
-        [x] Decoupage du fichier xsl en template
-        [x] tranformation du XSL en langage template
-        [ ] Récupération des variable depuis le code php
-        [ ] Refactorisation du code afin de mieux gérer les templates
-        [ ] extraction de tout le js et css dans des fichiers séparés.
+      - [x] Ajout du moteur de template RainTPL3
+      - [x] Decoupage du fichier xsl en template
+      - [x] tranformation du XSL en langage template
+      - [ ] Récupération des variable depuis le code php
+      - [ ] Refactorisation du code afin de mieux gérer les templates
+      - [ ] extraction de tout le js et css dans des fichiers séparés.
    * Suite à l'ajout d'un template, permettre facilement le changement du thème de Shaarlo.
    * Revoir la gestion des plugins.
 
