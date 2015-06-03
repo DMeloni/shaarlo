@@ -291,6 +291,20 @@ hr.mini {
     color:#F07000;
 }
 
+.floatingHeader {
+  position: fixed;
+  top: 0;
+  visibility: hidden;
+  background:white;
+  z-index:1;
+  margin-left: -20px;
+  padding-top: 1em;
+  padding-bottom: 5px;
+  box-shadow: 0 3px 2px -2px rgba(0,0,0,0.2);
+}
 
+.persist-header {
+    width:100%;
+}
 
 

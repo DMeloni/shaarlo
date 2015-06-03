@@ -1005,10 +1005,10 @@ class River extends Controller
     public static function renderArticle($params, $found)
     {
         ?>
-        <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>" class="">
+        <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>">
             <div class="columns large-12">
-                <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?>">
-                    <div class="">
+                <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?> persist-area">
+                    <div class="persist-header">
                         <div class="columns large-10">
                             <?php 
                             $class = '';
@@ -1089,6 +1089,7 @@ class River extends Controller
     {
         ?>
         <script>
+            var clonedHeaderRow;
             function getMy(){
                 document.forms["loginform"].action = "https://www.shaarli.fr/my/" + document.getElementById('pseudo').value + "/";
                 document.forms["loginform"].submit();
@@ -1337,7 +1338,9 @@ class River extends Controller
 
                     setTimeout(function(){
                         $(element).addClass('slider');
+                        
                         $('#div-container-articles').append(element);
+                        initPersistArea(element, clonedHeaderRow);
                         // On active les evenements onclick sur les nouveaux articles
                         $(element).click(function() {
                             refreshArticle($(this).attr('data-article-id'));
@@ -1365,6 +1368,48 @@ class River extends Controller
         <?php } ?>
 
         $(document).foundation(); 
+        
+        
+        /* Peristance du header de titre https://css-tricks.com/persistent-headers/ */
+        function UpdateTableHeaders() {
+           $(".persist-area").each(function() {
+               var el             = $(this),
+                   offset         = el.offset(),
+                   scrollTop      = $(window).scrollTop(),
+                   floatingHeader = $(".floatingHeader", this)
+               
+               if ((scrollTop > offset.top) && (scrollTop < offset.top + el.height() - 80)) {
+                   floatingHeader.css({
+                    "visibility": "visible"
+                   });
+               } else {
+                   floatingHeader.css({
+                    "visibility": "hidden"
+                   });      
+               };
+           });
+        }
+        
+        
+        function initPersistArea(that, clonedHeaderRow) {
+           clonedHeaderRow = $(".persist-header", that);
+           clonedHeaderRow
+             .before(clonedHeaderRow.clone())
+             .css("width", clonedHeaderRow.width()+39)
+             .addClass("floatingHeader");
+        }
+        
+        
+        $(function() {
+            $(".persist-area").each(function() {
+                initPersistArea(this, clonedHeaderRow);
+            });
+
+            $(window)
+            .scroll(UpdateTableHeaders)
+            .trigger("scroll");
+        });
+
         </script>
     <?php
     }
