@@ -95,7 +95,8 @@ class Favicon
                 return false;
             }
             list(,$status) = $exploded;
-            
+            var_dump($status);
+            var_dump($headers);
             switch ($status) {
                 case '301':
                 case '302':

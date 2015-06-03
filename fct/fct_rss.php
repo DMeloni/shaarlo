@@ -98,12 +98,16 @@ function getRss($url, $sslVersion=null){
     curl_setopt_array($ch, $options);
 
     $result = curl_exec($ch);
+    //var_dump(curl_error($ch));
     curl_close($ch);
 
     if($result== false && $sslVersion == null){
         return getRss($url, 1);
     }
     if($result== false && $sslVersion == 1){
+        return getRss($url, 2);
+    }
+    if($result== false && $sslVersion == 2){
         return getRss($url, 3);
     }
 
@@ -134,6 +138,40 @@ function convertXmlToTableau($xml,$xpath){
         }
         $tableau[] = $classArray ;
     }
+    return $tableau;
+}
+
+/*
+ * Conversion de xml à tableau associatif de php
+* @param $xml   : XML
+* @param $xpath : xpath de element à récupérer
+* return : tableau associatif
+*/
+function convertXmlToTableauAndStop($xml,$xpath){
+    $list = $xml->xpath($xpath);
+    $tableau = array();
+    
+    foreach ($list as $elt){
+        $classArray = array();
+        foreach ($elt as $key => $el){
+            $value = (string)$el;
+            if(empty($classArray[$key])){
+                $classArray[$key] = $value;
+            }else{
+                $classArray[$key] .= ',' . $value;
+            }
+        }
+        $tableau[] = $classArray ;
+        
+        // On sort si jamais l'item en cours n'est plus à la date du jour
+        if (isset($classArray['pubDate'])) {
+            if (date('Ymd') != date('Ymd', strtotime($classArray['pubDate']))) {
+                break;
+            }
+        }
+
+    }
+
     return $tableau;
 }
 
@@ -351,3 +389,110 @@ function getAllGReaderFlux($pathFlux){
     return $allFlux;
 }
 
+
+function synchroShaarli($url, $full=false, $avecMiniature=true) {
+    $mysqli = shaarliMyConnect();
+    if (!$full) {
+        $content = getRss($url . '?do=rss');
+    } else {
+        $content = getRss($url . '?do=rss&nb=all');
+    }
+    $adebut = microtime(true);
+    $shaarlistes = array();
+    $articles = array();
+    $dataDir = 'data';
+    $fluxDir = 'flux';
+
+    $urlRssSimplifiee = simplifieUrl($url);
+    $fluxName = md5(($urlRssSimplifiee));
+    $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
+    file_put_contents($fluxFile, $content);
+
+    //Fri, 13 Mar 2015 16:09:22 +0400
+    //if (strpos($content, date('D, d M Y')) === false && !isset($_GET['full'])) {
+    //    echo 'zut';
+    //    return;
+    //}
+
+    $xmlContent = getSimpleXMLElement($content);
+    if($xmlContent === false){
+        echo "flux foireux : " . $url;
+        return;
+    }
+
+
+    //if (!isset($_GET['today_only'])) {
+    //    $rssListArrayed = convertXmlToTableauAndStop($xmlContent, XPATH_RSS_ITEM);
+    //} else {
+        $rssListArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
+    //}
+
+    $maxArticlesParInsert = 100;
+    foreach($rssListArrayed as $rssItem) {
+
+        $link = $rssItem['link'];
+        $rssTimestamp = strtotime($rssItem['pubDate']);
+        $articleDateJour = date('Ymd', $rssTimestamp);
+        //if($articleDateJour !== date('Ymd') 
+        //&& $articleDateJour !== '20141106' && !isset($_GET['full'])
+        //) {
+        //    break;
+        //}
+        
+        $guid = $rssItem['guid'];
+        $title = $rssItem['title'];
+        $description = $rssItem['description'];
+        $id = md5(simplifieUrl($guid));
+        $category = '';
+        if (isset($rssItem['category'])) {
+            $category = $rssItem['category'];
+        }
+        
+        $linkSansHttp  = str_replace('http://', '', $link);
+        $linkSansHttps = str_replace('https://', '', $linkSansHttp);
+        $urlSimplifie = $linkSansHttps;
+
+        $idCommun = md5($urlSimplifie);
+        // Si c'est un lien qui pointe vers un shaarli, il est surement déjà en base
+        // Donc on le récupère directement
+        $nbBouclesMax = 5;
+        $nbBoucles = 0;
+        $lienSource = $link;
+        $idRssOrigin = null;
+        
+        //http://lehollandaisvolant.net/?id=20150408205630
+        
+        while ( preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)
+            || preg_match('#\id=[0-9]{14}$#', $lienSource)
+        ) {
+            $retourGetId = getIdCommunFromShaarliLink($mysqli, $lienSource);
+            if($idRssOrigin === null) {
+                $idRssOrigin = getIdRssOriginFromShaarliLink($mysqli, $lienSource);
+            }
+            $nbBoucles++;
+            if(!is_null($retourGetId) && $nbBoucles < $nbBouclesMax) {
+                $idCommun = $retourGetId['id_commun'];
+                $lienSource = $retourGetId['article_url'];
+            }else{
+                break;
+            }
+        }
+        
+        // Creation miniature
+        if ($avecMiniature) {
+            captureUrl($link, $idCommun, 200, 200, true);
+            captureUrl($link, $idCommun, 256, 256, true);
+            captureUrl($link, $idCommun, 450, 450, true);
+        }
+        $articleDate = date('YmdHis', $rssTimestamp);
+        $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin, $category);
+
+        if (count($articles) > $maxArticlesParInsert) {
+            insertArticles($mysqli, $articles);
+            $articles = array();
+        }
+    }
+    insertArticles($mysqli, $articles);
+
+    shaarliMyDisconnect($mysqli);
+}

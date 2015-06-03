@@ -10,7 +10,7 @@ require_once 'fct/fct_mysql.php';
 require_once 'fct/fct_http.php';
 require_once 'fct/fct_session.php';
 include_once('fct/fct_capture.php');
- 
+
 // Vérification de la clef
 // TODO
 
@@ -43,9 +43,10 @@ if (is_file($pidFile) && is_null(get('force'))) {
 } else {
     file_put_contents($pidFile, date('YmdHis'));
 }
-
+$adebut = microtime(true);
 $shaarlistes = array();
 $articles = array();
+$tags = array();
 foreach($allShaarlistes as $url) {
     $urlRssSimplifiee = simplifieUrl($url);
     //echo $url ;
@@ -58,6 +59,12 @@ foreach($allShaarlistes as $url) {
             }
         
         $content = file_get_contents($fluxFile);
+
+        //Fri, 13 Mar 2015 16:09:22 +0400
+        if (strpos($content, date('D, d M Y')) === false && !isset($_GET['full'])) {
+            continue;
+        }
+        
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
             if (!is_null(get('force'))) {
@@ -76,19 +83,35 @@ foreach($allShaarlistes as $url) {
         
         $shaarlistes[] = creerRss($fluxName, $titre, $url, $urlRssSimplifiee, 1);
         
-        $rssListArrayed= convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
+        if (!isset($_GET['full'])) {
+            $rssListArrayed = convertXmlToTableauAndStop($xmlContent, XPATH_RSS_ITEM);
+        } else {
+            $rssListArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
+        }
+        
         foreach($rssListArrayed as $rssItem) {
+
 			$link = $rssItem['link'];
             $rssTimestamp = strtotime($rssItem['pubDate']);
             $articleDateJour = date('Ymd', $rssTimestamp);
             if($articleDateJour !== date('Ymd') && $articleDateJour !== '20141106' && !isset($_GET['full'])) {
-                continue;
+                break;
+            }
+            $guid = $rssItem['guid'];
+            if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $guid)) {
+                $guid = str_replace('mode=links&', '', $guid);
+            }
+            if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $link)) {
+                $link = str_replace('mode=links&', '', $link);
             }
             
-			$guid = $rssItem['guid'];
             $title = $rssItem['title'];
             $description = $rssItem['description'];
             $id = md5(simplifieUrl($guid));
+            $category = '';
+            if (isset($rssItem['category'])) {
+                $category = $rssItem['category'];
+            }
             
             $linkSansHttp  = str_replace('http://', '', $link);
             $linkSansHttps = str_replace('https://', '', $linkSansHttp);
@@ -101,8 +124,9 @@ foreach($allShaarlistes as $url) {
             $nbBoucles = 0;
             $lienSource = $link;
             $idRssOrigin = null;
+            
             while ( preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)
-                || preg_match('#\id=[0-9]{14}$#', $lienSource)
+                || preg_match('#\?id=[0-9]{14}$#', $lienSource)
             ) {
                 $retourGetId = getIdCommunFromShaarliLink($mysqli, $lienSource);
                 if($idRssOrigin === null) {
@@ -123,8 +147,20 @@ foreach($allShaarlistes as $url) {
             captureUrl($link, $idCommun, 450, 450, true);
             
             $articleDate = date('YmdHis', $rssTimestamp);
-            $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin);
-
+            $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin, $category);
+            
+            $categories = explode(',', $category);
+            foreach ($categories as $categoriesPart) {
+                if (empty($categoriesPart)) {
+                    continue;
+                }
+                $tags[] = creerTag($id, $categoriesPart);
+            }
+            
+            if (count($tags) > $maxArticlesParInsert) {
+                insertEntites($mysqli, 'tags', $tags);
+                $tags = array();
+            }
             
             if (count($articles) > $maxArticlesParInsert) {
                 insertArticles($mysqli, $articles);
@@ -136,6 +172,9 @@ foreach($allShaarlistes as $url) {
     //    echo ' -  pas de flux';
     //}
     
+    insertEntites($mysqli, 'tags', $tags);
+    $tags = array();
+                
     insertArticles($mysqli, $articles);
     $articles = array();
     
@@ -146,3 +185,10 @@ insertEntites($mysqli, 'rss', $shaarlistes);
     
 shaarliMyDisconnect($mysqli);
 @unlink($pidFile);
+
+$afin = microtime(true) - $adebut;
+
+
+file_put_contents('temps_script.txt', sprintf('%s : %s', date('d/m/Y H:i:s'), $afin));
+
+

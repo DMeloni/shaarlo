@@ -6,6 +6,7 @@ require_once('fct/fct_markdown.php');
 require_once('fct/fct_mysql.php');
 require_once('fct/Favicon/DataAccess.php');
 require_once('fct/Favicon/Favicon.php');
+require_once('fct/PasswordHashing/password_hashing_PBKDF2.php');
 
 /**
  * Retourne le nombre de sessions ouvertes (OVH)
@@ -48,10 +49,10 @@ function loadConfiguration($url) {
     $urlShaarlisteSimplifiee = simplifieUrl($url);
     $pseudo = md5($urlShaarlisteSimplifiee);
     
-    // R�cup�ration du message dans shaarli
+    // Récupération du message dans shaarli
     $tagConfiguration = 'shaarlo_configuration_v1';
 
-    // Ajout des param�tres r�cup�rant le bon message
+    // Ajout des paramètres récupérant le bon message
     $urlConfiguration = sprintf('%s?do=rss&searchtags=%s', $url, $tagConfiguration);
 
     $rss = getRss($urlConfiguration);
@@ -93,7 +94,7 @@ function loadConfiguration($url) {
     $favicon = new \Favicon\Favicon();
     $mysqli = shaarliMyConnect();
     
-    // Cr�ation en base du shaarliste
+    // Création en base du shaarliste
     $shaarliste = creerShaarliste($username, $pseudo, $url);
     insertEntite($mysqli, 'shaarliste', $shaarliste);
         
@@ -140,7 +141,7 @@ function loadConfiguration($url) {
                 insertEntite($mysqli, 'rss', $rss);
             }
 
-            // Cr�ation de l'abonnement
+            // Création de l'abonnement
             $monRss = creerMonRss($username, $idRss, $pseudo, $param['key']);
             insertEntite($mysqli, 'mes_rss', $monRss);
         }
@@ -156,6 +157,9 @@ function loadConfiguration($url) {
     }
 }
 
+function getIdRssFromUrl($url) {
+    return md5(simplifieUrl($url));
+}
 function simplifieUrl($url) {
     $urlSimplifiee = str_replace('https://', '', $url);
     $urlSimplifiee = str_replace('http://', '', $urlSimplifiee);
@@ -173,3 +177,490 @@ function isAdmin() {
     
     return false;
 }
+
+function getShaarlieur($shaarlieurId) {
+    $mysqli = shaarliMyConnect();
+    $shaarlieur = selectShaarlieur($mysqli, $_SESSION['shaarlieur_id']);
+    shaarliMyDisConnect($mysqli);
+    
+    return $shaarlieur;
+}
+
+function getSession($sessionId = null, $connexion = false, $password = '') {
+    global $SESSION_CHARGEE;
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (!empty($SESSION_CHARGEE) && is_null($sessionId)) {
+        return $_SESSION;
+    }
+
+    if ($sessionId == null && !empty($_COOKIE['shaarlieur']) && is_null($_SESSION['shaarlieur_id'])) {
+        $sessionId = $_COOKIE['shaarlieur'];
+        $connexion = true;
+    }
+
+    if (!isset($_SESSION['shaarlieur_id']) && is_null($sessionId)) {
+        $consonnes = array('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
+            'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'z');
+        $voyelles = array('a', 'e', 'i', 'o', 'u', 'y');
+        
+        $_SESSION['shaarlieur_id'] = $consonnes[array_rand($consonnes)]
+        . $voyelles[array_rand($voyelles)]
+        . $consonnes[array_rand($consonnes)]
+        . $voyelles[array_rand($voyelles)]
+        . $consonnes[array_rand($consonnes)]
+        . $voyelles[array_rand($voyelles)];
+        $sessionId = $_SESSION['shaarlieur_id'];
+        //$_SESSION['shaarlieur_id'] = '';
+    }
+
+    if (is_null($sessionId) && !is_null($_SESSION['shaarlieur_id'])) {
+        $sessionId = $_SESSION['shaarlieur_id'];
+    }
+
+    // récupération du compte en bdd
+    $mysqli = shaarliMyConnect();
+    $shaarlieurSqlData = selectShaarlieur($mysqli, $sessionId);
+
+    // Création du shaarlieur en bdd
+    if (is_null($shaarlieurSqlData)) {
+        $data = array('abonnements' => array(), 'display_shaarlistes_non_suivis' => true);
+        $passwordHash = '';
+        if (!empty($password)) {
+            $passwordHash = createShaarlieurHash($shaarlieurId, $password);
+        }
+        $shaarlieurEntite = creerShaarlieur($sessionId, $passwordHash, json_encode($data));
+        insertEntite($mysqli, 'shaarlieur', $shaarlieurEntite);
+
+        $shaarlieurSqlData = selectShaarlieur($mysqli, $sessionId);
+    } else {
+        // Si le compte existe et qu'il y a un password
+        if (!empty($shaarlieurSqlData['pwd'])) {
+            // S'il s'agit d'une connexion, on regarde l"entrée utilisateur
+            if ($connexion) {
+                // On regarde dans le cookie
+                if (!empty($_COOKIE["shaarlieur_hash"])) {
+                    if (true !== validate_password($shaarlieurId . $shaarlieurSqlData['pwd'], $_COOKIE["shaarlieur_hash"])) {
+                        return 401;
+                    }
+                } else {
+                    // Sinon dans le password donné
+                    if (true !== validate_password($shaarlieurId . $password, $shaarlieurSqlData["pwd"])) {
+                        return 401;
+                    }
+                    // Si la connexion avec la bdd a marché, on met un cookie
+                    setcookie('shaarlieur_hash', createShaarlieurHash($shaarlieurId, $shaarlieurSqlData["pwd"]), time()+31536000, '.shaarli.fr');
+                }
+            }
+        } else {
+            // Si le compte n'existe pas mais qu'un password est entré
+            if (!empty($password)) {
+                $passwordHash = createShaarlieurHash($shaarlieurId, $password);
+                majPasswordHash($passwordHash);
+            }
+        }
+    }
+
+    if (!is_null($sessionId)) {
+        $_SESSION['shaarlieur_id'] = $sessionId;
+    }
+
+    $SESSION_CHARGEE = 'oui';
+    
+    $_SESSION['shaarlieur_shaarli_ok'] = $shaarlieurSqlData['shaarli_ok'];
+    $_SESSION['shaarlieur_nb_connexion'] = $shaarlieurSqlData['nb_connexion'];
+    $_SESSION['shaarlieur_inscription_auto'] =  $shaarlieurSqlData['inscription_auto'];
+    $_SESSION['shaarlieur_date_insert'] = $shaarlieurSqlData['date_insert'];
+    $_SESSION['shaarlieur_data']  = json_decode($shaarlieurSqlData['data'], true);
+    $_SESSION['shaarlieur_data']['abonnements'] = getAllAbonnementsId($mysqli, $_SESSION['shaarlieur_id']);
+    $_SESSION['shaarlieur_shaarli_url'] = $shaarlieurSqlData['shaarli_url'];
+    $_SESSION['shaarlieur_shaarli_private'] = $shaarlieurSqlData['shaarli_private'];
+    $_SESSION['shaarlieur_id_rss'] = $shaarlieurSqlData['id_rss'];
+    $_SESSION['shaarlieur_shaarli_url_id_ok'] = $shaarlieurSqlData['shaarli_url_id_ok'];
+
+
+
+    if (!is_null($sessionId) && $connexion) {
+        majDerniereConnexion($mysqli, $sessionId);
+    }
+
+    return $_SESSION;
+}
+
+function setSession($session) {
+    $_SESSION = $session;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
+    shaarliMyDisConnect($mysqli);
+}
+
+// Met à jour la liste d'abonnement d'un shaarlieur
+function majAbonnements($abonnements) {
+    $session = getSession();
+    $session['shaarlieur_data']['abonnements'] = $abonnements;
+    setSession($session);
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
+
+    // Suppression des anciens abonnements 
+    deleteMesRss($mysqli, $session['shaarlieur_id']);
+
+    // Création de l'abonnement
+    foreach ($abonnements as $shaarlisteId) {
+        $monRss = creerMonRss($session['shaarlieur_id'], $shaarlisteId, '', '');
+        insertEntite($mysqli, 'mes_rss', $monRss);
+    }
+
+    shaarliMyDisConnect($mysqli);
+}
+
+// Met à jour la liste d'abonnement d'un shaarlieur
+function majInscriptionAuto($inscriptionAuto) {
+    $session = getSession();
+    $session['shaarlieur_inscription_auto'] = $inscriptionAuto;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurInscriptionAuto($mysqli, $session['shaarlieur_id'], $inscriptionAuto);
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+
+// Met à jour le hash du pwd
+function majPasswordHash($pwdHash) {
+    $session = getSession();
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurPassword($mysqli, $session['shaarlieur_id'], $pwdHash);
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+// Met à jour l'url de son shaarli
+function majShaarliUrl($shaarliUrl, $isShaarliPrivate) {
+    $session = getSession();
+    $session['shaarlieur_shaarli_url'] = $shaarliUrl;
+    $session['shaarlieur_shaarli_private'] = $isShaarliPrivate;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurShaarliUrl($mysqli, $session['shaarlieur_id'], $shaarliUrl, $isShaarliPrivate);
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+/**
+ * Retourne le nombre de liens de l'utilisateur
+ * 
+ * @return int c : le nombre de lien
+ */
+function getNombreDeClics() {
+    $session = getSession();
+    $mysqli = shaarliMyConnect();
+    $nbClics =  getNombreDeClicsFromShaarlieurId($mysqli, $session['shaarlieur_id']);
+    shaarliMyDisConnect($mysqli);
+    
+    return $nbClics;
+}
+
+/**
+ * Retourne le nombre de liens de l'utilisateur
+ * 
+ * @return int : la position du shaarlieur
+ */
+function getShaarlieurPositionTop() {
+    $session = getSession();
+    $mysqli = shaarliMyConnect();
+    $topShaarlieur =  getTopShaarlieurFromShaarlieurId($mysqli, $session['shaarlieur_id']);
+    shaarliMyDisConnect($mysqli);
+    
+    if (!empty($topShaarlieur['row_number'])) {
+        return $topShaarlieur['row_number'] - 1;
+    }
+    
+    return null;
+}
+
+
+
+// Retourne l'url du shaarli de l'utilisateur
+function getShaarliUrl() {
+    $session = getSession();
+    return $session['shaarlieur_shaarli_url'];
+}
+
+// Indique si le shaarli de l'utilisateur est privé ou pas
+function isShaarliPrivate() {
+    $session = getSession();
+    return $session['shaarlieur_shaarli_private'];
+}
+
+// Indique si le shaarlieur est shaarliste
+function isShaarliste() {
+    $session = getSession();
+    return '1' == $session['shaarlieur_shaarli_ok'];
+}
+
+// Retourne la liste des abonnements de l'utilisateur
+function getAbonnements($sessionId=null) {
+    $session = getSession($sessionId);
+    return $session['shaarlieur_data']['abonnements'];
+}
+
+// Retourne l'id du flux rss du site
+function getIdRss() {
+    $session = getSession();
+    return $session['shaarlieur_id_rss'];
+}
+
+// Retourne l'id du flux rss du site
+function getIdOkRss() {
+    $session = getSession();
+    return $session['shaarlieur_shaarli_url_id_ok'];
+}
+
+// Un shaarlieur sérieux s'est connecté plus de x fois et a un compte ancien
+function isSerieux() {
+    $session = getSession();
+    
+    if ('' === getUtilisateurId()) {
+        return false;
+    }
+
+    if (isset($session['shaarlieur_nb_connexion']) && $session['shaarlieur_nb_connexion'] >= 4) {
+        $dateDuJour = new DateTime();
+        $dateDuJour->modify('-4 days');
+        $dateLastWeek = $dateDuJour->format('YmdHis');
+        if (isset($session['shaarlieur_date_insert']) && $session['shaarlieur_date_insert'] < $dateLastWeek) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Indique si l'utilisateur est abonné au flux
+function estAbonne($idRss) {
+    $abonnements = getAbonnements();
+    return in_array($idRss, $abonnements);
+}
+
+//Indique si l'utilisateur est connecté
+function isConnected() {
+    $session = getSession();
+    return isset($session['shaarlieur_id']);
+}
+
+
+//Retourne l'id de l'utilisateur
+function getUtilisateurId() {
+    $session = getSession();
+    return $session['shaarlieur_id'];
+}
+
+function displayShaarlistesNonSuivis() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_shaarlistes_non_suivis']) && $session['shaarlieur_data']['display_shaarlistes_non_suivis'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
+function displayBestArticle() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_best_article']) && $session['shaarlieur_data']['display_best_article'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function displayEmptyDescription() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_empty_description']) && $session['shaarlieur_data']['display_empty_description'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
+// Indique s'il faut regrouper les liens ou pas
+function isModeRiver() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['mode_river']) && $session['shaarlieur_data']['mode_river'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function isMenuLocked() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['lock']) && $session['shaarlieur_data']['lock'] === 'lock') {
+        return true;
+    }
+
+    return false;
+}
+
+
+function isExtended() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['extend']) && $session['shaarlieur_data']['extend'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
+function isInscriptionAuto() {
+    $session = getSession();
+    if (isset($session['shaarlieur_inscription_auto']) && $session['shaarlieur_inscription_auto'] == true) {
+        return true;
+    }
+
+    return false;
+}
+
+function useElevator() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_elevator']) && $session['shaarlieur_data']['use_elevator'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function useUselessOptions() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_useless_options']) && $session['shaarlieur_data']['use_useless_options'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function useDotsies() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_dotsies']) && $session['shaarlieur_data']['use_dotsies'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function useTopButtons() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_top_buttons']) && $session['shaarlieur_data']['use_top_buttons'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function useRefreshButton() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_refresh_button']) && $session['shaarlieur_data']['use_refresh_button'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
+function displayRssButton() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_rss_button']) && $session['shaarlieur_data']['display_rss_button'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function useScrollInfini() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_scroll_infini']) && $session['shaarlieur_data']['use_scroll_infini'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function displayOnlyNewArticles() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_only_new_articles']) && $session['shaarlieur_data']['display_only_new_articles'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+function getTags() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['tags']) && !empty($session['shaarlieur_data']['tags'])) {
+        // A VIRER UN JOUR
+        if (empty($session['shaarlieur_data']['tags'][0])) {
+            return array();
+        }
+        return $session['shaarlieur_data']['tags'];
+    }
+
+    return array();
+}
+
+function getNotAllowedTags() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['not_allowed_tags']) && !empty($session['shaarlieur_data']['not_allowed_tags'])) {
+        return $session['shaarlieur_data']['not_allowed_tags'];
+    }
+
+    return array();
+}
+
+function updateTags($tags) {
+    $session = getSession();
+    if (!empty($tags)) {
+        $tags = str_replace("\n", ' ', $tags);
+        $tags = str_replace(',', ' ', $tags);
+        $tags = explode(' ', trim($tags));
+    } else {
+        $tags = array();
+    }
+    $session['shaarlieur_data']['tags'] = $tags;
+    setSession($session);
+}
+
+function updateNotAllowedTags($tags) {
+    $session = getSession();
+    $tags = str_replace("\n", ' ', $tags);
+    $tags = str_replace(',', ' ', $tags);
+    $tags = explode(' ', trim($tags));
+    $session['shaarlieur_data']['not_allowed_tags'] = $tags;
+    setSession($session);
+}
+
+
+function getHash($passwordString) {
+    $salt = $GLOBALS['PWD_SALT'];
+    echo $salt;
+
+    return hash("sha256", $salt . $passwordString);
+}
+
+function createShaarlieurHash($shaarlieurId, $password) {
+    return create_hash($shaarlieurId . $password);
+}
+
+function setShaarlieurHash($shaarlieurId, $password) {
+    $session = getSession();
+    $session['shaarlieur_hash'] = createShaarlieurHash($shaarlieurId, $password);
+    setSession($session);
+}
+
+function getShaarlieurHash($shaarlieurId, $password) {
+    $session = getSession();
+    if (isset($session['shaarlieur_hash'])) {
+        return $session['shaarlieur_hash'];
+    }
+
+    return null;
+}
+

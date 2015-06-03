@@ -94,6 +94,11 @@ if ($_GET['do'] === 'buildAllRss') {
     $uneJourneeEnSeconde = 1 * 30 * 60;
 
     $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
+    if(isset($_GET['nbthreads']) && isset($_GET['thread'])) {
+        $allShaarlistesChunked = array_chunk($allShaarlistes, ceil(count($allShaarlistes)/(int)$_GET['nbthreads']), true);
+        $allShaarlistes = $allShaarlistesChunked[(int)$_GET['thread']+1];
+    }
+    
     foreach($allShaarlistes as $shaarliste) {
         $urlSimplifiee = simplifieUrl($shaarliste);
         $fluxName = md5(($urlSimplifiee));
@@ -490,7 +495,7 @@ if ($_GET['do'] === 'getInfoAboutAll') {
     }*/
 
     
-    if( !is_file($statFile) || $cache == 'false') {
+    if ( !is_file($statFile) || true || rand(0,100) == 100) {
         $mysqli = shaarliMyConnect();
         $infos = selectAllShaarlistes($mysqli);
 

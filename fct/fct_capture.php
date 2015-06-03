@@ -27,7 +27,7 @@ function captureUrl($url, $id, $width = 450, $height = 450, $cache = false) {
         // Chemin de l'image de la capture du site
         $formatImgCapture = 'jpg';
         // On regarde le Content-Type de l'url
-        $headersMeilleurArticleDuJour = get_headers($url, 1);
+        $headersMeilleurArticleDuJour = @get_headers($url, 1);
         // Si c'est une image, on l'enregistre directement
         if (isset($headersMeilleurArticleDuJour['Content-Type'])) {
             if (strpos($headersMeilleurArticleDuJour['Content-Type'], 'image/jpeg') === 0

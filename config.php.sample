@@ -1,12 +1,14 @@
 <?php
-ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/sessions');
+
 
 ini_set('session.use_cookies', 1);       // Use cookies to store session.
 ini_set('session.use_only_cookies', 1);  // Force cookies for session (phpsessionID forbidden in URL)
 ini_set('session.use_trans_sid', false); // Prevent php to use sessionID in URL if cookies are disabled.
 ini_set('session.cookie_domain', '.shaarli.fr');
-ini_set('session.cookie_lifetime', 12 * 60 * 60);
-
+session_set_cookie_params(365 *24 * 60 * 60);
+ini_set('session.cookie_lifetime', 365 *24 * 60 * 60);
+ini_set('session.gc_maxlifetime', 48 * 60 * 60);
+ini_set('session.save_path', $_SERVER['DOCUMENT_ROOT'].'/../sessions');
 session_name('shaarli');
 
 /*
@@ -16,7 +18,8 @@ $GLOBALS['MYSQL_SERVER'] = 'shaarli.mysql.db'; /* Adresse du serveur mysql */
 $GLOBALS['MYSQL_USER'] = 'shaarliuser'; /* Utilisateur ayant les droits d'écriture */
 $GLOBALS['MYSQL_PASSWORD'] = 'xxx'; /* Mot de passe de l'utilisateur */
 $GLOBALS['MYSQL_DB'] = 'shaarlidb'; /* Nom de la base de données */
-$GLOBALS['salt']     = 'toto';/* Clef de salaison */
+$GLOBALS['salt']     = 'xxx';/* Clef de salaison */
+$GLOBALS['PWD_SALT']  = 'xxx';/* Clef de salaison pour les comptes */
 
 /*
  * Directorys
