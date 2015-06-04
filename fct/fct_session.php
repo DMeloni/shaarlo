@@ -609,6 +609,13 @@ function getTags() {
 function getNotAllowedTags() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['not_allowed_tags']) && !empty($session['shaarlieur_data']['not_allowed_tags'])) {
+        
+        // Suppression des tags vides
+        foreach ($session['shaarlieur_data']['not_allowed_tags'] as $k => $tag) {
+            if (empty($tag)) {
+                unset($session['shaarlieur_data']['not_allowed_tags'][$k]);
+            }
+        }
         return $session['shaarlieur_data']['not_allowed_tags'];
     }
 
