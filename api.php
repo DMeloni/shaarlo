@@ -91,12 +91,12 @@ if ($_GET['do'] === 'buildAllRss') {
     $fluxDir = 'flux';
     $dataDir = 'data';
 
-    $uneJourneeEnSeconde = 1 * 30 * 60;
+    $uneJourneeEnSeconde = 1 * 4 * 60;
 
     $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
     if(isset($_GET['nbthreads']) && isset($_GET['thread'])) {
         $allShaarlistesChunked = array_chunk($allShaarlistes, ceil(count($allShaarlistes)/(int)$_GET['nbthreads']), true);
-        $allShaarlistes = $allShaarlistesChunked[(int)$_GET['thread']+1];
+        $allShaarlistes = $allShaarlistesChunked[(int)$_GET['thread']-1];
     }
     
     foreach($allShaarlistes as $shaarliste) {
@@ -107,7 +107,7 @@ if ($_GET['do'] === 'buildAllRss') {
         if(is_file($fluxFile)) {
             $lastvisit = @filemtime($fluxFile);
             $difference = mktime() - $lastvisit;
-            // Dans le cas où le fichier est encore récent, on garde celui des 30 dernieres minutes
+            // Dans le cas où le fichier est encore récent, on garde celui des 4 dernieres minutes
             if ($difference < $uneJourneeEnSeconde) {
                 echo sprintf("%s - %s : recent \n", $fluxFile, $shaarliste);
                 continue;
