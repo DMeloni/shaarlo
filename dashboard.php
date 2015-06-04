@@ -220,7 +220,7 @@ class Dashboard extends Controller
                         /*
                          * Bloc top shaarlieur
                          */
-                        if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 50) {
+                        if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 65) {
                         ?>
                         <div class="row">
                             <div class="columns large-12 center">
@@ -230,7 +230,7 @@ class Dashboard extends Controller
                                            <?php
                                             $nomImageTopGif = sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']);
                                             if (is_file($nomImageTopGif)) {
-                                                ?><img src="<?php echo $nomImageTopGif; ?>" alt="top_50"/><?php
+                                                ?><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/><?php
                                             }
                                             ?>
 
