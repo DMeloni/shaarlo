@@ -247,6 +247,24 @@ class Controller
             r.send(params);
         }
 
+        function addOption(that, action, value) {
+            var r = new XMLHttpRequest(); 
+            var params = "do="+action + "&value="+value+ "&state="+value;
+            r.open("POST", "add.php", true); 
+            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            r.onreadystatechange = function () {
+                if (r.readyState == 4) {
+                    if(r.status == 200){
+                        that.attr('data-waiting', '');
+                        return; 
+                    }
+                    else {
+                        return; 
+                    }
+                }
+            }; 
+            r.send(params);
+        }
 
         </script>
         <div class="clear"></div>

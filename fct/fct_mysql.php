@@ -752,5 +752,47 @@ function getTopShaarlieurFromShaarlieurId($mysqli, $shaarlieurId) {
 }
 
 
+/**
+ * Retourne le top des tags éligibles aux badges
+ * pour un utilisateur
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * @param array  $tags
+ * 
+ * @return array(array('nom' => 'shaarli', 'c' => '80')...)
+ */
+function getTopTagsFromShaarlieurIdAndTags($mysqli, $shaarlieurId, $tags) {
+    if (empty($tags)) {
+        return array();
+    }
+    $tagsIN = arrayToIN($mysqli, $tags);
+    
+    $query = sprintf("
+        SELECT t.nom, count(*) as c 
+        FROM `shaarlieur_liens_clic` as lc 
+            LEFT JOIN liens AS l ON lc.id_commun=l.id_commun 
+            LEFT JOIN tags AS t ON l.id=t.id_lien  
+        WHERE t.nom IS NOT NULL AND lc.`id_shaarlieur`='%s'
+        AND t.nom $tagsIN
+        GROUP BY t.nom
+        ORDER BY count(*) DESC
+        "
+        , $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            $results[md5(strtolower($row['nom']))] = $row;
+        }
+    }
+
+    return $results;
+}
+
+
+
+
 
 

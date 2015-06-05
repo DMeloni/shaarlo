@@ -35,14 +35,30 @@ button.microscopic, .button.microscopic {
    color: #B92310;
 }
 
-.shaarliste-selection {
+.shaarliste-selection,
+.badge-selection {
     opacity: 0.5;
 }
 
+.badge-selection.disabled {
+    filter: grayscale(1);
+    -webkit-filter: grayscale(1);
+    -moz-filter: grayscale(1);
+    -o-filter: grayscale(1);
+    -ms-filter: grayscale(1);
+}
+
+
+.badge-selection:hover,        
 .shaarliste-selection:hover {
     cursor: pointer;
 }
 
+.badge-selection.selected {
+    border-color: orange;
+}
+
+.badge-selection.selected,
 .shaarliste-selection.selected {
     opacity: 1;
 }

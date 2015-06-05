@@ -109,6 +109,17 @@ if(isset($_POST['do']) && $_POST['do'] == 'inscription_auto' && isset($_POST['va
     return;
 }
 
+/*
+ * Modification du badge actif
+ */
+if(isset($_POST['do']) && $_POST['do'] == 'badge' && isset($_POST['value'])) {
+    updateCurrentBadge($_POST['value']);
+
+    header('HTTP/1.1 200 OK', true, 200);
+    return;
+}
+
+
 
 $optionsAutorisees = array('extend', 'mode_river', 'display_empty_description', 
     'use_elevator', 'use_useless_options','use_dotsies',

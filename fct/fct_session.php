@@ -645,6 +645,21 @@ function updateNotAllowedTags($tags) {
 }
 
 
+function updateCurrentBadge($badge) {
+    $session = getSession();
+    $session['shaarlieur_data']['badge'] = $badge;
+    setSession($session);
+}
+
+function getCurrentBadge() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['badge']) && !empty($session['shaarlieur_data']['badge'])) {
+        return $session['shaarlieur_data']['badge'];
+    }
+
+    return null;
+}
+
 function getHash($passwordString) {
     $salt = $GLOBALS['PWD_SALT'];
     echo $salt;
@@ -669,5 +684,16 @@ function getShaarlieurHash($shaarlieurId, $password) {
     }
 
     return null;
+}
+
+function getTopTagsFromTags($tags) {
+    if ('' === getUtilisateurId()) {
+        return false;
+    }
+    
+    $mysqli = shaarliMyConnect();
+    $topTags = getTopTagsFromShaarlieurIdAndTags($mysqli, getUtilisateurId(), $tags);
+    
+    return $topTags;
 }
 

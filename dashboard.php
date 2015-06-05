@@ -99,6 +99,7 @@ class Dashboard extends Controller
             $params['shaarli_url'] = getShaarliUrl();
             $params['pas_de_profil'] = $pasDeProfil;
             $params['creation'] = $creation;
+            $params['currentBadge'] = getCurrentBadge();
 
             $this->render($params);
         }
@@ -220,21 +221,31 @@ class Dashboard extends Controller
                         /*
                          * Bloc top shaarlieur
                          */
-                        if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 65) {
+                        if (!$params['pas_de_profil'] && !$params['creation']) {
                         ?>
                         <div class="row">
                             <div class="columns large-12 center">
                                 <div class="panel">
                                     <div class="row text-center">
                                         <div class="columns large-12">
-                                           <?php
-                                            $nomImageTopGif = sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']);
+                                            <?php
+                                            $idBadge = 1;
+                                            if (!empty($params['shaarlieurPositionTop']) && is_file(sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']))) {
+                                                $idBadge = $params['shaarlieurPositionTop'];
+                                            }
+                                            if (!is_null($params['currentBadge'])) {
+                                                $idBadge = $params['currentBadge'];
+                                            }
+
+                                            $nomImageTopGif = sprintf('img/top/top_%s.gif', $idBadge);
                                             if (is_file($nomImageTopGif)) {
-                                                ?><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/><?php
+                                                ?><a href="badges.php"><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/></a><?php
                                             }
                                             ?>
-
                                         </div>
+                                        <?php 
+                                        if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 1000) {
+                                        ?>
                                         <div class="columns large-12">
                                             <?php
                                             if ($params['shaarlieurPositionTop'] == 1) {
@@ -245,17 +256,19 @@ class Dashboard extends Controller
                                                 ?>Vous faites partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 10</span> des utilisateurs du site :-D<?php
                                             } elseif ($params['shaarlieurPositionTop'] <= 50) {
                                                 ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 50</span> des utilisateurs du site :-)<?php
-                                            } else {
+                                            } elseif ($params['shaarlieurPositionTop'] <= 100) {
                                                 ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 100</span> des utilisateurs du site :-)<?php
+                                            } else {
+                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 1000</span> des utilisateurs du site :-)<?php
                                             }
                                             ?>
                                         </div>
+                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <?php } ?>
-                        
                         <?php
                         if (!$params['pas_de_profil'] && !$params['creation']) {
                         ?>
@@ -679,25 +692,6 @@ class Dashboard extends Controller
                 addOption($(this), 'display_rss_button', $(this).val());
             });
 
-            function addOption(that, action, value) {
-                var r = new XMLHttpRequest(); 
-                var params = "do="+action + "&value="+value+ "&state="+value;
-                r.open("POST", "add.php", true); 
-                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                r.onreadystatechange = function () {
-                    if (r.readyState == 4) {
-                        if(r.status == 200){
-                            
-                            return; 
-                        }
-                        else {
-                            that.text = '-Erreur-';
-                            return; 
-                        }
-                    }
-                }; 
-                r.send(params);
-            }
             
             function addAbo(that, id, action) {
                 var r = new XMLHttpRequest(); 
