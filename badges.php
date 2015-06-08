@@ -57,7 +57,7 @@ class Abonnements extends Controller
                         39 => array('id' => '39', 'img' => 'img/top/top_39.gif', 'disabled' => true, 'tag' => array('google' => 5)),
                         40 => array('id' => '40', 'img' => 'img/top/top_40.gif', 'disabled' => true, 'tag' => array('image' => 5)),
                         41 => array('id' => '41', 'img' => 'img/top/top_41.gif', 'disabled' => true, 'tag' => array('jeu' => 5)),
-                        42 => array('id' => '42', 'title' => 'Offert !', 'img' => 'img/top/top_42.gif', 'disabled' => true, 'tag' => array('shaarli' => 5)),
+                        42 => array('id' => '42', 'img' => 'img/top/top_42.gif', 'disabled' => true, 'tag' => array('shaarli' => 5)),
                         43 => array('id' => '43', 'title' => 'Offert !', 'img' => 'img/top/top_43.gif', 'disabled' => false),
                         44 => array('id' => '44', 'img' => 'img/top/top_44.gif', 'disabled' => true, 'tag' => array('loi' => 5)),
                         45 => array('id' => '45', 'img' => 'img/top/top_45.gif', 'disabled' => true, 'tag' => array('git' => 5)),
