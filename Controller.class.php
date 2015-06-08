@@ -23,12 +23,13 @@ class Controller
                         <meta name="description" content="La communauté partage ses liens" />
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.css" />
-                        <link rel="stylesheet" href="css/foundation-overload.css?v=2" />
-                        <link rel="stylesheet" href="css/style-light.css?v=10" />
+                        <link rel="stylesheet" href="css/foundation-overload.css?v=3" />
+                        <link rel="stylesheet" href="css/style-light.css?v=11" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
                         <script src="js/foundation/foundation.js"></script>
                         <script src="js/foundation/foundation.equalizer.js"></script>
+                        <script src="js/foundation/foundation.reveal.js"></script>
                         <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png">
                         <link rel="apple-touch-icon" sizes="60x60" href="img/apple-icon-60x60.png">
                         <link rel="apple-touch-icon" sizes="72x72" href="img/apple-icon-72x72.png">
@@ -188,11 +189,11 @@ class Controller
 
         ?>
         <div id="menu-top" class="<?php echo $class.$onclick; ?>">
-            <h1>
+            <h1 class="show-for-medium-up">
                 <a href="/"><img class="logo hidden-on-smartphone" src="img/logo.png" height="40" width="36" /></a>
                 <a href="./index.php"><?php echo $titre ?></a>
             </h1>
-            <ul>
+            <ul class="show-for-medium-up" >
                 <li><a href="index.php">River</a></li>
                 <?php
                 if (getUtilisateurId() !== '') {
@@ -214,6 +215,26 @@ class Controller
                 }
                 ?>
                     <li><a href="./index.php?do=logout"><img src="img/logout_icon.png" height="28" width="28" /></a></li>
+            </ul>
+            <ul class="show-for-small-only" >
+                <li><a href="index.php">River</a></li>
+                <?php
+                if (getUtilisateurId() !== '') {
+                ?>
+                <li><a href="dashboard.php">Profil</a></li>
+                <?php
+                }
+                ?>
+                <li><a href="index.php?sortBy=rand&amp;from=2000-09-16">Aléa</a></li>
+                <li><a href="<?php echo htmlentities($myHref); ?>">My</a></li>
+                <?php
+                if (displayRssButton() && !empty($rssUrl)) {
+                    ?>
+                    <li><a style="vertical-align: sub;" href="<?php echo htmlentities($rssUrl); ?>"><img src="img/rss_iconZ.png" style="background:orange;" height="14" width="14" /></a></li>
+                    <?php
+                }
+                ?>
+                    <li><a style="vertical-align: sub;" href="./index.php?do=logout"><img src="img/logout_icon.png" height="14" width="14" /></a></li>
             </ul>
         </div>
         <?php

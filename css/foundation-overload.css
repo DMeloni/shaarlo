@@ -97,3 +97,9 @@ button.microscopic, .button.microscopic {
 .panel {
     background: white;
 }
+
+.reveal-modal {
+    height:70%;
+    overflow: auto;
+}
+

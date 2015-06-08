@@ -158,7 +158,7 @@ class River extends Controller
 
         // http://www.shaarli.fr/shaarli/
         if (isset($_GET['do']) && $_GET['do'] === 'rss') {
-            $usernameRecherche='196e3006151883482e97250f4f1e8eb8';
+            $usernameRecherche='';
             if(isset($_GET['u'])) {
                 $usernameRecherche = $_GET['u'];
             }
@@ -338,6 +338,7 @@ class River extends Controller
             }
             
             $imgMiniCapturePath = captureUrl($article['article_url'], $article['id_commun'], 200, 200);
+            $imgCapturePathMax = getImgPathFromId($article['id_commun']);
             if(isset($_SESSION['ireadit']['id'][$article['id_commun']])) {
                 $readClass = 'read';
             } else {
@@ -359,7 +360,8 @@ class River extends Controller
                                                       'derniere_date_maj' => $derniereDateMaj,
                                                       'read-class' => $readClass,
                                                       'id_commun' => $article['id_commun'],
-                                                      'url_image' => $imgMiniCapturePath
+                                                      'url_image' => $imgMiniCapturePath,
+                                                      'url_image_max' => $imgCapturePathMax
                                                       );
             } else {
                 $found[$article['id_commun']] = array('description' => $description, 
@@ -377,7 +379,8 @@ class River extends Controller
                                                           'derniere_date_maj' => $derniereDateMaj,
                                                           'read-class' => $readClass,
                                                           'id_commun' => $article['id_commun'],
-                                                          'url_image' => $imgMiniCapturePath
+                                                          'url_image' => $imgMiniCapturePath,
+                                                          'url_image_max' => $imgCapturePathMax
                                                           );  
             }
         }
@@ -619,7 +622,6 @@ class River extends Controller
 
         // Affichage
         if (isset($_GET['do']) && $_GET['do'] === 'rss') {
-
             header('Content-Type: application/rss+xml; charset=utf-8');
             echo sanitize_output($shaarloRss);
 
@@ -744,14 +746,21 @@ class River extends Controller
                 <?php
                 if (useTopButtons()) {
                     ?>
-                    <div class="fake-panel">
-                        <div class="columns large-12 text-center">
+                    <div class="row">
+                        <div class="columns large-12 text-center show-for-medium-up">
                             <a class="button" href="<?php echo($params['href_top_jour']); ?>">Top du jour</a>
                             <a class="button" href="<?php echo($params['href_top_hier']); ?>">Top d'hier</a>
                             <a class="button" href="<?php echo($params['href_top_semaine']);?>">Top hebdo</a>
                             <!--<a class="button" href="<?php echo($params['href_top_mois']); ?>">Top du mois</a>-->
                         </div>
+                        <div class="columns large-12 text-center show-for-small-only">
+                            <a class="button microscopic" href="<?php echo($params['href_top_jour']); ?>">Top du jour</a>
+                            <a class="button microscopic" href="<?php echo($params['href_top_hier']); ?>">Top d'hier</a>
+                            <a class="button microscopic" href="<?php echo($params['href_top_semaine']);?>">Top hebdo</a>
+                            <!--<a class="button" href="<?php echo($params['href_top_mois']); ?>">Top du mois</a>-->
+                        </div>
                     </div>
+                    <br/>
                     <?php
                 }
                 ?>
@@ -767,8 +776,11 @@ class River extends Controller
                         </div>
                     </div>
                     <div class="fake-panel">
-                        <div class="columns large-12 text-right">
-                            <a class="button tiny" onclick="option_extend(this)">(+)</a>
+                        <div class="columns large-12 text-right show-for-medium-up">
+                            <a class="button tiny " onclick="option_extend(this)">+</a>
+                        </div>
+                        <div class="columns large-12 text-right show-for-small-only">
+                            <a class="button microscopic" onclick="option_extend(this)">+</a>
                         </div>
                     </div>
                 </form>
@@ -1008,64 +1020,68 @@ class River extends Controller
         <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>">
             <div class="columns large-12">
                 <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?> persist-area">
-                    <div class="persist-header">
-                        <div class="columns large-10">
-                            <?php 
-                            $class = '';
-                            if ($found['pop'] > 0) { 
-                                $class = 'toptopic';
-                            } 
-                            ?>
-                            <h3 class="<?php echo $class; ?>">
-                                <a title="Go to original place" href="<?php echo htmlentities($found['link']); ?>" onmouseup="ireadit(this, '<?php echo htmlentities($found['id_commun']); ?>')"><?php echo htmlentities($found['title']); ?>
+                    <div class="columns large-2">
+                        <?php if (!empty($found['url_image'])) { ?>
+                        <a data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="#">
+                            <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); width:100%;height:200px;background-repeat: no-repeat;background-position: center;"></div>
+                        </a>
+
+                        <div id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
+                          <a target="_blank" title="Go to original place" href="<?php echo htmlentities($found['link']); ?>"><img src="<?php echo htmlentities($found['url_image_max']); ?>" /></a>
+                          <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
+                        </div>
+                        <?php } ?>
+                        &nbsp;
+                    </div>
+                    <div class="columns large-10">
+                        <div class="persist-header">
+                            <div class="columns large-11">
                                 <?php 
+                                $class = '';
                                 if ($found['pop'] > 0) { 
-                                    echo sprintf('[%s]', $found['pop']+1);
+                                    $class = 'toptopic';
+                                } 
+                                ?>
+                                <h3 class="<?php echo $class; ?>">
+                                    <a title="Go to original place" href="<?php echo htmlentities($found['link']); ?>" onmouseup="ireadit(this, '<?php echo htmlentities($found['id_commun']); ?>')"><?php echo htmlentities($found['title']); ?>
+                                    <?php 
+                                    if ($found['pop'] > 0) { 
+                                        echo sprintf('[%s]', $found['pop']+1);
+                                    }
+                                    ?>
+                                    </a>
+                                </h3>
+                                <div class="mini visible-on-hover color-blue"><?php echo htmlentities($found['link']); ?></div>
+                            </div>
+
+                            <div class="columns large-1 text-right">
+                                <?php if(useRefreshButton()) { ?>
+                                    <span data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="a-refresh-article button secondary tiny"><img alt="bouton refresh" id="img-article-refresh-<?php echo htmlentities($found['id_commun']); ?>" src="img/refresh-24-24.png" /></span>
+                                <?php } ?>
+                                <?php
+                                if (!empty($params['my_shaarli'])) {
+                                    $href = sprintf('%s/?post=%s&source=bookmarklet&title=%s',$params['my_shaarli'] , urlencode($found['link']), urlencode($found['title']));
+                                    ?>
+                                    <a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" href='<?php echo htmlentities($href); ?>' target="_blank" title="Reshaarlier" class="a-reshaarlier button secondary tiny"><img width="24" height="24" alt="bouton reshaarlier" src="img/shaarli.png" /></a>
+                                    <?php
                                 }
                                 ?>
-                                </a>
-                            </h3>
-                            <div class="mini visible-on-hover color-blue"><?php echo htmlentities($found['link']); ?></div>
-                        </div>
-
-                        <?php
-                        if (!empty($params['my_shaarli'])) {
-                            $href = sprintf('%s/?post=%s&source=bookmarklet&title=%s',$params['my_shaarli'] , urlencode($found['link']), urlencode($found['title']));
-                            ?>
-                            <div class="columns large-1 text-right">
-                                <a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" href='<?php echo htmlentities($href); ?>' target="_blank" title="Reshaarlier" class="a-reshaarlier button secondary tiny"><img width="24" height="24" alt="bouton reshaarlier" src="img/shaarli.png" /></a>
                             </div>
-                            <?php
-                        }
+                            
+                        </div>
+                        <div class="">
+                            <div id="div-description-<?php echo htmlentities($found['id_commun']); ?>" style="overflow:hidden;" class="columns large-9 <?php if($params['extended'] && strlen($found['description']) > 1500) echo 'extended'; ?>">
+                                <?php echo ($found['description']); ?>
+                            </div>
+                        </div>
 
-                        ?>
-
-                        <?php if(useRefreshButton()) { ?>
-                        <div class="columns large-1 text-right">
-                            <span data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="a-refresh-article button secondary tiny"><img alt="bouton refresh" id="img-article-refresh-<?php echo htmlentities($found['id_commun']); ?>" src="img/refresh-24-24.png" /></span>
+                        <?php if($params['extended'] && strlen($found['description']) > 1500) { ?>
+                        <div class="clear"></div>
+                        <div class="row text-center">
+                            <a class="no-margin-bottom button secondary tiny" onclick="extend(this, '#div-description-<?php echo htmlentities($found['id_commun']); ?>')">+</a>
                         </div>
                         <?php } ?>
                     </div>
-                    <div class="">
-                        <div id="div-description-<?php echo htmlentities($found['id_commun']); ?>" style="overflow:hidden;" class="columns large-9 <?php if($params['extended'] && strlen($found['description']) > 1500) echo 'extended'; ?>">
-                            <?php echo ($found['description']); ?>
-                        </div>
-                        <?php if (!empty($found['url_image'])) { ?>
-                        <div class="columns large-3">
-                            <a title="Go to original place" href="<?php echo htmlentities($found['link']); ?>">
-                                <div class="article-thumbnail" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); width:100%;height:200px;background-repeat: no-repeat;background-position: right;"></div>
-                            </a>
-                        </div>
-                        <?php } ?>
-                    </div>
-
-                    <?php if($params['extended'] && strlen($found['description']) > 1500) { ?>
-                    <div class="clear"></div>
-                    <div class="row text-center">
-                        <a class="no-margin-bottom button secondary tiny" onclick="extend(this, '#div-description-<?php echo htmlentities($found['id_commun']); ?>')">+</a>
-                    </div>
-                    <?php } ?>
-                    
                     <div class="clear"></div>
                     <hr class="mini"/>
                     <div class="">

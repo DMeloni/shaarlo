@@ -2,6 +2,17 @@
 include_once('fct/Webshots/webshots.php');
 
 /**
+ * Retourne uniquement le chemin d'une miniature
+ * 
+ */
+function getImgPathFromId($id) {
+    $sousDossier = sprintf('%s/%s/%s', substr($id, 0, 2), substr($id, 2, 2), substr($id, 4, 2));
+    $imgCapturePath = sprintf('img/capture/%s/%s.jpg', $sousDossier, $id);
+    
+    return $imgCapturePath;
+}
+
+/**
  * Capture une page web
  * et en fait une miniature
  * 
