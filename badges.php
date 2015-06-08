@@ -42,7 +42,7 @@ class Abonnements extends Controller
                         24 => array('id' => '24', 'img' => 'img/top/top_24.gif', 'disabled' => true, 'tag' => array('fun' => 5)),
                         25 => array('id' => '25', 'img' => 'img/top/top_25.gif', 'disabled' => true, 'tag' => array('python' => 5)),
                         26 => array('id' => '26', 'img' => 'img/top/top_26.gif', 'disabled' => true, 'tag' => array('france' => 5)),
-                        27 => array('id' => '27', 'img' => 'img/top/top_27.gif', 'disabled' => false),
+                        27 => array('id' => '27', 'title' => 'Offert !', 'img' => 'img/top/top_27.gif', 'disabled' => false),
                         28 => array('id' => '28', 'img' => 'img/top/top_28.gif', 'disabled' => true, 'tag' => array('musique' => 2)),
                         29 => array('id' => '29', 'img' => 'img/top/top_29.gif', 'disabled' => true, 'tag' => array('musique' => 5)),
                         30 => array('id' => '30', 'img' => 'img/top/top_30.gif', 'disabled' => true, 'tag' => array('musique' => 10)),
@@ -130,8 +130,18 @@ class Abonnements extends Controller
                         }
                         continue 2; // On passe au badge suivant
                     }
+
+                    // Si le tag est trouvé et que la condition est remplie, on informe l'utilisateur
+                    if($topTags[md5(strtolower($tag))]['c'] >= $minOccurence) {
+                        $differenceOccurence = $minOccurence - $topTags[md5(strtolower($tag))]['c'];
+                        if (empty($badges[$idBadge]['title'])) {
+                            $badges[$idBadge]['title']  = "Condition : Lire $minOccurence article(s) sur le thème $tag";
+                        } else {
+                            $badges[$idBadge]['title'] .= " et $minOccurence article(s) sur le thème $tag";
+                        }
+                    }
                 }
-                $badges[$idBadge]['title'] = 'Gagné !';
+                $badges[$idBadge]['title'] .= ' - Gagné !';
                 // Si on arrive jusqu'ici c'est que toutes les conditions de tags sont ok
                 $badges[$idBadge]['disabled'] = false;
             }
