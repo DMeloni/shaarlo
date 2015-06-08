@@ -1020,19 +1020,6 @@ class River extends Controller
         <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>">
             <div class="columns large-12">
                 <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?> persist-area">
-                    <div class="columns large-2">
-                        <?php if (!empty($found['url_image'])) { ?>
-                        <a data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="#">
-                            <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); width:100%;height:200px;background-repeat: no-repeat;background-position: center;"></div>
-                        </a>
-
-                        <div id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
-                          <a target="_blank" title="Go to original place" href="<?php echo htmlentities($found['link']); ?>"><img src="<?php echo htmlentities($found['url_image_max']); ?>" /></a>
-                          <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
-                        </div>
-                        <?php } ?>
-                        &nbsp;
-                    </div>
                     <div class="columns large-10">
                         <div class="persist-header">
                             <div class="columns large-11">
@@ -1081,6 +1068,19 @@ class River extends Controller
                             <a class="no-margin-bottom button secondary tiny" onclick="extend(this, '#div-description-<?php echo htmlentities($found['id_commun']); ?>')">+</a>
                         </div>
                         <?php } ?>
+                    </div>
+                    <div class="columns large-2">
+                        <?php if (!empty($found['url_image'])) { ?>
+                        <a data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="#">
+                            <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); width:100%;height:200px;background-repeat: no-repeat;background-position: center;"></div>
+                        </a>
+
+                        <div id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
+                          <a target="_blank" title="Go to original place" href="<?php echo htmlentities($found['link']); ?>"><img src="<?php echo htmlentities($found['url_image_max']); ?>" /></a>
+                          <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
+                        </div>
+                        <?php } ?>
+                        &nbsp;
                     </div>
                     <div class="clear"></div>
                     <hr class="mini"/>
