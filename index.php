@@ -1071,13 +1071,15 @@ class River extends Controller
                     </div>
                     <div class="columns large-2">
                         <?php if (!empty($found['url_image'])) { ?>
-                        <a data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="#">
+                        <a class="thumbnail-modal-reveal" data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="#">
                             <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); width:100%;height:200px;background-repeat: no-repeat;background-position: center;"></div>
                         </a>
 
                         <div id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
-                          <a target="_blank" title="Go to original place" href="<?php echo htmlentities($found['link']); ?>"><img src="<?php echo htmlentities($found['url_image_max']); ?>" /></a>
-                          <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
+                            <a target="_blank" title="Go to original place" href="<?php echo htmlentities($found['link']); ?>">
+                                <img data-src="<?php echo htmlentities($found['url_image_max']); ?>" id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>-src" src="" />
+                            </a>
+                            <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
                         </div>
                         <?php } ?>
                         &nbsp;
@@ -1380,6 +1382,17 @@ class River extends Controller
             }
         });
         <?php } ?>
+
+        (function() {
+            $(".thumbnail-modal-reveal").each(function( index, element ) {
+                // Use the one function as we only need to load the video once, even if they visit the modal multiple times
+                $(element).one( "click", function() { 
+                    var id = $(this).attr("data-reveal-id");
+                    var imgElement = $("#"+id+"-src");
+                    imgElement.attr('src', imgElement.attr('data-src'));
+                });
+            });
+        })();
 
         $(document).foundation(); 
 
