@@ -940,16 +940,11 @@ class River extends Controller
                                     <div class="article-content"><?php echo ($meilleurArticleDuJour['article_description']);?></div>
                                 </div>
                                 <div class="column large-4">
-                                    <a title="Go to original place" href="<?php echo htmlentities($meilleurArticleDuJour['article_url']);?>">
-                                        <img src="<?php echo htmlentities($meilleurArticleDuJour['url_image']);?>"/>
+                                    <?php if (!empty($meilleurArticleDuJour['url_image'])) { ?>
+                                    <a class="thumbnail-modal-reveal" data-reveal-id="thumbnail-<?php echo htmlentities($meilleurArticleDuJour['id_commun']); ?>" title="Zoom it" href="<?php echo htmlentities($meilleurArticleDuJour['article_url']); ?>">
+                                        <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($meilleurArticleDuJour['url_image']); ?>'); width:100%;height:450px;background-repeat: no-repeat;background-position: center;"></div>
                                     </a>
-                                    
-                                <?php if (!empty($found['url_image'])) { ?>
-                                <a class="thumbnail-modal-reveal" data-reveal-id="thumbnail-<?php echo htmlentities($meilleurArticleDuJour['id_commun']); ?>" title="Zoom it" href="<?php echo htmlentities($meilleurArticleDuJour['article_url']); ?>">
-                                    <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); width:100%;height:200px;background-repeat: no-repeat;background-position: center;"></div>
-                                </a>
-                                <?php } ?>
-                        
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>
