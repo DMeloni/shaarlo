@@ -23,8 +23,8 @@ class Controller
                         <meta name="description" content="La communauté partage ses liens" />
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.css" />
-                        <link rel="stylesheet" href="css/foundation-overload.css?v=3" />
-                        <link rel="stylesheet" href="css/style-light.css?v=11" />
+                        <link rel="stylesheet" href="css/foundation-overload.css?v=4" />
+                        <link rel="stylesheet" href="css/style-light.css?v=12" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
                         <script src="js/foundation/foundation.js"></script>

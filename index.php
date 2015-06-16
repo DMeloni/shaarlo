@@ -919,16 +919,14 @@ class River extends Controller
                                 <input type="hidden" name="post" value="" />
                                 <input type="hidden" name="title" value="..." />
                                 <input type="hidden" name="source" value="bookmarklet" />
-                                <textarea name="description" placeholder="Dire quelque chose"></textarea>
+                                <textarea data-input-conversation-id="conversation" class="textarea-conversation" name="description" placeholder="Dire quelque chose"></textarea>
                                 <input class="button tiny right hidden" id="conversation" type="submit" value="Converser" />
                             </form>
                         </div>
                     </div>
                 </div>
-                <div id="div-last-user-article">
-
-                </div>
                 
+                <div id="div-last-user-article"></div>
                 <?php } ?>
 
                 <div class="columns large-12">
@@ -1084,22 +1082,30 @@ class River extends Controller
                                 <?php if(useRefreshButton()) { ?>
                                     <span data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="a-refresh-article button secondary tiny"><img alt="bouton refresh" id="img-article-refresh-<?php echo htmlentities($found['id_commun']); ?>" src="img/refresh-24-24.png" /></span>
                                 <?php } ?>
-                                <?php
-                                if (!empty($params['my_shaarli'])) {
-                                    $href = sprintf('%s/?post=%s&source=bookmarklet&title=%s',$params['my_shaarli'] , urlencode($found['link']), urlencode($found['title']));
-                                    ?>
-                                    <a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" href='<?php echo htmlentities($href); ?>' target="_blank" title="Reshaarlier" class="a-reshaarlier button secondary tiny"><img width="24" height="24" alt="bouton reshaarlier" src="img/shaarli.png" /></a>
-                                    <?php
-                                }
-                                ?>
                             </div>
-                            
                         </div>
                         <div class="">
                             <div id="div-description-<?php echo htmlentities($found['id_commun']); ?>" style="overflow:hidden;" class="columns large-9 <?php if($params['extended'] && strlen($found['description']) > 1500) echo 'extended'; ?>">
                                 <?php echo ($found['description']); ?>
+                                <?php 
+                                // Bloc commenter
+                                if (!empty($params['my_shaarli']) && strpos($found['description'], $params['my_shaarli']) === false ) {
+                                ?>
+                                <form target="_blank" method="GET" action="<?php echo $params['my_shaarli']; ?>">
+                                    <input type="hidden" name="source" value="bookmarklet" />
+                                    <input type="hidden" name="title" value="<?php echo htmlentities($found['title']); ?>" />
+                                    <input type="hidden" name="post" value="<?php echo htmlentities($found['link']); ?>" />
+                                    <input type="hidden" name="tags" value="<?php echo implode(' ', $found['tags_array']); ?>" />
+                                    <textarea id="textarea-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="textarea-conversation" data-input-conversation-id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" name="description" placeholder="Commenter/Shaarlier"></textarea>
+                                    <input data-article-id="<?php echo htmlentities($found['id_commun']); ?>" id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="a-reshaarlier button tiny secondary right hidden" type="submit" value="Commenter" />
+                                </form>
+                                <?php 
+                                }
+                                ?>
                             </div>
                         </div>
+                        
+
 
                         <?php if($params['extended'] && strlen($found['description']) > 1500) { ?>
                         <div class="clear"></div>
@@ -1329,6 +1335,10 @@ class River extends Controller
         */
         $(document).on("click", '.a-reshaarlier', function() {
             var articleId = $(this).attr('data-article-id');
+            $(this).closest("form").submit();
+            $('#textarea-conversation-' + articleId).attr('disabled', 'disabled');
+            $(this).attr('disabled', 'disabled');
+
             $(window).focus(function(){
                 synchroShaarli(articleId);
                 $(window).unbind('focus');
@@ -1345,14 +1355,15 @@ class River extends Controller
         Lorsque l'utilisateur utilise le bouton Converser
         Un appel de synchro est fait pour récupérer sa réponse
         */
-        $('#form-conversation').find('textarea').on("focus", function() {
-            $('#conversation').show();
+        $(document).on("focus", '.textarea-conversation', function() {
+            $('#' + $(this).attr('data-input-conversation-id')).show();
         });
-        $('#form-conversation').find('textarea').on("focusout", function() {
+        $(document).on("focusout", '.textarea-conversation', function() {
             if(!$(this).val()) {
-                $('#conversation').hide();
+                $('#' + $(this).attr('data-input-conversation-id')).hide();
             }
         });
+
         $('#conversation').on("click", function() {
             $('#form-conversation').submit();
             $('#form-conversation').find('input').attr('disabled', 'disabled');

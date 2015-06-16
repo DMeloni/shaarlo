@@ -103,3 +103,9 @@ button.microscopic, .button.microscopic {
     overflow: auto;
 }
 
+
+textarea{
+    box-shadow:none;
+    border-radius: 5px;
+}
+

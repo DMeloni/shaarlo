@@ -310,3 +310,14 @@ hr.mini {
 }
 
 
+.read textarea{
+    background: #F1F1F1;
+}
+
+.read:hover textarea{
+    opacity: 1; 
+    background:#FFF;
+    -webkit-animation: background-f1-ff 1s;
+    animation: background-f1-ff 1s;    
+}
+
