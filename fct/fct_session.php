@@ -575,6 +575,16 @@ function displayRssButton() {
     return false;
 }
 
+function displayBlocConversation() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_bloc_conversation']) && $session['shaarlieur_data']['display_bloc_conversation'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+
 function useScrollInfini() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['use_scroll_infini']) && $session['shaarlieur_data']['use_scroll_infini'] === true) {

@@ -126,6 +126,7 @@ $optionsAutorisees = array('extend', 'mode_river', 'display_empty_description',
     'use_top_buttons',
     'use_refresh_button',
     'display_rss_button',
+    'display_bloc_conversation',
     'use_scroll_infini',
     'display_only_new_articles',
 );

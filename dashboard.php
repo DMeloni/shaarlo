@@ -347,6 +347,18 @@ class Dashboard extends Controller
                                             </div>
                                     </div>
                                     <hr class="no-margin"/>
+                                    <?php if ($params['shaarli_url']) { ?>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Afficher le bloc de conversation <span class="button microscopic alert">NEW</span></span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    <?php } ?>
+                                    <hr class="no-margin"/>
                                     <div class="row">
                                         <div class="columns large-8">
                                             <span>Afficher les liens sans description</span>
@@ -529,7 +541,7 @@ class Dashboard extends Controller
                             <div class="panel">
                                 <div class="row">
                                     <div class="columns large-12">
-                                        <h3>Filtre sur les tags <span class="button small alert">NEW</span></h3>
+                                        <h3>Filtre sur les tags</h3>
                                         
                                         <form method="POST">
                                             <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
@@ -654,6 +666,9 @@ class Dashboard extends Controller
             });
             $('.checkbox-display-empty-description').click(function() {
                 addOption($(this), 'display_empty_description', $(this).val());
+            });
+            $('.checkbox-display_bloc_conversation').click(function() {
+                addOption($(this), 'display_bloc_conversation', $(this).val());
             });
             $('.checkbox-display_only_new_articles').click(function() {
                 addOption($(this), 'display_only_new_articles', $(this).val());

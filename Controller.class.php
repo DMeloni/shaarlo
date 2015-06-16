@@ -268,6 +268,25 @@ class Controller
             r.send(params);
         }
 
+        function synchroShaarliLastArticle() {
+            var r = new XMLHttpRequest(); 
+            var params = "";
+            r.open("POST", "synchro_shaarli.php", true); 
+            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            r.onreadystatechange = function () {
+                if (r.readyState == 4) {
+                    if(r.status == 200){
+                        refreshLastArticle();
+                        return ;
+                    }
+                    else {
+                        return; 
+                    }
+                }
+            }; 
+            r.send(params);
+        }
+        
         function addOption(that, action, value) {
             var r = new XMLHttpRequest(); 
             var params = "do="+action + "&value="+value+ "&state="+value;

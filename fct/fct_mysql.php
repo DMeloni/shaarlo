@@ -245,6 +245,25 @@ function getMeilleursArticlesDuJour($mysqli, $dateTimeFrom, $dateTimeTo, $limit=
     return $articles;
 }
 
+function getLastIdCommunFromIdRss($mysqli, $idRss) {
+    $query = sprintf('SELECT id_commun 
+        FROM liens
+        WHERE id_rss="%s"
+        ORDER BY date_insert DESC 
+        LIMIT 1'
+        , $idRss
+    );
+
+    $articles = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row['id_commun'];
+        }
+    }
+    
+    return null;
+}
+
 
 function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popularite=0, $orderBy = null, $order='desc', $from=null, $to=null, $limit=null, $tags=null) {
     $articles = array();

@@ -189,7 +189,19 @@ class River extends Controller
             $tags = getTags();
         }
         
-        
+        // N'affiche que le html d'un article
+        $displayOnlyArticle = false;
+            
+        // Affiche le dernier article d'un utilisateur
+        if (isset($_GET['getLastArticleFromUserId']) && getIdRss()) {
+            $lastIdCommun = getLastIdCommunFromIdRss($mysqli, getIdRss());
+            if (empty($lastIdCommun)) {
+                die;
+            }
+            $q = 'id:' . $lastIdCommun;
+            $displayOnlyArticle = true;
+        }
+
 
         $articles = getAllArticlesDuJour($mysqli, $usernameRecherche, $q, $filtreDePopularite, $sortBy, $sort, $from, $to, $limit, $tags);
 
@@ -393,6 +405,7 @@ class River extends Controller
                 }
             }
         }
+
         // Si on décide d'afficher uniquement les articles du jour précis
         // eg : first_date < date_du_jour
         if (displayOnlyNewArticles() && $sortBy !== 'rand') {
@@ -678,8 +691,6 @@ class River extends Controller
             $hrefTopSemaine = sprintf('?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateMoinsUneSemaine->format('Ymd'), $dateDuJour->format('Ymd'));
             $hrefTopMois = sprintf('?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateMoinsUnMois->format('Ymd'), $dateDuJour->format('Ymd'));
 
-            // N'affiche que le html d'un article
-            $displayOnlyArticle = false;
             if (isset($_GET['display_only_article'])) {
                 $displayOnlyArticle = true;
             }
@@ -722,6 +733,7 @@ class River extends Controller
                 , 'href_top_semaine' => $hrefTopSemaine
                 , 'href_top_mois' => $hrefTopMois
                 , 'displayOnlyArticle' => $displayOnlyArticle
+                , 'displayBlocConversation' => displayBlocConversation()
                 , 'tags_json'   => json_encode($tags)
                 );
             header('Content-Type: text/html; charset=utf-8');
@@ -898,6 +910,27 @@ class River extends Controller
                     </div>
                 </div>
                 <div class="clear"></div>
+                
+                <?php if ($params['displayBlocConversation'] && !empty($params['my_shaarli'])) { ?>
+                <div class="">
+                    <div class="columns large-12">
+                        <div class="fake-panel">
+                            <form id="form-conversation" target="_blank" method="GET" action="<?php echo $params['my_shaarli']; ?>">
+                                <input type="hidden" name="post" value="" />
+                                <input type="hidden" name="title" value="..." />
+                                <input type="hidden" name="source" value="bookmarklet" />
+                                <textarea name="description" placeholder="Dire quelque chose"></textarea>
+                                <input class="button tiny right hidden" id="conversation" type="submit" value="Converser" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div id="div-last-user-article">
+
+                </div>
+                
+                <?php } ?>
+
                 <div class="columns large-12">
                     <div class="fake-panel text-right">
                         <?php if($params['date_hier']) { ?>
@@ -909,8 +942,8 @@ class River extends Controller
                         <div style="display:none;" id="div-date-precedente" data-date-precedente-from="<?php echo htmlentities($params['date_hier']);?>000000" data-date-precedente-to="<?php echo htmlentities($params['date_hier']);?>235959"></div>
                     </div>
                 </div>
-                <?php
 
+                <?php
                 if ($params['meilleurs_article_du_jour']) {
                     foreach( $params['meilleurs_article_du_jour'] as $meilleurArticleDuJour) {
                     ?>
@@ -952,6 +985,8 @@ class River extends Controller
                     <?php
                     }
                 }
+
+                
                 if (count($params['found']) == 0) {
                     ?>
                     <div class="">
@@ -1021,7 +1056,7 @@ class River extends Controller
     public static function renderArticle($params, $found)
     {
         ?>
-        <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>">
+        <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>" data-id-commun="<?php echo htmlentities($found['id_commun']); ?>">
             <div class="columns large-12">
                 <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?> persist-area">
                     <div class="columns large-10">
@@ -1292,19 +1327,70 @@ class River extends Controller
         Lorsque l'utilisateur reshaare un lien
         Un appel de synchro est fait pour récupérer sa réponse
         */
-        $('.a-reshaarlier').click(function() {
+        $(document).on("click", '.a-reshaarlier', function() {
             var articleId = $(this).attr('data-article-id');
             $(window).focus(function(){
                 synchroShaarli(articleId);
+                $(window).unbind('focus');
             });
             setTimeout(
                 function() {
-                    synchroShaarli();
+                    synchroShaarli(articleId);
                 }
                 , 2 * 60 * 1000
             );
         });
 
+        /* 
+        Lorsque l'utilisateur utilise le bouton Converser
+        Un appel de synchro est fait pour récupérer sa réponse
+        */
+        $('#form-conversation').find('textarea').on("focus", function() {
+            $('#conversation').show();
+        });
+        $('#form-conversation').find('textarea').on("focusout", function() {
+            if(!$(this).val()) {
+                $('#conversation').hide();
+            }
+        });
+        $('#conversation').on("click", function() {
+            $('#form-conversation').submit();
+            $('#form-conversation').find('input').attr('disabled', 'disabled');
+            $('#form-conversation').find('textarea').attr('disabled', 'disabled');
+            $(window).focus(function(){
+                synchroShaarliLastArticle();
+                $(window).unbind('focus');
+            });
+        });
+
+        // On récupère le dernier article de l'utilisateur pour l'ajouter à la page courante
+        function refreshLastArticle() {
+            $.ajax({
+              method: "GET",
+              url: "index.php",
+              data: { getLastArticleFromUserId: "true" }
+            }).done(function( msg ) {
+                if (typeof($($(msg)[2])) != 'undefined') {
+                    var idAAjouter = $($(msg)[2]).attr('id');
+                    // On vérifie qu'il n'existe pas déjà dans la page courante ou 
+                    // dans le champ prévu pour
+                    if ($('#' + idAAjouter).length ==0 && $('#div-last-user-article').find('#' + idAAjouter).length == 0) {
+                        $('#div-last-user-article').append(msg);
+                        $('.a-refresh-article').unbind('click');
+                        $('.a-refresh-article').click(function() {
+                            refreshArticle($(this).attr('data-article-id'));
+                        });
+                    }
+                    
+                    // On reactive le champs de conversation
+                    $('#form-conversation').find('input').attr('disabled', false);
+                    $('#form-conversation').find('textarea').attr('disabled', false);
+                    $('#form-conversation').find('textarea').val('');
+                    $('#conversation').hide();
+                }
+            });
+        }
+        
         synchroShaarli();
 
         function refreshArticle(articleId) {
