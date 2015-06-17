@@ -920,7 +920,7 @@ class River extends Controller
                                 <input type="hidden" name="title" value="..." />
                                 <input type="hidden" name="source" value="bookmarklet" />
                                 <textarea data-input-conversation-id="conversation" class="textarea-conversation" name="description" placeholder="Dire quelque chose"></textarea>
-                                <input class="button tiny right hidden" id="conversation" type="submit" value="Converser" />
+                                <input class="button tiny right hidden" id="conversation" type="button" value="Converser" />
                             </form>
                         </div>
                     </div>
@@ -1097,7 +1097,7 @@ class River extends Controller
                                     <input type="hidden" name="post" value="<?php echo htmlentities($found['link']); ?>" />
                                     <input type="hidden" name="tags" value="<?php echo implode(' ', $found['tags_array']); ?>" />
                                     <textarea id="textarea-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="textarea-conversation" data-input-conversation-id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" name="description" placeholder="Commenter/Shaarlier"></textarea>
-                                    <input data-article-id="<?php echo htmlentities($found['id_commun']); ?>" id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="a-reshaarlier button tiny secondary right hidden" type="submit" value="Commenter" />
+                                    <input data-article-id="<?php echo htmlentities($found['id_commun']); ?>" id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="a-reshaarlier button tiny secondary right hidden" type="button" value="Commenter" />
                                 </form>
                                 <?php 
                                 }
@@ -1338,14 +1338,16 @@ class River extends Controller
             $(this).closest("form").submit();
             $('#textarea-conversation-' + articleId).attr('disabled', 'disabled');
             $(this).attr('disabled', 'disabled');
-
+            
+            var shaarliUrl = '<?php echo getShaarliUrl() . '?' ;?>';
+            
             $(window).focus(function(){
-                synchroShaarli(articleId);
+                synchroShaarli(articleId, shaarliUrl);
                 $(window).unbind('focus');
             });
             setTimeout(
                 function() {
-                    synchroShaarli(articleId);
+                    synchroShaarli(articleId, shaarliUrl);
                 }
                 , 2 * 60 * 1000
             );
@@ -1391,12 +1393,14 @@ class River extends Controller
                         $('.a-refresh-article').click(function() {
                             refreshArticle($(this).attr('data-article-id'));
                         });
+                        
+                        // On purge la valeur de la conversation uniquement si le commentaire a été soumis
+                        $('#form-conversation').find('textarea').val('');
                     }
-                    
+
                     // On reactive le champs de conversation
                     $('#form-conversation').find('input').attr('disabled', false);
                     $('#form-conversation').find('textarea').attr('disabled', false);
-                    $('#form-conversation').find('textarea').val('');
                     $('#conversation').hide();
                 }
             });
@@ -1404,18 +1408,26 @@ class River extends Controller
         
         synchroShaarli();
 
-        function refreshArticle(articleId) {
+        function refreshArticle(articleId, ssiTextePresent) {
             $('#img-article-refresh-' + articleId).addClass('refresh-on');
             $.ajax({
               method: "GET",
               url: "index.php",
               data: { q: "id:"+articleId, display_only_article: "true" }
             }).done(function( msg ) {
-                $('#div-article-' + articleId).replaceWith(msg);
-                $('.a-refresh-article').unbind('click');
-                $('.a-refresh-article').click(function() {
-                    refreshArticle($(this).attr('data-article-id'));
-                });
+                if (typeof(ssiTextePresent) == 'undefined' 
+                 || msg.indexOf(ssiTextePresent) != -1
+                ) {
+                    $('#div-article-' + articleId).replaceWith(msg);
+                    $('.a-refresh-article').unbind('click');
+                    $('.a-refresh-article').click(function() {
+                        refreshArticle($(this).attr('data-article-id'));
+                    });
+                } else {
+                    // On ne raffraichie pas car le commentaire n'est pas retrouvé
+                    $('#textarea-conversation-' + articleId).attr('disabled', false);
+                    $('#input-conversation-' + articleId).attr('disabled', false);
+                }
             });
         }
 

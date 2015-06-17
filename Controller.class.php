@@ -247,7 +247,7 @@ class Controller
         ?>
         <script>
 
-        function synchroShaarli(articleId) {
+        function synchroShaarli(articleId, ssiTextePresent) {
             var r = new XMLHttpRequest(); 
             var params = "";
             r.open("POST", "synchro_shaarli.php", true); 
@@ -256,7 +256,7 @@ class Controller
                 if (r.readyState == 4) {
                     if(r.status == 200){
                         if (typeof(articleId) != "undefined") {
-                            refreshArticle(articleId);
+                            refreshArticle(articleId, ssiTextePresent);
                         }
                         return ;
                     }
