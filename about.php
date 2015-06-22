@@ -104,7 +104,6 @@ class Dashboard extends Controller
                                         <li>Shaarlos : bande de plusieurs Shaarlieurs</li>
                                         <li>Shaare : note (ou lien) partagé via Shaarli - peut s'écrire aussi Shaar</li>
                                         <li>Shaaroulette : se promener sur son propre Shaarli ou celui de quelqu'un d'autre par sérendipité (voir <a href="http://orangina-rouge.org/shaarli/?cu3_FA">http://orangina-rouge.org/shaarli/?cu3_FA</a>) </li>
-                                        <li>Shaarlibrairie : collection de site utilisant Shaarli </li>
                                     </ul>
                                     <p>
                                      <a href="http://orangina-rouge.org/shaarli/?J-HBoA">Source</a>
