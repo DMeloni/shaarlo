@@ -632,6 +632,23 @@ function getNotAllowedTags() {
     return array();
 }
 
+
+function getNotAllowedUrls() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['not_allowed_urls']) && !empty($session['shaarlieur_data']['not_allowed_urls'])) {
+        
+        // Suppression des links vides
+        foreach ($session['shaarlieur_data']['not_allowed_urls'] as $k => $url) {
+            if (empty($url)) {
+                unset($session['shaarlieur_data']['not_allowed_urls'][$k]);
+            }
+        }
+        return $session['shaarlieur_data']['not_allowed_urls'];
+    }
+    
+    return array();
+}
+
 function updateTags($tags) {
     $session = getSession();
     if (!empty($tags)) {
@@ -651,6 +668,15 @@ function updateNotAllowedTags($tags) {
     $tags = str_replace(',', ' ', $tags);
     $tags = explode(' ', trim($tags));
     $session['shaarlieur_data']['not_allowed_tags'] = $tags;
+    setSession($session);
+}
+
+function updateNotAllowedUrls($urls) {
+    $session = getSession();
+    $urls = str_replace("\n", ' ', $urls);
+    $urls = str_replace(',', ' ', $urls);
+    $urls = explode(' ', trim($urls));
+    $session['shaarlieur_data']['not_allowed_urls'] = $urls;
     setSession($session);
 }
 

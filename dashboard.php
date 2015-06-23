@@ -60,6 +60,12 @@ class Dashboard extends Controller
                     updateNotAllowedTags($_POST['not_allowed_tags']);
                     $params['message'] = "La liste des tags à ignorer a été mise à jour";
                 }
+                // Maj filtre des urls
+                if ('enregistrer_urls' ===  $_POST['action']) {
+                    $session = getSession($_POST['profil_id']);
+                    updateNotAllowedUrls($_POST['not_allowed_urls']);
+                    $params['message'] = "La liste des sites web à ignorer a été mise à jour";
+                }
             }
 
             if (isset($_GET['action'])) {
@@ -556,6 +562,24 @@ class Dashboard extends Controller
                                             <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
                                             <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf..."><?php echo htmlentities(implode(' ', getNotAllowedTags()));?> </textarea>
                                             <input type="hidden" name="action" value="enregistrer_tags" />
+                                            
+                                            <input class="button" type="submit" value="Sauvegarder" />
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Filtre sur les urls <span class="button tiny alert">NEW</span></h3>
+                                        <form method="POST">
+                                            <p>Ne jamais afficher de lien vers les sites web suivants</p>
+                                            <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
+                                            <input type="hidden" name="action" value="enregistrer_urls" />
                                             
                                             <input class="button" type="submit" value="Sauvegarder" />
                                         </form>

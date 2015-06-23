@@ -1,13 +1,11 @@
 <?php 
 
 require_once('Controller.class.php');
-
-
 require_once 'config.php';
 require_once 'fct/fct_session.php';
 include_once('fct/fct_capture.php');
 
- // Returns a token.
+// Returns a token.
 function getToken()
 {
     $rnd = sha1(uniqid('',true).'_'.mt_rand().$GLOBALS['salt']);  // We generate a random string.
@@ -397,6 +395,19 @@ class River extends Controller
             }
         }
 
+        // Si on ne décide de ne pas afficher les articles 
+        // qui pointent vers des sites bloqués par l'utilisateur
+        $notAllowedUrls = getNotAllowedUrls();
+        if (!empty($notAllowedUrls)) {
+            foreach ($found as $k => $article) {
+                foreach ($notAllowedUrls as $notAllowedUrl) {
+                    if (strpos($article['link'], $notAllowedUrl) !== false) {
+                        unset($found[$k]);
+                    }
+                }
+            }
+        }
+
         // Si on ne décide de ne pas afficher les articles reshaarlier
         if (isset($_GET['mode_infinite']) && isset($_GET['to'])) {
             foreach ($found as $k => $article) {
@@ -776,7 +787,7 @@ class River extends Controller
                     <?php
                 }
                 ?>
-
+                
                 <form method="GET" action="index.php" id="searchform" class="<?php if('yes' == $params['filter_on']) { echo 'hidden'; } ?>">
                     <div>
                         <div class="columns large-12">
@@ -1342,15 +1353,14 @@ class River extends Controller
             var shaarliUrl = '<?php echo getShaarliUrl() . '?' ;?>';
             
             $(window).focus(function(){
-                synchroShaarli(articleId, shaarliUrl);
+                setTimeout(
+                    function() {
+                        synchroShaarli(articleId, shaarliUrl);
+                    }
+                    , 5 * 1000
+                );
                 $(window).unbind('focus');
             });
-            setTimeout(
-                function() {
-                    synchroShaarli(articleId, shaarliUrl);
-                }
-                , 2 * 60 * 1000
-            );
         });
 
         /* 
