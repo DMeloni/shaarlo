@@ -148,7 +148,7 @@ class Dashboard extends Controller
                                                 <form method="GET">
                                                     <input type="hidden" name="action" value="connexion"/>
                                                     <input type="hidden" name="profil_id" value="<?php echo htmlentities($_GET['profil_id']); ?>"/>
-                                                    <input name="password" type="text" value=""/>
+                                                    <input name="password" type="password" value=""/>
                                                     <input class="button success" type="submit" value="Valider" />
                                                 </form>
                                             </div>
@@ -577,7 +577,7 @@ class Dashboard extends Controller
                                     <div class="columns large-12">
                                         <h3>Filtre sur les urls <span class="button tiny alert">NEW</span></h3>
                                         <form method="POST">
-                                            <p>Ne jamais afficher de lien vers les sites web suivants</p>
+                                            <p>Ne jamais afficher de lien vers les sites web suivants :</p>
                                             <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
                                             <input type="hidden" name="action" value="enregistrer_urls" />
                                             
