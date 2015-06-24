@@ -811,6 +811,27 @@ function getTopTagsFromShaarlieurIdAndTags($mysqli, $shaarlieurId, $tags) {
 }
 
 
+/**
+ * Retourne le nombre d'activation/desactivation
+ * d'une option disponible dans le dashboad
+ * 
+ * @param $mysqli
+ * @param string $option : 'display_best_article'
+ * 
+ * @return array('true' => '10', 'false' => '4')
+ */
+function getStatsFromOption($mysqli, $option) {
+    $query = sprintf("SELECT * FROM (SELECT count(*) AS 'false' FROM `shaarlieur` WHERE `data` LIKE '%%\"%s\":false%%') AS option_false, (SELECT count(*) AS 'true' FROM `shaarlieur` WHERE `data` LIKE '%%\"%s\":true%%') AS option_true", $mysqli->real_escape_string($option), $mysqli->real_escape_string($option));
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row;
+        }
+    }
+
+    return null;
+}
+
 
 
 
