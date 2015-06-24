@@ -192,6 +192,9 @@ class Controller
             <h1 class="show-for-medium-up">
                 <a href="/"><img class="logo hidden-on-smartphone" src="img/logo.png" height="40" width="36" /></a>
                 <a href="./index.php"><?php echo $titre ?></a>
+                <a style="display:inline-block" target="_blank" href="https://www.tipeee.com/shaarlo">
+                    <img width="50" src="img/tipeee.png" />
+                </a> 
             </h1>
             <ul class="show-for-medium-up" >
                 <li><a href="index.php">River</a></li>
