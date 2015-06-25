@@ -1068,6 +1068,7 @@ class River extends Controller
         <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>" data-id-commun="<?php echo htmlentities($found['id_commun']); ?>">
             <div class="columns large-12">
                 <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?> persist-area">
+                    <span class="croix noselect" data-article-id="<?php echo htmlentities($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">X</span>
                     <div class="columns large-10">
                         <div class="persist-header">
                             <div class="columns large-11">
@@ -1139,6 +1140,7 @@ class River extends Controller
                         <?php } ?>
                         &nbsp;
                     </div>
+                    
                     <div class="clear"></div>
                     <hr class="mini"/>
                     <div class="">
@@ -1152,6 +1154,7 @@ class River extends Controller
                         ?>
                         </div>
                     </div>
+                    
                 </div>
             </div>
         </div>
@@ -1218,6 +1221,26 @@ class River extends Controller
                 }
             }
 
+            /**
+            * Fait un appel ajax pour ignorer un article
+            */
+            function ignoreit(him, id) 
+            {
+                var r = new XMLHttpRequest(); 
+                var params = "do=ignoreit&id=" + id;
+                r.open("POST", "add.php", true); 
+                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                r.onreadystatechange = function () {
+                    if (r.readyState == 4) {
+                        if(r.status == 200){
+                            $('#div-article-' + id).hide();
+                        }
+                        return true; 
+                    }
+                };
+                r.send(params);
+            }
+            
             function ireadit(him, id) 
             {
                 var r = new XMLHttpRequest(); 
@@ -1361,6 +1384,17 @@ class River extends Controller
                 );
                 $(window).unbind('focus');
             });
+        });
+
+        /*
+        Lorsque l'utilisateur ne souhaite plus jamais voir un lien
+        */
+       $(document).on("click", '.croix', function() {
+            var articleId = $(this).attr('data-article-id');
+            var r = confirm("Attention, cette conversation n'apparaitra plus jamais (pas de retour possible pour l'instant). Continuer ? ");
+            if (r == true) {
+                ignoreit(this, articleId);
+            }
         });
 
         /* 

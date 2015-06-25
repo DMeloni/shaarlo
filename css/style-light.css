@@ -321,3 +321,28 @@ hr.mini {
     animation: background-f1-ff 1s;    
 }
 
+.panel > .croix:first-child{
+    color: #AAA;
+    float: right;
+    margin-top: -12px;
+    margin-right: -10px;
+    border-radius: 5px;
+    width: 20px;
+    text-align: center;
+    transition: background-color 300ms ease-out;
+}
+.panel > .croix:first-child:hover{
+    color: #FFF;
+    background: #AAA;
+    cursor:pointer;
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+

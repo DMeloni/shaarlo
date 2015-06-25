@@ -32,6 +32,21 @@ if(isset($_POST['do']) && $_POST['do'] == 'ireadit') {
 } 
 
 /*
+ * Ignorage d'un article
+*/
+if(isset($_POST['do']) && $_POST['do'] == 'ignoreit' && isset($_POST['id'])) {  
+    $mysqli = shaarliMyConnect();
+    $shaarlieurLienIgnore = creerShaarlieurLiensIgnore($_POST['id'], getUtilisateurId());
+    insertEntite($mysqli, 'shaarlieur_liens_ignore', $shaarlieurLienIgnore);
+    shaarliMyDisconnect($mysqli);
+
+    $_SESSION['ireadit']['id'][$_POST['id']] = $_POST['id'];
+
+    header('HTTP/1.1 200 OK', true, 200);
+    return;
+}
+
+/*
  * Enregistrement lock du menu
  */
 if(isset($_POST['do']) && $_POST['do'] == 'lock') {

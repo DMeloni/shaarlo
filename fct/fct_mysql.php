@@ -210,6 +210,23 @@ function creerShaarlieurLiensClic($idCommun, $idShaarlieur) {
     return $entite;
 }
 
+/**
+ * Créer une ligne pour la table shaarlieur_liens_ignore_
+ * 
+ * @param string $idCommun : l'id de la conversation
+ * @param string $idShaarlieur : l'id du shaarlieur
+ * 
+ * @return array $entite
+ */
+function creerShaarlieurLiensIgnore($idCommun, $idShaarlieur) {
+    $entite = array('id_commun' => $idCommun, 'id_shaarlieur' => $idShaarlieur);
+
+    $entite['date_update'] = date('YmdHis');
+    $entite['date_insert'] = $entite['date_update'];
+    
+    return $entite;
+}
+
 function getMeilleursArticlesDuJour($mysqli, $dateTimeFrom, $dateTimeTo, $limit=1, $id=null) {
     if(is_null($id)) {
         $query = sprintf('SELECT * 
@@ -264,7 +281,9 @@ function getLastIdCommunFromIdRss($mysqli, $idRss) {
     return null;
 }
 
-
+/**
+ * Récupère les articles d'un utilisateur en les regroupant comme il faut
+ */
 function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popularite=0, $orderBy = null, $order='desc', $from=null, $to=null, $limit=null, $tags=null) {
     $articles = array();
     $matchSQL ='';
@@ -348,19 +367,20 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     $username = $mysqli->real_escape_string($username);
     
     
-    $jointureTags = 'WHERE';
+    // Jointure sur les articles à ignorer
+    $jointureTags = " LEFT JOIN shaarlieur_liens_ignore AS sli ON l.id_commun=sli.id_commun AND sli.id_shaarlieur='$username' WHERE sli.id_commun is NULL AND ";
     
     // Ajout de la contrainte sur les tags 
     if (!empty($tags)) {
         $tagsIN = arrayToIN($mysqli, $tags);
-        $jointureTags = " JOIN tags ON l.id=tags.id_lien WHERE tags.nom $tagsIN AND ";
+        $jointureTags = " JOIN tags ON l.id=tags.id_lien LEFT JOIN shaarlieur_liens_ignore AS sli ON l.id_commun=sli.id_commun AND sli.id_shaarlieur='$username' WHERE sli.id_commun is NULL AND tags.nom $tagsIN AND ";
     }
-    
+
     if(!is_null($username)) {
         $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin from liens 
         INNER JOIN (
             SELECT liens.id_commun, count(*) as c from liens INNER JOIN (
-                SELECT id_commun, count(*) as c FROM `liens` as l $jointureTags l.id_rss IN (
+                SELECT l.id_commun, count(*) as c FROM `liens` as l $jointureTags l.id_rss IN (
                     SELECT id_rss from mes_rss AS m 
                     JOIN rss ON m.id_rss = rss.id 
                     WHERE m.username='$username' AND rss.active = '1'
@@ -398,6 +418,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
 
     return $articles;
 }
+
 
 function getAllAbonnementsId($mysqli, $username) {
     $entites = array();
