@@ -144,6 +144,7 @@ $optionsAutorisees = array('extend', 'mode_river', 'display_empty_description',
     'display_bloc_conversation',
     'use_scroll_infini',
     'display_only_new_articles',
+    'use_tipeee',
 );
 
 if(isset($_POST['do']) && in_array($_POST['do'], $optionsAutorisees) && isset($_POST['value'])) {

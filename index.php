@@ -171,6 +171,11 @@ class River extends Controller
             }
         }
 
+        // Ajout d'un tag ignoré
+        if (isset($_GET['do']) && $_GET['do'] === 'add_ignored_tag' && !empty($_GET['tag'])) {
+            addNotAllowedTags($_GET['tag']);
+        }
+        
         // Filtre sur les tags
         $tags = array();
         // Envoyé depuis l'appel ajax
@@ -1148,7 +1153,7 @@ class River extends Controller
                         <?php 
                         foreach ($found['tags_array'] as $tag) {
                             if (!empty($tag)) {
-                                ?><a href="?tags=<?php echo htmlentities($tag);?>" class="button microscopic secondary"><?php echo $tag; ?></a> <?php
+                                ?><a href="?tags=<?php echo htmlentities($tag);?>" class="button microscopic secondary"><?php echo $tag; ?><a href="?do=add_ignored_tag&tag=<?php echo htmlentities($tag);?>" onclick="return(confirm('Les articles portant ce tag ne seront plus affichés, continuer ? '));" class="button microscopic secondary">X</a></a> <?php
                             }
                         }
                         ?>

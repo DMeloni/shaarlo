@@ -594,6 +594,18 @@ function useScrollInfini() {
     return false;
 }
 
+
+function useTipeee() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['use_tipeee']) && $session['shaarlieur_data']['use_tipeee'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
+
+
 function displayOnlyNewArticles() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['display_only_new_articles']) && $session['shaarlieur_data']['display_only_new_articles'] === true) {
@@ -662,12 +674,34 @@ function updateTags($tags) {
     setSession($session);
 }
 
+/**
+ * Ajoute un tag à la liste des tags bloqués
+ * 
+ * @param string $tag : le tag à filtrer
+ * 
+ * @return true|false si maj 
+ **/
+function addNotAllowedTags($tag) {
+    $actualsTags = getNotAllowedTags();
+    if (!is_array($tag, $actualsTags)) {
+        $actualsTags[] = $tag;
+        updateNotAllowedTags($actualsTags);
+        
+        return true;
+    }
+    
+    return false;
+}
+
 function updateNotAllowedTags($tags) {
     $session = getSession();
-    $tags = str_replace("\n", ' ', $tags);
-    $tags = str_replace(',', ' ', $tags);
-    $tags = explode(' ', trim($tags));
+    if (is_string($tags)) {
+        $tags = str_replace("\n", ' ', $tags);
+        $tags = str_replace(',', ' ', $tags);
+        $tags = explode(' ', trim($tags));
+    }
     $session['shaarlieur_data']['not_allowed_tags'] = $tags;
+
     setSession($session);
 }
 

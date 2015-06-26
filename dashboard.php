@@ -356,7 +356,7 @@ class Dashboard extends Controller
                                     <?php if ($params['shaarli_url']) { ?>
                                     <div class="row">
                                         <div class="columns large-8">
-                                            <span>Afficher le bloc de conversation <span class="button microscopic alert">NEW</span></span>
+                                            <span>Afficher le bloc de conversation</span>
                                         </div>
                                         <div class="columns large-4">
                                             <input type="radio" <?php if(displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="oui"/>oui
@@ -452,6 +452,17 @@ class Dashboard extends Controller
                                         <div class="columns large-4">
                                             <input type="radio" <?php if(useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="oui"/>oui
                                             <input type="radio" <?php if(!useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    <hr class="no-margin"/>
+                                    
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Ne pas afficher les trucs du style Tipeee <span class="button microscopic alert">NEW</span></span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="non"/>non
                                         </div>
                                     </div>
                                     <hr class="no-margin"/>
@@ -730,8 +741,11 @@ class Dashboard extends Controller
             $('.checkbox-display_rss_button').click(function() {
                 addOption($(this), 'display_rss_button', $(this).val());
             });
+            $('.checkbox-use_tipeee').click(function() {
+                addOption($(this), 'use_tipeee', $(this).val());
+            });
 
-            
+
             function addAbo(that, id, action) {
                 var r = new XMLHttpRequest(); 
                 var params = "do="+action+"&id=" + id;
