@@ -458,7 +458,7 @@ class Dashboard extends Controller
                                     
                                     <div class="row">
                                         <div class="columns large-8">
-                                            <span>Ne pas afficher les trucs du style Tipeee <span class="button microscopic alert">NEW</span></span>
+                                            <span>Afficher les trucs du style Tipeee <span class="button microscopic alert">NEW</span></span>
                                         </div>
                                         <div class="columns large-4">
                                             <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="oui"/>oui
@@ -479,31 +479,15 @@ class Dashboard extends Controller
                                                 <input type="radio" <?php if(!useUselessOptions()) {echo ' checked="checked" ';}?> name="checkbox-use-useless-options" class="checkbox-use-useless-options no-margin" value="non"/>non
                                             </div>
                                     </div>
+
                                     <?php }?>
-                                        <!--
-                                        <div class="row">
-                                            <div class="columns large-8">
-                                                <span>En travaux : Activer le mode river (dégroupe les liens)</span>
-                                            </div>
-                                            <div class="columns large-4">
-                                                <input type="radio" <?php if(isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="oui"/>oui
-                                                <input type="radio" <?php if(!isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="non"/>non
-                                            </div>
-                                        </div>
-                                        -->
-                                </div>
-                            </div>
-                        </div>
-                        <?php } ?>
-                        <?php
-                        if (useUselessOptions()) {
-                        ?>
-                        <div class="row">
-                            <div class="columns large-12 center">
-                                <div class="panel">
+                                    <?php
+                                    if (useUselessOptions()) {
+                                    ?>
+                                    <br/>
                                     <div class="row">
                                         <div class="column large-12">
-                                            <h3>Options mainstream</h3>
+                                            <h5>Options mainstream</h5>
                                         </div>
                                     </div>
 
@@ -526,11 +510,28 @@ class Dashboard extends Controller
                                             <input type="radio" <?php if(!useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="non"/><span class="no-dotsies">non</span>
                                         </div>
                                     </div>
+                                    <?php } ?>
+                                    <div class="row">
+                                        <div class="columns large-12 text-right">
+                                            <span><form><input type="submit" class="button" value="Enregistrer"></form></span>
+                                        </div>
+                                    </div>
+                                        <!--
+                                        <div class="row">
+                                            <div class="columns large-8">
+                                                <span>En travaux : Activer le mode river (dégroupe les liens)</span>
+                                            </div>
+                                            <div class="columns large-4">
+                                                <input type="radio" <?php if(isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="oui"/>oui
+                                                <input type="radio" <?php if(!isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="non"/>non
+                                            </div>
+                                        </div>
+                                        -->
                                 </div>
                             </div>
-                            
                         </div>
                         <?php } ?>
+
 
                     <?php if (isSerieux() && !$params['creation']) { ?>
                     <div class="row">

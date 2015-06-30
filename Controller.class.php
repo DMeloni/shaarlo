@@ -24,7 +24,7 @@ class Controller
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.css" />
                         <link rel="stylesheet" href="css/foundation-overload.css?v=4" />
-                        <link rel="stylesheet" href="css/style-light.css?v=13" />
+                        <link rel="stylesheet" href="css/style-light.css?v=15" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
                         <script src="js/foundation/foundation.js"></script>
@@ -237,11 +237,11 @@ class Controller
                 <?php
                 if (displayRssButton() && !empty($rssUrl)) {
                     ?>
-                    <li><a style="vertical-align: sub;" href="<?php echo htmlentities($rssUrl); ?>"><img src="img/rss_iconZ.png" style="background:orange;" height="14" width="14" /></a></li>
+                    <li><a style="vertical-align: baseline;" href="<?php echo htmlentities($rssUrl); ?>"><img src="img/rss_iconZ.png" style="background:orange;" height="14" width="14" /></a></li>
                     <?php
                 }
                 ?>
-                    <li><a style="vertical-align: sub;" href="./index.php?do=logout"><img src="img/logout_icon.png" height="14" width="14" /></a></li>
+                    <li><a style="vertical-align: baseline;" href="./index.php?do=logout"><img src="img/logout_icon.png" height="14" width="14" /></a></li>
             </ul>
         </div>
         <?php
