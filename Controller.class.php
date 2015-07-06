@@ -24,7 +24,7 @@ class Controller
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.css" />
                         <link rel="stylesheet" href="css/foundation-overload.css?v=4" />
-                        <link rel="stylesheet" href="css/style-light.css?v=15" />
+                        <link rel="stylesheet" href="css/style-light.css?v=16" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
                         <script src="js/foundation/foundation.js"></script>

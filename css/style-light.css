@@ -128,7 +128,6 @@ input:focus{background:#EEE;color:#3465A4;border-color:#3465A4;}
 .action-extend button,.action-extend a{color:#A1A1A1;background-color: #FFF;border:#A1A1A1 1px solid;border-radius:100px;width: 30px;height: 30px;font-size: 30px;text-align: center;line-height: 25px;}
 .action-extend button:hover, .action-extend a:hover{color:#FFF;background-color: #A1A1A1;cursor:pointer;}
 .entete-avatar{
-    opacity:0.5;
     border: 1px solid;
     border-radius: 6px;
     margin-top: 6px;
@@ -421,4 +420,38 @@ hr.mini {
         font-size:9px;
     }
 } 
- 
+
+.icon-comment {
+    height:32px;
+    width:32px;
+    position: absolute;
+    right: 15px;
+    background:url('img/comment_icon.png');
+    display: none;
+    z-index:1;
+}
+
+.icon-edition {
+    height:32px;
+    width:32px;
+    position: absolute;
+    right: 15px;
+    background:url('img/edit_icon.png');
+    display: none;
+    z-index:2;
+}
+
+.icon-comment:hover,
+.icon-edition:hover {
+    cursor:pointer;
+}
+
+.div-discussion-edit:hover {
+    background: #F7F7F7;
+}
+.div-discussion-edit:hover .icon-comment,
+.div-discussion-edit:hover .icon-edition {
+    display: inline-block;
+}
+
+

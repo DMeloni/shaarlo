@@ -63,7 +63,7 @@ function insertEntites($mysqli, $table, $entites) {
     $requeteClefSQL = implode(', ', $clefsSQL);
     
     if($table == 'liens') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_url=VALUES(article_url), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss), tags=VALUES(tags) ', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss), tags=VALUES(tags) ', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'rss') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update), rss_titre=VALUES(rss_titre)', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'shaarliste') {
@@ -210,14 +210,6 @@ function creerShaarlieurLiensClic($idCommun, $idShaarlieur) {
     return $entite;
 }
 
-/**
- * Créer une ligne pour la table shaarlieur_liens_ignore_
- * 
- * @param string $idCommun : l'id de la conversation
- * @param string $idShaarlieur : l'id du shaarlieur
- * 
- * @return array $entite
- */
 function creerShaarlieurLiensIgnore($idCommun, $idShaarlieur) {
     $entite = array('id_commun' => $idCommun, 'id_shaarlieur' => $idShaarlieur);
 
@@ -281,9 +273,7 @@ function getLastIdCommunFromIdRss($mysqli, $idRss) {
     return null;
 }
 
-/**
- * Récupère les articles d'un utilisateur en les regroupant comme il faut
- */
+
 function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popularite=0, $orderBy = null, $order='desc', $from=null, $to=null, $limit=null, $tags=null) {
     $articles = array();
     $matchSQL ='';
@@ -376,6 +366,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         $jointureTags = " JOIN tags ON l.id=tags.id_lien LEFT JOIN shaarlieur_liens_ignore AS sli ON l.id_commun=sli.id_commun AND sli.id_shaarlieur='$username' WHERE sli.id_commun is NULL AND tags.nom $tagsIN AND ";
     }
 
+    
     if(!is_null($username)) {
         $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin from liens 
         INNER JOIN (
@@ -418,7 +409,6 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
 
     return $articles;
 }
-
 
 function getAllAbonnementsId($mysqli, $username) {
     $entites = array();

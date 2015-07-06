@@ -311,7 +311,7 @@ class River extends Controller
                 }
 
 
-                $description = sprintf('%s<div class="columns large-11 small-9"><span class="entete-pseudo"><b>%s</b> <span class="mini-on-smartphone opacity-test-3">%s</span> </span></div><br/><div class="columns large-11 small-9"> %s %s</div><br/><br/><div class="clear"></div>', 
+                $description = sprintf('%s<div class="columns large-11 small-9"><span class="entete-pseudo"><b>%s</b> <span class="mini-on-smartphone opacity-test-3">%s</span> </span></div><br/><div class="columns large-11 small-9 right"> %s %s</div><br/><br/><div class="clear"></div>', 
                     $img,
                     $rssTitreAffiche, 
                     $dateAffichee, 
@@ -339,9 +339,25 @@ class River extends Controller
                 $articleTags .= $nouveauxTags;
             }
 
+            $discussion = array();
+
+            // C'est un de mes posts
+            if (isShaarliste()) {
+                if (getIdOkRss() === $article['id_rss']) {
+                    $idPostShaarli = sprintf('%s_%s', substr($article['article_date'], 0, 8), substr($article['article_date'], 8, 6));
+                    $discussion['edit_link'] = sprintf('%s?source=bookmarklet&edit_link=%s', getShaarliUrl(), $idPostShaarli);
+                } else {
+                    $discussion['comment_link'] = sprintf('%s?source=bookmarklet&post=%s', getShaarliUrl(), $article['article_uuid']);
+                }
+            }
+            
+
+            $discussion['permalink'] = $article['article_uuid'];
+            $discussion['description'] = $description;
+
             $articleFirstDate = $article['article_date'];
             if(isset($found[$article['id_commun']])) {
-                $discussions[$article['id_commun']][] = $description;
+                $discussions[$article['id_commun']][] = $discussion;
                 $description .= $found[$article['id_commun']]['description'];
                 $nouveauxTags = trim(strtolower($found[$article['id_commun']]['tags']));
                 if (!empty($nouveauxTags)) {
@@ -356,9 +372,11 @@ class River extends Controller
                 $faviconPath = $found[$article['id_commun']]['dernier_auteur_favicon'];
                 $derniereDateMaj = $found[$article['id_commun']]['derniere_date_maj'];
             } else {
-                $discussions[$article['id_commun']] = array($description);
+                $discussions[$article['id_commun']] = array($discussion);
             }
             
+
+
             $imgMiniCapturePath = captureUrl($article['article_url'], $article['id_commun'], 200, 200);
             $imgCapturePathMax = getImgPathFromId($article['id_commun']);
             if(isset($_SESSION['ireadit']['id'][$article['id_commun']])) {
@@ -1126,7 +1144,21 @@ class River extends Controller
                                     if ($d > 0 && $params['extended']) {
                                         $discussionClass .= ' div-discussion-hidden hidden';
                                     }
-                                    ?><div class="<?php echo $discussionClass;?>"><?php echo $discussion;?></div><?php
+                                    if (isset($discussion['edit_link']) || isset($discussion['comment_link'])) {
+                                        $discussionClass .= ' div-discussion-edit';
+                                    }
+                                    ?><div class="<?php echo $discussionClass;?>">
+                                        <?php 
+                                        if (isset($discussion['edit_link'])) {
+                                            ?><a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? echo htmlentities($discussion['edit_link']); ?>" target="_blank"> </a><?php
+                                        } 
+                                        elseif (isset($discussion['comment_link'])) {
+                                            // Lien de réponse
+                                            ?><a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? echo htmlentities($discussion['comment_link']); ?>" target="_blank"> </a><?php
+                                        }
+                                        echo $discussion['description'];
+                                        ?>
+                                    </div><?php
                                     $d++;
                                 }
                                 ?>
