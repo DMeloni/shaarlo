@@ -81,7 +81,46 @@ class Dashboard extends Controller
                         </div>
                     </div>
                 </div>
-
+                
+                <div class="row">
+                    <div class="column large-12 text-center">
+                        <h2 id="thanks">Remerciements</h2>
+                        <div class="panel">
+                            <div class="row">
+                                <div class="column large-12">
+                                    <img src="img/merci.gif" alt="merci.gif"/>
+                                </div>
+                                <div class="column large-12">
+                                  Je souhaite remercier chaleureusement les personnes qui ont contribuées
+                                  de près comme de loin à shaarlo !
+                                  <br/>
+                                  Je tiens à vous remercier également pour vos bons conseils au quotidien qui aident à améliorer l'usage de l'outil !
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column large-12">
+                        <div class="panel">
+                            <h3>Contributions Juin 2015</h3>
+                            <div class="row">
+                                <div class="column large-12">
+                                  Les personnes suivantes ont fait un don <a href="https://www.tipeee.com/shaarlo/">Tipeee</a> pour financer la maintenance et le développement du site et acceptent d'être citées :
+                                </div>
+                                <div class="column large-12">
+                                    <ul>
+                                      <li>Knah Tsaeb</li>
+                                      <li>Zouzou</li>
+                                      <li>streisand.fr</li>
+                                    </ul>
+                                </div>
+                                <div class="column large-12">
+                                  Je remercie également toutes les personnes qui ont fait un don et ne veulent pas nécessairement être citées !
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="columns large-12 center">
                         <div class="panel">
@@ -113,11 +152,34 @@ class Dashboard extends Controller
                         </div>
                     </div>
                 </div>
+                <div class="row" id="cout-infra">
+                    <div class="columns large-12 center">
+                        <div class="panel">
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <h3>Coût de l'infrastructure shaarli.fr </h3>
+                                    <p>
+                                    Pour un soucis de transparence, voici ce que coûte actuellement l'hébergement de shaarli.fr (2015)
+                                    </p>
+                                    <ul>
+                                        <li>Hébergement mutualisé pro OVH : 60€</li>
+                                        <li>Certificat SSL : 50€ </li>
+                                        <li>Nom de domaine : 7€</li>
+                                        <li>TVA : 24€</li>
+                                        <li>Serveur VPS : 28€ (7€ x 4 trimestres)</li>
+                                        <li>Total : 169€ TTC (14€ par mois)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <?php
                 $this->renderScript();
                 ?>
-		    </body>
-		</html>
+                </body>
+                </html>
 
 		<?php
 	}
