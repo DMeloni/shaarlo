@@ -310,14 +310,24 @@ class River extends Controller
                     $dateAffichee = date('d/m/Y', $articleDateTime->getTimestamp());
                 }
 
+                if (displayImages()) {
+                    $description = sprintf('%s<div class="columns large-11 small-9"><span class="entete-pseudo"><b>%s</b><span class="mini-on-smartphone opacity-test-3">%s</span> </span></div><br/><div class="columns large-11 small-9 right"> %s %s</div><br/><br/><div class="clear"></div>', 
+                        $img,
+                        $rssTitreAffiche, 
+                        $dateAffichee, 
+                        str_replace('<br>', '<br/>', $article['article_description']),
+                        $followUrl
+                    );
+                } else {
+                    $description = sprintf('<div class="columns large-12 small-12"><span class="entete-pseudo"><b>%s</b><span class="mini-on-smartphone opacity-test-3">%s</span> </span></div><br/><div class="columns large-12 small-12"> %s %s</div><br/><br/><div class="clear"></div>', 
+                        $rssTitreAffiche, 
+                        $dateAffichee, 
+                        str_replace('<br>', '<br/>', $article['article_description']),
+                        $followUrl
+                    );
+                }
+                
 
-                $description = sprintf('%s<div class="columns large-11 small-9"><span class="entete-pseudo"><b>%s</b> <span class="mini-on-smartphone opacity-test-3">%s</span> </span></div><br/><div class="columns large-11 small-9 right"> %s %s</div><br/><br/><div class="clear"></div>', 
-                    $img,
-                    $rssTitreAffiche, 
-                    $dateAffichee, 
-                    str_replace('<br>', '<br/>', $article['article_description']),
-                    $followUrl
-               );
             } else {
                 // Si le message a été censuré, on affiche un message
                 $description = sprintf("<b>%s</b> %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', '<span title="Ce contenu ne correspond pas aux règles de ce site web.">-- Commentaire censuré --</span>'));  
@@ -1134,7 +1144,7 @@ class River extends Controller
                     </div>
                     <div class="clear"></div>
                     <br/>
-                    <div class="columns large-10 small-10">
+                    <div class="columns <?php if (displayImages()) {?>large-10 small-10<?php } ?>">
                         <div class="">
                             <div id="div-description-<?php echo htmlentities($found['id_commun']); ?>" style="overflow:hidden;" class="columns large-10 <?php if($params['extended']) echo 'extended'; ?>">
                                 <?php 
@@ -1166,7 +1176,7 @@ class River extends Controller
                                 // Bloc commenter
                                 if (!empty($params['my_shaarli']) && strpos($found['description'], $params['my_shaarli']) === false ) {
                                 ?>
-                                <div class="columns large-11 small-9 right">
+                                <div class="columns <?php if (displayImages()) {?>large-11 small-9 right<?php } else {?>large-12 small-12 <?php } ?>">
                                     <form target="_blank" method="GET" action="<?php echo $params['my_shaarli']; ?>">
                                         <input type="hidden" name="source" value="bookmarklet" />
                                         <input type="hidden" name="title" value="<?php echo htmlentities($found['title']); ?>" />
@@ -1189,6 +1199,8 @@ class River extends Controller
                         </div>
                         <?php } ?>
                     </div>
+                    
+                    <?php if (displayImages()) { ?>
                     <div class="columns large-2 small-2">
                         <?php if (!empty($found['url_image'])) { ?>
                         <a class="thumbnail-modal-reveal visible-on-hover" data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="<?php echo htmlentities($found['link']); ?>">
@@ -1204,7 +1216,7 @@ class River extends Controller
                         &nbsp;
                     </div>
                     <?php
-                    
+                    }
                     
                     ?>
                     <div class="clear"></div>

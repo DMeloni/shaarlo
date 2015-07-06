@@ -575,6 +575,15 @@ function displayRssButton() {
     return false;
 }
 
+function displayImages() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_img']) && $session['shaarlieur_data']['display_img'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
 function displayBlocConversation() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['display_bloc_conversation']) && $session['shaarlieur_data']['display_bloc_conversation'] === true) {

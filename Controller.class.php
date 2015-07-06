@@ -22,14 +22,12 @@ class Controller
                         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                         <meta name="description" content="La communauté partage ses liens" />
                         <title>Shaarli.fr</title>
-                        <link rel="stylesheet" href="css/foundation.css" />
+                        <link rel="stylesheet" href="css/foundation.min.css" />
                         <link rel="stylesheet" href="css/foundation-overload.css?v=4" />
                         <link rel="stylesheet" href="css/style-light.css?v=16" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
-                        <script src="js/foundation/foundation.js"></script>
-                        <script src="js/foundation/foundation.equalizer.js"></script>
-                        <script src="js/foundation/foundation.reveal.js"></script>
+                        <script src="js/foundation.min.js"></script>
                         <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png">
                         <link rel="apple-touch-icon" sizes="60x60" href="img/apple-icon-60x60.png">
                         <link rel="apple-touch-icon" sizes="72x72" href="img/apple-icon-72x72.png">

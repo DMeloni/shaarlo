@@ -333,24 +333,30 @@ class Dashboard extends Controller
                                             <h3>Paramètres</h3>
                                         </div>
                                     </div>
+                                    <br/>
                                     <div class="row">
-                                            <div class="columns large-8">
-                                                    <span>Afficher les commentaires des shaarlistes non suivis</span>
-                                            </div>
-                                            <div class="columns large-4">
-                                                    <input type="radio" <?php if(displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="oui"/>oui
-                                                    <input type="radio" <?php if(!displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="non"/>non
-                                            </div>
+                                        <div class="column large-12">
+                                            <h5>Options fonctionnelles</h5>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Afficher les commentaires des shaarlistes non suivis</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                                <input type="radio" <?php if(displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="non"/>non
+                                        </div>
                                     </div>
                                     <hr class="no-margin"/>
                                     <div class="row">
-                                            <div class="columns large-8">
-                                                <span>Afficher le bloc "En ce moment sur la shaarlisphère"</span>
-                                            </div>
-                                            <div class="columns large-4">
-                                                <input type="radio" <?php if(displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="oui"/>oui
-                                                <input type="radio" <?php if(!displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="non"/>non
-                                            </div>
+                                        <div class="columns large-8">
+                                            <span>Afficher le bloc "En ce moment sur la shaarlisphère"</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="non"/>non
+                                        </div>
                                     </div>
                                     <hr class="no-margin"/>
                                     <?php if ($params['shaarli_url']) { ?>
@@ -416,13 +422,29 @@ class Dashboard extends Controller
                                     </div>
                                     <hr class="no-margin"/>
                                     <div class="row">
-                                            <div class="columns large-8">
-                                                    <span>Rendre la barre de menu fixe (rafraichir la page)</span>
-                                            </div>
-                                            <div class="columns large-4">
-                                                    <input type="radio" <?php if(isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="lock"/>oui
-                                                    <input type="radio" <?php if(!isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="open"/>non
-                                            </div>
+                                        <div class="columns large-8">
+                                            <span>S'inscrire automatiquement aux nouveaux shaarlistes</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    <hr class="no-margin"/>
+                                    <br/>
+                                    <div class="row">
+                                        <div class="column large-12">
+                                            <h5>Options d'affichage</h5>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Rendre la barre de menu fixe (rafraichir la page)</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="lock"/>oui
+                                            <input type="radio" <?php if(!isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="open"/>non
+                                        </div>
                                     </div>
                                     <hr class="no-margin"/>
                                     <div class="row">
@@ -437,16 +459,6 @@ class Dashboard extends Controller
                                     <hr class="no-margin"/>
                                     <div class="row">
                                         <div class="columns large-8">
-                                            <span>S'inscrire automatiquement aux nouveaux shaarlistes</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
                                             <span>Activer le scroll infini</span>
                                         </div>
                                         <div class="columns large-4">
@@ -455,10 +467,9 @@ class Dashboard extends Controller
                                         </div>
                                     </div>
                                     <hr class="no-margin"/>
-                                    
                                     <div class="row">
                                         <div class="columns large-8">
-                                            <span>Afficher les trucs du style Tipeee <span class="button microscopic alert">NEW</span></span>
+                                            <span>Afficher les trucs du style Tipeee</span>
                                         </div>
                                         <div class="columns large-4">
                                             <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="oui"/>oui
@@ -466,24 +477,16 @@ class Dashboard extends Controller
                                         </div>
                                     </div>
                                     <hr class="no-margin"/>
-
-                                    <?php
-                                    if (!$params['pas_de_profil'] && !$params['creation']) {
-                                    ?>
                                     <div class="row">
-                                            <div class="columns large-8">
-                                                <span>Activer le panneau des options inutiles (rafraichir la page)</span>
-                                            </div>
-                                            <div class="columns large-4">
-                                                <input type="radio" <?php if(useUselessOptions()) {echo ' checked="checked" ';}?> name="checkbox-use-useless-options" class="checkbox-use-useless-options no-margin" value="oui"/>oui
-                                                <input type="radio" <?php if(!useUselessOptions()) {echo ' checked="checked" ';}?> name="checkbox-use-useless-options" class="checkbox-use-useless-options no-margin" value="non"/>non
-                                            </div>
+                                        <div class="columns large-8">
+                                            <span>Afficher les images/avatars <span class="button microscopic alert">NEW</span></span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="non"/>non
+                                        </div>
                                     </div>
-
-                                    <?php }?>
-                                    <?php
-                                    if (useUselessOptions()) {
-                                    ?>
+                                    <hr class="no-margin"/>
                                     <br/>
                                     <div class="row">
                                         <div class="column large-12">
@@ -510,7 +513,6 @@ class Dashboard extends Controller
                                             <input type="radio" <?php if(!useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="non"/><span class="no-dotsies">non</span>
                                         </div>
                                     </div>
-                                    <?php } ?>
                                     <div class="row">
                                         <div class="columns large-12 text-right">
                                             <span><form><input type="submit" class="button" value="Enregistrer"></form></span>
@@ -744,6 +746,9 @@ class Dashboard extends Controller
             });
             $('.checkbox-use_tipeee').click(function() {
                 addOption($(this), 'use_tipeee', $(this).val());
+            });
+            $('.checkbox-display_img').click(function() {
+                addOption($(this), 'display_img', $(this).val());
             });
 
 
