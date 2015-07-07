@@ -274,7 +274,7 @@ function getLastIdCommunFromIdRss($mysqli, $idRss) {
 }
 
 
-function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popularite=0, $orderBy = null, $order='desc', $from=null, $to=null, $limit=null, $tags=null) {
+function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popularite=0, $orderBy = null, $order='desc', $from=null, $to=null, $limit=null, $tags=null, $onlyNews=false) {
     $articles = array();
     $matchSQL ='';
     if(!empty($fullText)) {
@@ -356,19 +356,21 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     
     $username = $mysqli->real_escape_string($username);
     
-    
-    // Jointure sur les articles à ignorer
+    // Jointure sur les articles déjà vus ou à ignorer
     $jointureTags = " LEFT JOIN shaarlieur_liens_ignore AS sli ON l.id_commun=sli.id_commun AND sli.id_shaarlieur='$username' WHERE sli.id_commun is NULL AND ";
-    
+    if ($onlyNews) {
+        $jointureTags = " LEFT JOIN shaarlieur_liens_ignore AS sli ON l.id_commun=sli.id_commun AND sli.id_shaarlieur='$username' LEFT JOIN shaarlieur_liens_clic AS slc ON l.id_commun=slc.id_commun AND slc.id_shaarlieur='$username' WHERE sli.id_commun is NULL AND slc.id_commun is NULL AND ";
+    }
+
     // Ajout de la contrainte sur les tags 
     if (!empty($tags)) {
         $tagsIN = arrayToIN($mysqli, $tags);
-        $jointureTags = " JOIN tags ON l.id=tags.id_lien LEFT JOIN shaarlieur_liens_ignore AS sli ON l.id_commun=sli.id_commun AND sli.id_shaarlieur='$username' WHERE sli.id_commun is NULL AND tags.nom $tagsIN AND ";
+        $jointureTags = " JOIN tags ON l.id=tags.id_lien $jointureTags tags.nom $tagsIN AND ";
     }
 
-    
     if(!is_null($username)) {
-        $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin from liens 
+        $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin,  liens_clic.nb_clic  
+        FROM liens 
         INNER JOIN (
             SELECT liens.id_commun, count(*) as c from liens INNER JOIN (
                 SELECT l.id_commun, count(*) as c FROM `liens` as l $jointureTags l.id_rss IN (
@@ -385,11 +387,8 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         INNER JOIN rss ON liens.id_rss=rss.id 
         LEFT OUTER JOIN rss AS rss_origin ON liens.id_rss_origin=rss_origin.id 
         LEFT OUTER JOIN mes_rss AS mes_rss_origin ON (rss_origin.id=mes_rss_origin.id_rss AND mes_rss_origin.username='$username')
-
         LEFT OUTER JOIN mes_rss ON (rss.id=mes_rss.id_rss AND mes_rss.username='$username')
-        /*WHERE liens.id_rss IN (
-                SELECT id_rss from mes_rss AS m WHERE m.username='$username'
-        ) */
+        LEFT OUTER JOIN liens_clic ON (liens_clic.id_commun=liens.id_commun) 
         WHERE rss.active = '1'
         GROUP BY liens.id 
         ORDER BY liens.article_date DESC");
@@ -844,6 +843,32 @@ function getStatsFromOption($mysqli, $option) {
 }
 
 
+/**
+ * Indique si un lien a déjà été cliqué par un utilisateur
+ * 
+ * @param $mysqli
+ * @param string $idCommun
+ * @param string $shaarlieurId
+ * 
+ * @return bool true | false
+ */
+function isLienDejaClic($mysqli, $idCommun, $shaarlieurId) {
+    $query = sprintf("SELECT count(*) AS c FROM shaarlieur_liens_clic WHERE id_shaarlieur='%s' AND id_commun='%s'", 
+        $mysqli->real_escape_string($shaarlieurId),
+        $mysqli->real_escape_string($idCommun)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['c']) && $row['c'] > 0) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 
 

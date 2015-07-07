@@ -123,3 +123,10 @@ function ajouterParametresGET($url, $nomsvaleurs){
     return $url;
 }
 
+/**
+* Affiche de manière protégée les éventuelles balises html
+*/
+function eh($string) {
+    echo htmlentities($string);
+}
+

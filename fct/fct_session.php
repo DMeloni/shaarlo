@@ -575,6 +575,17 @@ function displayRssButton() {
     return false;
 }
 
+function displayOnlyUnreadArticles() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_only_unread']) && $session['shaarlieur_data']['display_only_unread'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
 function displayImages() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['display_img']) && $session['shaarlieur_data']['display_img'] === false) {

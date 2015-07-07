@@ -15,16 +15,24 @@ if(isset($_POST['do']) && $_POST['do'] == 'ireadit') {
     }
 
     if(!isset($_SESSION['ireadit']['id'][$_POST['id']])) {
-        $lienClic = creerLiensClic($_POST['id']);
-        
         $mysqli = shaarliMyConnect();
-        insertEntite($mysqli, 'liens_clic', $lienClic);
+        
+        $isLienDejaClic = isLienDejaClic($mysqli, $_POST['id'], getUtilisateurId());
 
-        $shaarlieurLienClic = creerShaarlieurLiensClic($_POST['id'], getUtilisateurId());
-        insertEntite($mysqli, 'shaarlieur_liens_clic', $shaarlieurLienClic);
-        shaarliMyDisconnect($mysqli);
-
-        $_SESSION['ireadit']['id'][$_POST['id']] = $_POST['id'];
+        if (false === $isLienDejaClic) {
+            $lienClic = creerLiensClic($_POST['id']);
+            insertEntite($mysqli, 'liens_clic', $lienClic);
+            $shaarlieurLienClic = creerShaarlieurLiensClic($_POST['id'], getUtilisateurId());
+            insertEntite($mysqli, 'shaarlieur_liens_clic', $shaarlieurLienClic);
+            shaarliMyDisconnect($mysqli);
+            $_SESSION['ireadit']['id'][$_POST['id']] = $_POST['id'];
+            
+            header('HTTP/1.1 200 OK', true, 200);
+            return;
+        } else {
+            header('HTTP/1.1 304 Not modified', true, 304);
+            return;
+        }
     }
 
     header('HTTP/1.1 200 OK', true, 200);
@@ -145,7 +153,8 @@ $optionsAutorisees = array('extend', 'mode_river', 'display_empty_description',
     'use_scroll_infini',
     'display_only_new_articles',
     'use_tipeee',
-    'display_img'
+    'display_img',
+    'display_only_unread',
 );
 
 if(isset($_POST['do']) && in_array($_POST['do'], $optionsAutorisees) && isset($_POST['value'])) {
