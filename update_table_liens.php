@@ -43,12 +43,14 @@ if (is_file($pidFile) && is_null(get('force'))) {
 } else {
     file_put_contents($pidFile, date('YmdHis'));
 }
+
 $adebut = microtime(true);
 $shaarlistes = array();
 $articles = array();
 $tags = array();
 foreach($allShaarlistes as $url) {
     $urlRssSimplifiee = simplifieUrl($url);
+    
     //echo $url ;
     $fluxName = md5(($urlRssSimplifiee));
     $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
@@ -91,7 +93,10 @@ foreach($allShaarlistes as $url) {
         
         foreach($rssListArrayed as $rssItem) {
 
-			$link = $rssItem['link'];
+            $link = $rssItem['link'];
+            
+            $link = str_replace('my.shaarli.fr/', 'www.shaarli.fr/my/', $link);
+            
             $rssTimestamp = strtotime($rssItem['pubDate']);
             $articleDateJour = date('Ymd', $rssTimestamp);
             if($articleDateJour !== date('Ymd') && $articleDateJour !== '20141106' && !isset($_GET['full'])) {

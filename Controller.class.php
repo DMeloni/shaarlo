@@ -23,8 +23,8 @@ class Controller
                         <meta name="description" content="La communauté partage ses liens" />
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.min.css" />
-                        <link rel="stylesheet" href="css/foundation-overload.css?v=4" />
-                        <link rel="stylesheet" href="css/style-light.css?v=16" />
+                        <link rel="stylesheet" href="css/foundation-overload.css?v=5" />
+                        <link rel="stylesheet" href="css/style-light.css?v=18" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
                         <script src="js/foundation.min.js"></script>
@@ -123,9 +123,18 @@ class Controller
             foreach ($params['infoAboutAllDecodedChunked'] as $shaarlistes) {
                 ?><div class="row" data-equalizer><?php
                 foreach ($shaarlistes as $shaarliste) {
+                    $faviconIcoPath = sprintf('img/favicon/%s.ico', $shaarliste['id']);
+                    if(!is_file($faviconIcoPath)) {
+                       $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913'); 
+                    }
                     ?>
                 <div class="column large-3"  >
                     <div class="panel shaarliste-selection <?php if(in_array($shaarliste['id'], $params['abonnements'])) { echo 'selected'; }?>" id="shaarliste-selection-<?php echo $shaarliste['id'];?>" data-equalizer-watch data-shaarliste-id="<?php echo $shaarliste['id'];?>">
+                        <?php if (displayImages()) { ?>
+                        <div class="row text-center">
+                            <img class="entete-avatar" width="64" height="64" src="<?php eh($faviconIcoPath); ?>" />
+                        </div>
+                        <?php } ?>
                         <div class="row" >
                             <input style="display:none;" <?php if(in_array($shaarliste['id'], $params['abonnements'])) { echo 'checked="checked"'; }?> type="checkbox" name="shaarlistes[]" value="<?php echo $shaarliste['id'];?>" id="<?php echo $shaarliste['id'];?>" class="checkbox-shaarliste" />
                             <div class="column large-12 text-center">

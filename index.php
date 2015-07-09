@@ -205,8 +205,12 @@ class River extends Controller
             $displayOnlyArticle = true;
         }
 
-
-        $articles = getAllArticlesDuJour($mysqli, $usernameRecherche, $q, $filtreDePopularite, $sortBy, $sort, $from, $to, $limit, $tags);
+        $displayOnlyUnreadArticles = false;
+        if (!$afficherMessagerie) {
+            $displayOnlyUnreadArticles = displayOnlyUnreadArticles();
+        }
+                
+        $articles = getAllArticlesDuJour($mysqli, $usernameRecherche, $q, $filtreDePopularite, $sortBy, $sort, $from, $to, $limit, $tags, $displayOnlyUnreadArticles);
 
         $displayShaarlistesNonSuivis = displayShaarlistesNonSuivis();
         $isModeRiver = isModeRiver();
@@ -333,7 +337,8 @@ class River extends Controller
                 $description = sprintf("<b>%s</b> %s <br/> %s $followUrl<br/><br/>", $rssTitreAffiche, date('d/m/Y \à H:i', $articleDateTime->getTimestamp()), str_replace('<br>', '<br/>', '<span title="Ce contenu ne correspond pas aux règles de ce site web.">-- Commentaire censuré --</span>'));  
             }
 
-            
+            // Les balises html sont "normalement" déjà htmlentitées dans le rss, mais on sait jamais
+            $description = str_replace('<script', '&lt;script', $description);
 
             if($articleDateTime->format('Ymd') == $today->format('Ymd')) {
                 $derniereDateMaj = $articleDateTime->format('H:i');
@@ -429,6 +434,7 @@ class River extends Controller
                                                           'derniere_date_maj' => $derniereDateMaj,
                                                           'read-class' => $readClass,
                                                           'id_commun' => $article['id_commun'],
+                                                          'nb_clic' => $article['nb_clic'],
                                                           'url_image' => $imgMiniCapturePath,
                                                           'url_image_max' => $imgCapturePathMax,
                                                           'discussions' => $discussions[$article['id_commun']]
@@ -812,16 +818,16 @@ class River extends Controller
                     ?>
                     <div class="row">
                         <div class="columns large-12 text-center show-for-medium-up">
-                            <a class="button" href="<?php echo($params['href_top_jour']); ?>">Top du jour</a>
-                            <a class="button" href="<?php echo($params['href_top_hier']); ?>">Top d'hier</a>
-                            <a class="button" href="<?php echo($params['href_top_semaine']);?>">Top hebdo</a>
-                            <!--<a class="button" href="<?php echo($params['href_top_mois']); ?>">Top du mois</a>-->
+                            <a class="button" href="<?php eh($params['href_top_jour']); ?>">Top du jour</a>
+                            <a class="button" href="<?php eh($params['href_top_hier']); ?>">Top d'hier</a>
+                            <a class="button" href="<?php eh($params['href_top_semaine']);?>">Top hebdo</a>
+                            <!--<a class="button" href="<?php eh($params['href_top_mois']); ?>">Top du mois</a>-->
                         </div>
                         <div class="columns large-12 text-center show-for-small-only">
-                            <a class="button microscopic" href="<?php echo($params['href_top_jour']); ?>">Top du jour</a>
-                            <a class="button microscopic" href="<?php echo($params['href_top_hier']); ?>">Top d'hier</a>
-                            <a class="button microscopic" href="<?php echo($params['href_top_semaine']);?>">Top hebdo</a>
-                            <!--<a class="button" href="<?php echo($params['href_top_mois']); ?>">Top du mois</a>-->
+                            <a class="button tiny" href="<?php eh($params['href_top_jour']); ?>">Top du jour</a>
+                            <a class="button tiny" href="<?php eh($params['href_top_hier']); ?>">Top d'hier</a>
+                            <a class="button tiny" href="<?php eh($params['href_top_semaine']);?>">Top hebdo</a>
+                            <!--<a class="button" href="<?php eh($params['href_top_mois']); ?>">Top du mois</a>-->
                         </div>
                     </div>
                     <br/>
@@ -833,22 +839,20 @@ class River extends Controller
                     <div>
                         <div class="columns large-12">
                             <div class="fake-panel">
-                                <input id="searchbar" type="text" name="q" placeholder="Rechercher un article" value="<?php echo($params['searchTerm']); ?>"/>
+                                <input id="searchbar" type="text" name="q" placeholder="Rechercher un article" value="<?php eh($params['searchTerm']); ?>"/>
                                 <input name="from" type="hidden" value="20130000"></input>
                                 <input name="to" type="hidden" value="90130000"></input>
                             </div>
                         </div>
                     </div>
-                    <div class="fake-panel">
-                        <div class="columns large-12 text-right show-for-medium-up">
-                            <a class="button tiny " onclick="option_extend(this)">+</a>
-                        </div>
-                        <div class="columns large-12 text-right show-for-small-only">
-                            <a class="button microscopic" onclick="option_extend(this)">+</a>
+                    <div class="fake-panel show-for-medium-up">
+                        <div class="columns large-12 text-right">
+                            <a onclick="option_extend(this)">Avancé</a>
                         </div>
                     </div>
                 </form>
-                <div style="display:none;" id="div-tags-json" data-tags-json="<?php echo htmlentities($params['tags_json']);?>"></div>
+                
+                <div style="display:none;" id="div-tags-json" data-tags-json="<?php eh($params['tags_json']);?>"></div>
 
                 <div class="pagination">
                     <div id="bloc-filtre" class="<?php if(!$params['filter_on']) { echo 'hidden'; } ?>">
@@ -873,7 +877,7 @@ class River extends Controller
                                                 <label for="sortBy">Mot(s) clef(s)</label>
                                             </div>
                                             <div class="column large-6">
-                                                <input type="text" name="q" placeholder="shaarli,linux,..." value="<?php echo($params['searchTerm']); ?>"/>
+                                                <input type="text" name="q" placeholder="shaarli,linux,..." value="<?php eh($params['searchTerm']); ?>"/>
                                             </div>
                                         </div>
                                         <hr/>
@@ -887,7 +891,7 @@ class River extends Controller
                                                 <label for="pop">Popularité</label>
                                             </div>
                                             <div class="column large-6">
-                                                <input id="pop" name="pop" type="number" value="<?php echo($params['filtre_popularite']); ?>" min="0"></input>
+                                                <input id="pop" name="pop" type="number" value="<?php eh($params['filtre_popularite']); ?>" min="0"></input>
                                             </div>
                                         </div>
                                         <hr/>
@@ -901,7 +905,7 @@ class River extends Controller
                                                 <label for="limit">Nombre d'article à afficher</label>
                                             </div>
                                             <div class="column large-6">
-                                                <input value="<?php echo min($params['limit'], $params['min_limit']); ?>" id="limit" name="limit" type="number" min="0" max="<?php echo($params['max_limit']); ?>" />
+                                                <input value="<?php eh(min($params['limit'], $params['min_limit'])); ?>" id="limit" name="limit" type="number" min="0" max="<?php echo($params['max_limit']); ?>" />
                                             </div>
                                         </div>
                                         <hr/>
@@ -915,13 +919,13 @@ class River extends Controller
                                                 <label for="from">Du</label>
                                             </div>
                                             <div class="column large-4 left" data-equalizer-watch>
-                                                <input id="from" name="from" type="date" value="<?php echo($params['date_from']); ?>"></input>
+                                                <input id="from" name="from" type="date" value="<?php eh($params['date_from']); ?>"></input>
                                             </div>
                                             <div class="column large-1 left" data-equalizer-watch>
                                                 <label for="to">Au</label>
                                             </div>
                                             <div class="column large-4 left" data-equalizer-watch>
-                                                <input id="to" name="to" type="date" value="<?php echo($params['date_to']); ?>" max="<?php echo($params['max_date_to']); ?>"></input>
+                                                <input id="to" name="to" type="date" value="<?php eh($params['date_to']); ?>" max="<?php eh($params['max_date_to']); ?>"></input>
                                             </div>
                                         </div>
                                        <hr/>
@@ -962,12 +966,12 @@ class River extends Controller
                     </div>
                 </div>
                 <div class="clear"></div>
-                
+                <br/>
                 <?php if ($params['displayBlocConversation'] && !empty($params['my_shaarli'])) { ?>
                 <div class="">
                     <div class="columns large-12">
                         <div class="fake-panel">
-                            <form id="form-conversation" target="_blank" method="GET" action="<?php echo $params['my_shaarli']; ?>">
+                            <form id="form-conversation" target="_blank" method="GET" action="<?php eh($params['my_shaarli']); ?>">
                                 <input type="hidden" name="post" value="" />
                                 <input type="hidden" name="title" value="..." />
                                 <input type="hidden" name="source" value="bookmarklet" />
@@ -984,12 +988,12 @@ class River extends Controller
                 <div class="columns large-12">
                     <div class="fake-panel text-right">
                         <?php if($params['date_hier']) { ?>
-                            <a href="?from=<?php echo htmlentities($params['date_hier']);?>000000&amp;to=<?php echo htmlentities($params['date_hier']);?>235959">Jour précédent</a>
+                            <a href="?from=<?php eh($params['date_hier']);?>000000&amp;to=<?php eh($params['date_hier']);?>235959">Jour précédent</a>
                         <?php } ?>
                         <?php if($params['date_demain']) { ?>
-                            <a href="?from=<?php echo htmlentities($params['date_demain']);?>000000&amp;to=<?php echo htmlentities($params['date_demain']);?>235959">/ Jour suivant</a>
+                            <a href="?from=<?php eh($params['date_demain']);?>000000&amp;to=<?php eh($params['date_demain']);?>235959">/ Jour suivant</a>
                         <?php } ?>
-                        <div style="display:none;" id="div-date-precedente" data-date-precedente-from="<?php echo htmlentities($params['date_hier']);?>000000" data-date-precedente-to="<?php echo htmlentities($params['date_hier']);?>235959"></div>
+                        <div style="display:none;" id="div-date-precedente" data-date-precedente-from="<?php eh($params['date_hier']);?>000000" data-date-precedente-to="<?php eh($params['date_hier']);?>235959"></div>
                     </div>
                 </div>
 
@@ -1011,21 +1015,21 @@ class River extends Controller
                                         </b>
                                     </div>
                                     <h3>
-                                        <a title="Go to original place" href="<?php echo htmlentities($meilleurArticleDuJour['article_url']);?>">
-                                        <?php echo htmlentities($meilleurArticleDuJour['article_titre']);?>
+                                        <a title="Go to original place" href="<?php eh($meilleurArticleDuJour['article_url']);?>">
+                                        <?php eh($meilleurArticleDuJour['article_titre']);?>
                                         </a> 
                                     </h3>
-                                    <div class="mini hidden-on-smartphone visible-on-hover color-blue"><?php echo htmlentities($meilleurArticleDuJour['url']);?></div>
+                                    <div class="mini hidden-on-smartphone visible-on-hover color-blue"><?php eh($meilleurArticleDuJour['url']);?></div>
                                     <h4><?php echo ($meilleurArticleDuJour['avatar']);?>
-                                    <span class="entete-pseudo"><b><a href="<?php echo htmlentities($meilleurArticleDuJour['url']);?>"><?php echo htmlspecialchars($meilleurArticleDuJour['rss_titre']);?></a></b></span>
+                                    <span class="entete-pseudo"><b><a href="<?php eh($meilleurArticleDuJour['url']);?>"><?php eh($meilleurArticleDuJour['rss_titre']);?></a></b></span>
                                     </h4>
                                     
                                     <div class="article-content"><?php echo ($meilleurArticleDuJour['article_description']);?></div>
                                 </div>
                                 <div class="column large-4">
                                     <?php if (!empty($meilleurArticleDuJour['url_image'])) { ?>
-                                    <a class="thumbnail-modal-reveal" data-reveal-id="thumbnail-<?php echo htmlentities($meilleurArticleDuJour['id_commun']); ?>" title="Zoom it" href="<?php echo htmlentities($meilleurArticleDuJour['article_url']); ?>">
-                                        <div class="article-thumbnail visible-on-hover" style="background:url('<?php echo htmlentities($meilleurArticleDuJour['url_image']); ?>'); width:100%;height:450px;background-repeat: no-repeat;background-position: center;"></div>
+                                    <a class="thumbnail-modal-reveal" data-reveal-id="thumbnail-<?php eh($meilleurArticleDuJour['id_commun']); ?>" title="Zoom it" href="<?php eh($meilleurArticleDuJour['article_url']); ?>">
+                                        <div class="article-thumbnail visible-on-hover" style="background:url('<?php eh($meilleurArticleDuJour['url_image']); ?>'); width:100%;height:450px;background-repeat: no-repeat;background-position: center;"></div>
                                     </a>
                                     <?php } ?>
                                 </div>
@@ -1068,13 +1072,13 @@ class River extends Controller
                     <?php
                     foreach ($params['found'] as $idCommun => $found) {
                     ?>
-                        <a  href="?q=id:<?php echo htmlentities($found['id_commun']); ?>" class="add-padding-left-1 add-padding-bottom-1 add-padding-top-1 {read_class}">
+                        <a  href="?q=id:<?php eh($found['id_commun']); ?>" class="add-padding-left-1 add-padding-bottom-1 add-padding-top-1 {read_class}">
                             <div class="truncate display-inline-block-middle no-margin no-padding width-20">
-                                <img class="add-margin-right-1 entete-avatar" width="16" height="16" src="<?php echo htmlentities($found['dernier_auteur_favicon']); ?>"/>
-                                <span class="add-margin-right-2"><?php echo htmlentities($found['dernier_auteur']); ?> (<?php echo htmlentities($found['pop']); ?>)</span></div>
-                            <span class="float-right"><?php echo htmlentities($found['derniere_date_maj']); ?></span>
+                                <img class="add-margin-right-1 entete-avatar" width="16" height="16" src="<?php eh($found['dernier_auteur_favicon']); ?>"/>
+                                <span class="add-margin-right-2"><?php eh($found['dernier_auteur']); ?> (<?php eh($found['pop']); ?>)</span></div>
+                            <span class="float-right"><?php eh($found['derniere_date_maj']); ?></span>
                             <div class="truncate display-inline-block-middle no-margin no-padding max-width-60">
-                                <span class="add-margin-right-2"><?php echo htmlentities($found['title']); ?></span>
+                                <span class="add-margin-right-2"><?php eh($found['title']); ?></span>
                             </div>
                             
                         </a>
@@ -1097,7 +1101,7 @@ class River extends Controller
 
         <?php
         } else {
-            ?><div style="display:none;" data-date-precedente-from="<?php echo htmlentities($params['date_hier']);?>000000" data-date-precedente-to="<?php echo htmlentities($params['date_hier']);?>235959"></div><?php
+            ?><div style="display:none;" data-date-precedente-from="<?php eh($params['date_hier']);?>000000" data-date-precedente-to="<?php eh($params['date_hier']);?>235959"></div><?php
             foreach ($params['found'] as $found) {
                 $this->renderArticle($params, $found);
             }
@@ -1113,12 +1117,12 @@ class River extends Controller
         }
         
         ?>
-        <div id="div-article-<?php echo htmlentities($found['id_commun']); ?>" data-id-commun="<?php echo htmlentities($found['id_commun']); ?>">
+        <div id="div-article-<?php eh($found['id_commun']); ?>" data-id-commun="<?php eh($found['id_commun']); ?>">
             <div class="columns large-12">
-                <div class="panel fake-panel article <?php echo htmlentities($found['read-class']); ?> persist-area">
+                <div class="panel fake-panel article <?php eh($found['read-class']); ?> persist-area">
                     <div class="columns large-11 <?php if(useRefreshButton()) { ?>small-9<? } else {?>small-11<?php } ?>">
                         <h3 class="<?php echo $class; ?>">
-                            <a title="Go to original place" href="<?php echo htmlentities($found['link']); ?>" onmouseup="ireadit(this, '<?php echo htmlentities($found['id_commun']); ?>')"><?php echo htmlentities($found['title']); ?>
+                            <a title="Go to original place" href="<?php eh($found['link']); ?>" onmouseup="ireadit(this, '<?php eh($found['id_commun']); ?>')"><?php eh($found['title']); ?>
                             <?php 
                             if (count($discussions) > 1) { 
                                 echo sprintf('[%s]', count($discussions));
@@ -1130,23 +1134,23 @@ class River extends Controller
                     
                     <?php if(useRefreshButton()) { ?>
                     <div class="columns large-1 small-3 text-right">
-                        <span data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="a-refresh-article cercle-fleche"><span id="img-article-refresh-<?php echo htmlentities($found['id_commun']); ?>" >↺</span></span>
-                        <span onclick="return confirmIgnoreIt(<?php echo htmlentities($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php echo htmlentities($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
+                        <span data-article-id="<?php eh($found['id_commun']); ?>" class="a-refresh-article cercle-fleche"><span id="img-article-refresh-<?php eh($found['id_commun']); ?>" >↺</span></span>
+                        <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
                     </div>
                     <?php } else { ?>
                     <div class="columns large-1 small-1 text-right">
-                        <span onclick="return confirmIgnoreIt(<?php echo htmlentities($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php echo htmlentities($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
+                        <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
                     </div>
                     <?php } ?>
                     
                     <div class="columns large-12">
-                        <div class="mini visible-on-hover hidden-on-smartphone color-blue"><?php echo htmlentities($found['link']); ?></div>
+                        <div class="mini visible-on-hover hidden-on-smartphone color-blue"><?php eh($found['link']); ?></div>
                     </div>
                     <div class="clear"></div>
                     <br/>
                     <div class="columns <?php if (displayImages()) {?>large-10 small-10<?php } ?>">
                         <div class="">
-                            <div id="div-description-<?php echo htmlentities($found['id_commun']); ?>" style="overflow:hidden;" class="columns large-10 <?php if($params['extended']) echo 'extended'; ?>">
+                            <div id="div-description-<?php eh($found['id_commun']); ?>" style="overflow:hidden;" class="columns large-10 <?php if($params['extended']) echo 'extended'; ?>">
                                 <?php 
                                 $d = 0;
                                 foreach($discussions as $discussion) {
@@ -1160,11 +1164,11 @@ class River extends Controller
                                     ?><div class="<?php echo $discussionClass;?>">
                                         <?php 
                                         if (isset($discussion['edit_link'])) {
-                                            ?><a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? echo htmlentities($discussion['edit_link']); ?>" target="_blank"> </a><?php
+                                            ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? eh($discussion['edit_link']); ?>" target="_blank"> </a><?php
                                         } 
                                         elseif (isset($discussion['comment_link'])) {
                                             // Lien de réponse
-                                            ?><a data-article-id="<?php echo htmlentities($found['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? echo htmlentities($discussion['comment_link']); ?>" target="_blank"> </a><?php
+                                            ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? eh($discussion['comment_link']); ?>" target="_blank"> </a><?php
                                         }
                                         echo $discussion['description'];
                                         ?>
@@ -1179,11 +1183,11 @@ class River extends Controller
                                 <div class="columns <?php if (displayImages()) {?>large-11 small-9 right<?php } else {?>large-12 small-12 <?php } ?>">
                                     <form target="_blank" method="GET" action="<?php echo $params['my_shaarli']; ?>">
                                         <input type="hidden" name="source" value="bookmarklet" />
-                                        <input type="hidden" name="title" value="<?php echo htmlentities($found['title']); ?>" />
-                                        <input type="hidden" name="post" value="<?php echo htmlentities($found['link']); ?>" />
+                                        <input type="hidden" name="title" value="<?php eh($found['title']); ?>" />
+                                        <input type="hidden" name="post" value="<?php eh($found['link']); ?>" />
                                         <input type="hidden" name="tags" value="<?php echo implode(' ', $found['tags_array']); ?>" />
-                                        <textarea id="textarea-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="textarea-conversation" data-input-conversation-id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" name="description" placeholder="Commenter/Shaarlier"></textarea>
-                                        <input data-article-id="<?php echo htmlentities($found['id_commun']); ?>" id="input-conversation-<?php echo htmlentities($found['id_commun']); ?>" class="a-reshaarlier button tiny secondary right hidden" type="button" value="Commenter" />
+                                        <textarea id="textarea-conversation-<?php eh($found['id_commun']); ?>" class="textarea-conversation" data-input-conversation-id="input-conversation-<?php eh($found['id_commun']); ?>" name="description" placeholder="Commenter/Shaarlier"></textarea>
+                                        <input data-article-id="<?php eh($found['id_commun']); ?>" id="input-conversation-<?php eh($found['id_commun']); ?>" class="a-reshaarlier button tiny secondary right hidden" type="button" value="Commenter" />
                                     </form>
                                 </div>
                                 <?php 
@@ -1195,7 +1199,7 @@ class River extends Controller
                         <?php if($params['extended'] && count($discussions) > 1) { ?>
                         <div class="clear"></div>
                         <div class="row text-center">
-                            <a class="no-margin-bottom button secondary tiny" onclick="extend(this, '#div-description-<?php echo htmlentities($found['id_commun']); ?>')">Voir la discussion</a>
+                            <a class="no-margin-bottom button secondary tiny" onclick="extend(this, '#div-description-<?php eh($found['id_commun']); ?>')">Voir la discussion</a>
                         </div>
                         <?php } ?>
                     </div>
@@ -1203,12 +1207,12 @@ class River extends Controller
                     <?php if (displayImages()) { ?>
                     <div class="columns large-2 small-2">
                         <?php if (!empty($found['url_image'])) { ?>
-                        <a class="thumbnail-modal-reveal visible-on-hover" data-reveal-id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" title="Zoom it" href="<?php echo htmlentities($found['link']); ?>">
-                            <div class="article-thumbnail" style="background:url('<?php echo htmlentities($found['url_image']); ?>'); "></div>
+                        <a class="thumbnail-modal-reveal visible-on-hover" data-reveal-id="thumbnail-<?php eh($found['id_commun']); ?>" title="Zoom it" href="<?php eh($found['link']); ?>">
+                            <div class="article-thumbnail" style="background:url('<?php eh($found['url_image']); ?>'); "></div>
                         </a>
-                        <div id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
-                            <a target="_blank" title="Go to original place" href="<?php echo htmlentities($found['link']); ?>">
-                                <img data-src="<?php echo htmlentities($found['url_image_max']); ?>" id="thumbnail-<?php echo htmlentities($found['id_commun']); ?>-src" src="" />
+                        <div id="thumbnail-<?php eh($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
+                            <a target="_blank" title="Go to original place" href="<?php eh($found['link']); ?>">
+                                <img data-src="<?php eh($found['url_image_max']); ?>" id="thumbnail-<?php eh($found['id_commun']); ?>-src" src="" />
                             </a>
                             <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
                         </div>
@@ -1221,15 +1225,24 @@ class River extends Controller
                     ?>
                     <div class="clear"></div>
                     <hr class="mini"/>
-                    <div class="">
-                        <div class="columns large-12 text-left">
+                    <div class="article-footer">
+                        <div class="columns large-10 text-left">
                         <?php 
                         foreach ($found['tags_array'] as $tag) {
                             if (!empty($tag)) {
-                                ?><a href="?tags=<?php echo htmlentities($tag);?>" class="button microscopic secondary"><?php echo $tag; ?><a href="?do=add_ignored_tag&tag=<?php echo htmlentities($tag);?>" onclick="return(confirm('Les articles portant ce tag ne seront plus affichés, continuer ? '));" class="button microscopic secondary">X</a></a> <?php
+                                ?><a href="?tags=<?php eh($tag);?>" class="button microscopic secondary"><?php echo $tag; ?><a href="?do=add_ignored_tag&tag=<?php eh($tag);?>" onclick="return(confirm('Les articles portant ce tag ne seront plus affichés, continuer ? '));" class="button microscopic secondary">X</a></a> <?php
                             }
                         }
+
+                        $nbClics = 0;
+                        if ($found['nb_clic'] > 0) {
+                            $nbClics = $found['nb_clic'];
+                        }
+                        
                         ?>
+                        </div>
+                        <div class="columns large-2 text-right">
+                            <span style="font-size:12px;" class="nb-clics"><?php echo $nbClics; ?></span>
                         </div>
                     </div>
                     
@@ -1330,7 +1343,7 @@ class River extends Controller
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
                         if(r.status == 200){
-                            var blocArticle = him.parentNode.parentNode.parentNode.parentNode.parentNode;
+                            var blocArticle = him.parentNode.parentNode.parentNode;
                             removeClass(blocArticle, 'not-read');
                             addClass(blocArticle, 'read');
                         }

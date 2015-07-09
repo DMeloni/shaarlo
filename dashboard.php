@@ -6,10 +6,18 @@ class Dashboard extends Controller
 {
         public function run() 
         {
+
+            // Accès invité
+            if ('enregistrer_temporairement' ===  $_POST['action']) {
+                // Connexion invitée
+                getSession('', true);
+            }
+
             if (getUtilisateurId() === '') {
                 header('Location: index.php');
                 return;
             }
+
             $params = array();
             $creation = false;
             // Nouveau message
@@ -43,14 +51,16 @@ class Dashboard extends Controller
                     majAbonnements($abonnements);
                     $params['message'] = "Votre profil vient d'être créé";
                 }
-                
-                // Enregistrement d'un nouveau profil temporaire
-                if ('enregistrer_temporairement' ===  $_POST['action']) {
-                    $session = getSession($_POST['profil_id']);
-                    $abonnements = $_POST['shaarlistes'];
-                    majAbonnements($abonnements);
-                    header('Location: index.php');
-                    return;
+
+                // Enregistrement d'un password
+                if ('enregistrer_password' ===  $_POST['action']) {
+                    $password = '';
+                    if (isset($_POST['password'])) {
+                        $password = $_POST['password'];
+                    }
+                    $session = updatePassword(getUtilisateurId(), $password);
+
+                    $params['message'] = "Le pwd est enregistré";
                 }
 
                 // Maj filtre des tags
@@ -71,7 +81,11 @@ class Dashboard extends Controller
             if (isset($_GET['action'])) {
                 // Connexion
                 if ('connexion' ===  $_GET['action']) {
-                        $session = getSession($_GET['profil_id'], true, $_GET['password']);
+                        $password = null; 
+                        if (isset($_GET['password'])) {
+                            $password = $_GET['password'];
+                        }
+                        $session = getSession($_GET['profil_id'], true, $password);
                         if ($session !== 401) {
                             setcookie('shaarlieur', $_GET['profil_id'], time()+31536000, '.shaarli.fr');
                             header('Location: index.php');
@@ -187,29 +201,27 @@ class Dashboard extends Controller
                                         <div class="row hide-for-large-up">
                                             <div class="columns large-12 text-center">
                                                 <a href="?action=creation" class="button success">Créer un profil</a>
+                                                <form id="form-abonnements" method="POST">
+                                                    <input type="hidden" name="action" value="enregistrer_temporairement"/>
+                                                    <input type="hidden" name="profil_id" value=""/>
+                                                    <input id="button-tous" type="submit" class="button " value="Accès invité" />
+                                                </form>
                                             </div>
                                         </div>
                                         <div class="row valign-center show-for-large-up">
                                             <div class="columns large-12 text-center">
                                                 <a href="?action=creation" class="button success">Créer un profil</a>
+                                                <form id="form-abonnements" method="POST">
+                                                    <input type="hidden" name="action" value="enregistrer_temporairement"/>
+                                                    <input type="hidden" name="profil_id" value=""/>
+                                                    <input id="button-tous" type="submit" class="button " value="Accès invité" />
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <hr/>
-                            <div class="row">
-                                <div class="column large-12 text-center">
-                                    <h2>Sélectionnez les shaarlistes que vous souhaitez suivre</h2>
-                                </div>
-                            </div>
-                            <form id="form-abonnements" method="POST">
-                                <input type="hidden" name="action" value="enregistrer_temporairement"/>
-                                <input type="hidden" name="profil_id" value=""/>
-                            <?php
-                            $this->renderListeShaarlistes($params);
-                            ?>
-                            </form>
+
                             <?php
                         }
                         ?>
@@ -487,6 +499,17 @@ class Dashboard extends Controller
                                         </div>
                                     </div>
                                     <hr class="no-margin"/>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Afficher uniquement les liens non visités <span class="button microscopic alert">NEW</span></span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    <hr class="no-margin"/>
+                                    
                                     <br/>
                                     <div class="row">
                                         <div class="column large-12">
@@ -589,7 +612,7 @@ class Dashboard extends Controller
                             <div class="panel">
                                 <div class="row">
                                     <div class="columns large-12">
-                                        <h3>Filtre sur les urls <span class="button tiny alert">NEW</span></h3>
+                                        <h3>Filtre sur les urls</h3>
                                         <form method="POST">
                                             <p>Ne jamais afficher de lien vers les sites web suivants :</p>
                                             <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
@@ -603,7 +626,41 @@ class Dashboard extends Controller
                         </div>
                     </div>
                     <?php } ?>
-
+                    
+                    <?php if (isShaarliste()) { ?>
+                        <div class="row" id="pwd">
+                            <div class="columns large-12 center">
+                                <div class="panel">
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
+                                            <?php if (isPassword()) { ?>
+                                                <span>Ce compte est actuellement protégé par un mot de passe.</span>
+                                            <?php } ?>
+                                            <form method="POST" action="?">
+                                                <div class="row">
+                                                    <div class="columns large-12">
+                                                        <input type="hidden" name="action" value="enregistrer_password"/>
+                                                        <input autocomplete="off" placeholder="Mot de passe" type="password" name="password" value="" />
+                                                        <input class="button" type="submit" value="Enregistrer" />
+                                                    </div>
+                                                </div>
+                                            </form>
+                                            <p>La protection du compte permettra d'accéder à des fonctions avancées comme : 
+                                                <ul>
+                                                    <li>Modification de l'url de son shaarli</li>
+                                                    <li>Suppression du shaarli de la page d'abonnement</li>
+                                                    <li>Modification de son avatar</li>
+                                                    <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
+                                                    <li>Affichage du profil aux autres profils (avec des statistiques par exemple)</li>
+                                                </ul>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
                     <?php if (!$params['pas_de_profil'] && !$params['creation'] && !isShaarliste()) { ?>
                         <div class="row">
                             <div class="columns large-12 center">
@@ -749,6 +806,9 @@ class Dashboard extends Controller
             });
             $('.checkbox-display_img').click(function() {
                 addOption($(this), 'display_img', $(this).val());
+            });
+            $('.checkbox-display_only_unread').click(function() {
+                addOption($(this), 'display_only_unread', $(this).val());
             });
 
 

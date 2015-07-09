@@ -235,6 +235,7 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
         insertEntite($mysqli, 'shaarlieur', $shaarlieurEntite);
 
         $shaarlieurSqlData = selectShaarlieur($mysqli, $sessionId);
+
     } else {
         // Si le compte existe et qu'il y a un password
         if (!empty($shaarlieurSqlData['pwd'])) {
@@ -255,7 +256,7 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
                 }
             }
         } else {
-            // Si le compte n'existe pas mais qu'un password est entré
+            // Si le compte existe mais qu'aucun password n'est encore enregistré et qu'un password est entré
             if (!empty($password)) {
                 $passwordHash = createShaarlieurHash($shaarlieurId, $password);
                 majPasswordHash($passwordHash);
@@ -269,6 +270,11 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
 
     $SESSION_CHARGEE = 'oui';
     
+    if (!empty($shaarlieurSqlData['pwd'])) {
+        $_SESSION['shaarlieur_pwd'] = true;
+    } else {
+        $_SESSION['shaarlieur_pwd'] = false;
+    }
     $_SESSION['shaarlieur_shaarli_ok'] = $shaarlieurSqlData['shaarli_ok'];
     $_SESSION['shaarlieur_nb_connexion'] = $shaarlieurSqlData['nb_connexion'];
     $_SESSION['shaarlieur_inscription_auto'] =  $shaarlieurSqlData['inscription_auto'];
@@ -287,6 +293,33 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
     }
 
     return $_SESSION;
+}
+
+/**
+ * Enregistre un password pour le compte demandé
+ * 
+ * @string $sessionId : le pseudo de l'utilisateur
+ * @string $password  : le mot de passe
+ * 
+ * @return bool true|false
+ */
+function updatePassword($sessionId, $password) {
+    // récupération du compte en bdd
+    $mysqli = shaarliMyConnect();
+    $shaarlieurSqlData = selectShaarlieur($mysqli, $sessionId);
+
+    // Création du shaarlieur en bdd
+    if (!is_null($shaarlieurSqlData)) {
+        // Si le compte existe qu'un password est entré
+        if (!empty($password)) {
+            $passwordHash = createShaarlieurHash($shaarlieurId, $password);
+            majPasswordHash($passwordHash);
+            $_SESSION['shaarlieur_pwd'] = true;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function setSession($session) {
@@ -449,6 +482,15 @@ function isConnected() {
     return isset($session['shaarlieur_id']);
 }
 
+//Indique si l'utilisateur a un pwd
+function isPassword() {
+    $session = getSession();
+    if (isset($session['shaarlieur_pwd']) && $session['shaarlieur_pwd'] === true) {
+        return true;
+    }
+    
+    return false;
+}
 
 //Retourne l'id de l'utilisateur
 function getUtilisateurId() {

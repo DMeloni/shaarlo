@@ -109,3 +109,8 @@ textarea{
     border-radius: 5px;
 }
 
+.reveal-modal .close-reveal-modal {
+    z-index:2;
+}
+
+

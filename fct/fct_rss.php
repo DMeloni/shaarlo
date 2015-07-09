@@ -390,13 +390,18 @@ function getAllGReaderFlux($pathFlux){
 }
 
 
-function synchroShaarli($url, $full=false, $avecMiniature=true) {
+function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
     $mysqli = shaarliMyConnect();
-    if (!$full) {
-        $content = getRss($url . '?do=rss');
+    if (is_null($nb)) {
+        if (!$full) {
+            $content = getRss($url . '?do=rss');
+        } else {
+            $content = getRss($url . '?do=rss&nb=all');
+        }
     } else {
-        $content = getRss($url . '?do=rss&nb=all');
+        $content = getRss($url . '?do=rss&nb=' . $nb);
     }
+    
     $adebut = microtime(true);
     $shaarlistes = array();
     $articles = array();

@@ -174,30 +174,6 @@ if(isset($_POST['do']) && in_array($_POST['do'], $optionsAutorisees) && isset($_
     return;
 }
 
-
-$username = null;
-if (isset($_SESSION['username'])) {
-    if (getUtilisateurId() === '') {
-        header('HTTP/1.1 401 Unauthorized', true, 401);
-        return;
-    }
-    //Ajoute un shaarli
-    if($_POST['id']) {
-        $mysqli = shaarliMyConnect();
-        
-        if(isset($_POST['do']) && $_POST['do'] == 'delete') {
-            deleteRss($mysqli, $_SESSION['username'], $_POST['id']);
-        }elseif(isset($_POST['do']) && $_POST['do'] == 'add') {
-            $monRss = creerMonRss($_SESSION['username'], $_POST['id'], $_SESSION['username']);
-            insertEntite($mysqli, 'mes_rss', $monRss);
-        }
-        
-        shaarliMyDisconnect($mysqli);
-        header('HTTP/1.1 200 OK', true, 200);
-        return;
-    }
-}
-
 if (isset($_SESSION['shaarlieur_id'])) {
     if (getUtilisateurId() === '') {
         header('HTTP/1.1 401 Unauthorized', true, 401);
@@ -206,20 +182,24 @@ if (isset($_SESSION['shaarlieur_id'])) {
     //Ajoute un shaarli
     if($_POST['id']) {
         $mysqli = shaarliMyConnect();
-        
+        $abonnements = getAbonnements();
         if(isset($_POST['do']) && $_POST['do'] == 'delete') {
             // On est autorisé uniquement si on a plus d'un abonnement encore
-            $abonnements = getAbonnements();
             $nbAbonnements = count($abonnements);
             if ($nbAbonnements > 1) {
-                deleteRss($mysqli, $_SESSION['shaarlieur_id'], $_POST['id']);
+                foreach ($abonnements as $k => $abo) {
+                    if ($abo === $_POST['id']) {
+                        unset($abonnements[$k]);
+                    }
+                }
+                majAbonnements($abonnements);
             } else {
                 header('HTTP/1.1 202 Accepted', true, 202);
                 return;
             }
         }elseif(isset($_POST['do']) && $_POST['do'] == 'add') {
-            $monRss = creerMonRss($_SESSION['shaarlieur_id'], $_POST['id'], $_SESSION['shaarlieur_id']);
-            insertEntite($mysqli, 'mes_rss', $monRss);
+            $abonnements[] = $_POST['id'];
+            majAbonnements($abonnements);
         }
         
         shaarliMyDisconnect($mysqli);

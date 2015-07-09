@@ -364,6 +364,7 @@ hr.mini {
     width: 100%;
 } 
 
+
 @media (max-width: 600px) {
     #content{float: left;} .panel.dashboarded,#dashboard_icon,#content.dashboarded,#dashboard{width: 90%;margin-left:5%;}  
     #dashboard,#dashboard_icon{position: inherit;} .article-image{display:none;} 
@@ -419,6 +420,13 @@ hr.mini {
     .mini-on-smartphone {
         font-size:9px;
     }
+    
+    .menu ul.show-for-small-only { display: flex !important; float: none; }
+    .menu ul li { flex: 1 1 auto; text-align: center; }
+    
+    #searchbar { margin: 0 auto; height: auto; padding: 15px; width: 90%; }
+
+    .article + .article { border-top: 0 !important; }
 } 
 
 .icon-comment {
@@ -453,5 +461,11 @@ hr.mini {
 .div-discussion-edit:hover .icon-edition {
     display: inline-block;
 }
+
+#div-container-articles .article-footer { display: flex ; }
+#div-container-articles .article-footer > div { float: none; }
+#div-container-articles .article-footer > div.text-left { flex: 1 1 auto; } /* le bloc des tags est flexible entièrement */
+#div-container-articles .article-footer > div.text-right { flex: 0 0 40px; } /* le bloc du nb-clic est fixe, non flexible. */
+
 
 

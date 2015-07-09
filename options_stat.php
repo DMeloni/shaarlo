@@ -8,21 +8,18 @@ class OptionsStat extends Controller
     {
         $mysqli = shaarliMyConnect();
 
-        $options = 
-            array('extend', 
-            'mode_river', 
-            'display_empty_description', 
-            'use_elevator', 
-            'use_useless_options',
-            'use_dotsies',
-            'use_top_buttons',
-            'use_refresh_button',
-            'display_rss_button',
-            'display_bloc_conversation',
-            'use_scroll_infini',
-            'display_only_new_articles',
-        );
-
+            $options = array('extend', 'mode_river', 'display_empty_description', 
+                'use_elevator', 'use_useless_options','use_dotsies',
+                'use_top_buttons',
+                'use_refresh_button',
+                'display_rss_button',
+                'display_bloc_conversation',
+                'use_scroll_infini',
+                'display_only_new_articles',
+                'use_tipeee',
+                'display_img',
+                'display_only_unread',
+            );
         
         
         $optionsStat = array();
