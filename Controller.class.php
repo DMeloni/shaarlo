@@ -24,7 +24,7 @@ class Controller
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.min.css" />
                         <link rel="stylesheet" href="css/foundation-overload.css?v=5" />
-                        <link rel="stylesheet" href="css/style-light.css?v=18" />
+                        <link rel="stylesheet" href="css/style-light.css?v=19" />
                         <script src="js/vendor/jquery.js"></script>
                         <script src="js/vendor/modernizr.js"></script>
                         <script src="js/foundation.min.js"></script>
@@ -156,7 +156,8 @@ class Controller
                                 <?php } else { ?>
                                         <a onclick="event.stopPropagation();" target="_blank" href="<?php echo $shaarliste['link'];?>"><?php echo $shaarliste['title'];?></a>
                                 <?php } ?>
-                                    <br/>(<?php echo $shaarliste['nb_items'];?> liens sur le site)
+                                    <br/><span class="tiny"><?php echo $shaarliste['nb_items'];?> liens sur le site</span>
+                                    <br/><span class="tiny"><?php echo $shaarliste['nb_followers'];?> abonnés</span>
                                 </p>
 
                             </div>
@@ -176,6 +177,16 @@ class Controller
         public static function renderScript()
         {
 
+        }
+        
+        /** 
+         * Ajoute des br si menu fixe
+         */
+        public function addBr() {
+            if (isMenuLocked()) {
+                echo '<br/><br/><br/>';
+                    
+            }
         }
         
         public static function renderMenu($titre = 'Shaarli.fr', $rssUrl = '')

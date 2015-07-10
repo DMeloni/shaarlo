@@ -285,8 +285,8 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
     $_SESSION['shaarlieur_shaarli_private'] = $shaarlieurSqlData['shaarli_private'];
     $_SESSION['shaarlieur_id_rss'] = $shaarlieurSqlData['id_rss'];
     $_SESSION['shaarlieur_shaarli_url_id_ok'] = $shaarlieurSqlData['shaarli_url_id_ok'];
-
-
+    $_SESSION['shaarlieur_shaarli_on_abonnements'] = (bool)$shaarlieurSqlData['shaarli_on_abonnements'];
+    $_SESSION['shaarlieur_shaarli_on_river'] = (bool)$shaarlieurSqlData['shaarli_on_river'];
 
     if (!is_null($sessionId) && $connexion) {
         majDerniereConnexion($mysqli, $sessionId);
@@ -370,12 +370,12 @@ function majPasswordHash($pwdHash) {
 }
 
 // Met à jour l'url de son shaarli
-function majShaarliUrl($shaarliUrl, $isShaarliPrivate) {
+function majShaarliUrl($shaarliUrl) {
     $session = getSession();
     $session['shaarlieur_shaarli_url'] = $shaarliUrl;
-    $session['shaarlieur_shaarli_private'] = $isShaarliPrivate;
+    $session['shaarlieur_shaarli_ok'] = '2';
     $mysqli = shaarliMyConnect();
-    updateShaarlieurShaarliUrl($mysqli, $session['shaarlieur_id'], $shaarliUrl, $isShaarliPrivate);
+    updateShaarlieurShaarliUrl($mysqli, $session['shaarlieur_id'], $shaarliUrl);
     setSession($session);
     shaarliMyDisConnect($mysqli);
 }
@@ -420,6 +420,56 @@ function getShaarliUrl() {
     return $session['shaarlieur_shaarli_url'];
 }
 
+/**
+ * Indique si le shaarli doit apparaitre dans la liste des abonnements
+ */
+function isOnAbonnements() {
+    $session = getSession();
+    if (isset($session['shaarlieur_shaarli_on_abonnements']) && $session['shaarlieur_shaarli_on_abonnements'] === false) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Met à jour le champ shaarli_on_abonnements
+ */
+function majShaarliOnAbonnements($isOnAbonnements) {
+    $session = getSession();
+    $session['shaarlieur_shaarli_on_abonnements'] = $isOnAbonnements;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurShaarliOnAbonnements($mysqli, $session['shaarlieur_id'], $isOnAbonnements);
+    
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+/**
+ * Met à jour le champ shaarli_on_abonnements
+ */
+function majShaarliOnRiver($isOnRiver) {
+    $session = getSession();
+    $session['shaarlieur_shaarli_on_river'] = $isOnRiver;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurShaarliOnRiver($mysqli, $session['shaarlieur_id'], $isOnRiver);
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+
+/**
+ * Indique si le shaarli doit apparaitre dans la page des flux
+ */
+function isOnRiver() {
+    $session = getSession();
+    if (isset($session['shaarlieur_shaarli_on_river']) && $session['shaarlieur_shaarli_on_river'] === false) {
+        return false;
+    }
+    
+    return true;
+}
+
 // Indique si le shaarli de l'utilisateur est privé ou pas
 function isShaarliPrivate() {
     $session = getSession();
@@ -430,6 +480,12 @@ function isShaarliPrivate() {
 function isShaarliste() {
     $session = getSession();
     return '1' == $session['shaarlieur_shaarli_ok'];
+}
+
+// Indique si le shaarli est en attente de modération
+function isEnAttenteDeModeration() {
+    $session = getSession();
+    return '2' == $session['shaarlieur_shaarli_ok'];
 }
 
 // Retourne la liste des abonnements de l'utilisateur
@@ -706,7 +762,6 @@ function getNotAllowedTags() {
     return array();
 }
 
-
 function getNotAllowedUrls() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['not_allowed_urls']) && !empty($session['shaarlieur_data']['not_allowed_urls'])) {
@@ -828,4 +883,30 @@ function getTopTagsFromTags($tags) {
     
     return $topTags;
 }
+
+
+/**
+ * Retourne l'url de l'icone de profil
+ * 
+ * @return string 'img/favicon/145487454.ico'
+ */
+function getImageProfilSrc() {
+    $idRss = getIdOkRss();
+    if (empty($idRss)) {
+        return null;
+    }
+    
+    $faviconGifPath = sprintf('img/favicon/%s.gif', $idRss);
+    if (is_file($faviconGifPath)) {
+        return $faviconGifPath;
+    }
+    $faviconIcoPath = sprintf('img/favicon/%s.ico', $idRss);
+    if (is_file($faviconIcoPath)) {
+        return $faviconIcoPath;
+    }
+
+    return null;
+}
+
+
 

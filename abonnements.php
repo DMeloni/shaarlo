@@ -43,15 +43,7 @@ class Abonnements extends Controller
                 <?php
                 $this->renderMenu();
                 ?>
-                <?php 
-                if ($params['nbAbonnements'] > 0) {
-                ?>
-                <div class="row">
-                    <div class="column large-12 text-right">
-                        <a href="dashboard.php">Retour profil</a>
-                    </div>
-                </div>
-                <?php } ?>
+
 
                 <div class="row">
                     <div class="column large-12 text-center">

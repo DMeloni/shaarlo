@@ -718,10 +718,7 @@ class River extends Controller
             if(!empty($_SERVER['HTTPS'])) {
                 $isSecure = 'yes';
             }
-            $myShaarliUrl='';
-            if(isset($_SESSION['username'])){
-                $myShaarliUrl = htmlentities(sprintf('http://my.shaarli.fr/%s/', $_SESSION['username']));
-            }
+
             
             $nodesc = null;
             if(isset($_GET['nodesc'])) {
@@ -814,7 +811,7 @@ class River extends Controller
                 ?>
 
                 <?php
-                if (useTopButtons()) {
+                if (useTopButtons() && !$params['afficher_messagerie']) {
                     ?>
                     <div class="row">
                         <div class="columns large-12 text-center show-for-medium-up">
@@ -834,7 +831,7 @@ class River extends Controller
                     <?php
                 }
                 ?>
-                
+                <?php if (!$params['afficher_messagerie']) { ?>
                 <form method="GET" action="index.php" id="searchform" class="<?php if('yes' == $params['filter_on']) { echo 'hidden'; } ?>">
                     <div>
                         <div class="columns large-12">
@@ -845,13 +842,14 @@ class River extends Controller
                             </div>
                         </div>
                     </div>
+                    
                     <div class="fake-panel show-for-medium-up">
                         <div class="columns large-12 text-right">
                             <a onclick="option_extend(this)">Avancé</a>
                         </div>
                     </div>
                 </form>
-                
+                <?php } ?>
                 <div style="display:none;" id="div-tags-json" data-tags-json="<?php eh($params['tags_json']);?>"></div>
 
                 <div class="pagination">
@@ -966,8 +964,9 @@ class River extends Controller
                     </div>
                 </div>
                 <div class="clear"></div>
+                
                 <br/>
-                <?php if ($params['displayBlocConversation'] && !empty($params['my_shaarli'])) { ?>
+                <?php if (!$params['afficher_messagerie'] && $params['displayBlocConversation'] && !empty($params['my_shaarli'])) { ?>
                 <div class="">
                     <div class="columns large-12">
                         <div class="fake-panel">
@@ -985,6 +984,7 @@ class River extends Controller
                 <div id="div-last-user-article"></div>
                 <?php } ?>
 
+                <?php if (!$params['afficher_messagerie']) { ?>
                 <div class="columns large-12">
                     <div class="fake-panel text-right">
                         <?php if($params['date_hier']) { ?>
@@ -996,9 +996,9 @@ class River extends Controller
                         <div style="display:none;" id="div-date-precedente" data-date-precedente-from="<?php eh($params['date_hier']);?>000000" data-date-precedente-to="<?php eh($params['date_hier']);?>235959"></div>
                     </div>
                 </div>
-
+                <?php } ?>
                 <?php
-                if ($params['meilleurs_article_du_jour']) {
+                if ($params['meilleurs_article_du_jour'] && !$params['afficher_messagerie']) {
                     foreach( $params['meilleurs_article_du_jour'] as $meilleurArticleDuJour) {
                     ?>
                     <div class="column large-12">

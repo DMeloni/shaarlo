@@ -174,6 +174,29 @@ if(isset($_POST['do']) && in_array($_POST['do'], $optionsAutorisees) && isset($_
     return;
 }
 
+if(isset($_POST['do']) && 'on_abonnements' === $_POST['do'] && isset($_POST['value'])) {
+    if($_POST['value'] == 'oui') {
+        majShaarliOnAbonnements(true);
+    } 
+    if($_POST['value'] == 'non') {
+        majShaarliOnAbonnements(false);
+    }   
+    
+    header('HTTP/1.1 200 OK', true, 200);
+    return;
+}
+
+if(isset($_POST['do']) && 'on_river' === $_POST['do'] && isset($_POST['value'])) {
+    if($_POST['value'] == 'oui') {
+        majShaarliOnRiver(true);
+    } 
+    if($_POST['value'] == 'non') {
+        majShaarliOnRiver(false);
+    }   
+    
+    header('HTTP/1.1 200 OK', true, 200);
+    return;
+}
 if (isset($_SESSION['shaarlieur_id'])) {
     if (getUtilisateurId() === '') {
         header('HTTP/1.1 401 Unauthorized', true, 401);

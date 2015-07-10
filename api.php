@@ -498,7 +498,17 @@ if ($_GET['do'] === 'getInfoAboutAll') {
     if ( !is_file($statFile) || true || rand(0,100) == 100) {
         $mysqli = shaarliMyConnect();
         $infos = selectAllShaarlistes($mysqli);
-
+        $topRss = getTopRss($mysqli);
+        
+        // Croisement entre les shaarlistes et leur nb de followers
+        foreach ($infos as $idRss => $info) {
+            if (isset($topRss[$idRss])) {
+                $infos[$idRss]['nb_followers'] = $topRss[$idRss];
+            } else {
+                $infos[$idRss]['nb_followers'] = 0;
+            }
+        }
+        
         if(is_array($infos)) {
             $stat = utf8_encode(json_encode($infos));
             file_put_contents($statFile, $stat);

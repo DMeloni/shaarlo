@@ -33,12 +33,25 @@ class Dashboard extends Controller
                     }
                 }
 
-                if ('mon_shaarli' ===  $_POST['action']) {
-                    $isShaarliPrivate = true;
-                    if ('oui' === $_POST['checkbox-shaarli_private']) {
-                        $isShaarliPrivate = false;
+                if ('mon_shaarli' ===  $_POST['action'] && !isEnAttenteDeModeration()) {
+                    if (isset($_POST['shaarli_url'])) {
+                        if (!isShaarliste()) {
+                            // Premiere soumission du shaarli, il passera par la modération
+                            majShaarliUrl($_POST['shaarli_url']);
+                        } else {
+                            // Deuxieme soumission, on vérifie le flux de prime abord
+                            $url = $_POST['shaarli_url'];
+                            $url = supprimeDernierPointInterrogation($url);
+                            if ($url !== getShaarliUrl()) {
+                                $content = getRss($url . '?do=rss');
+                                if (empty($content)) {
+                                    $params['message'] = "Ce flux n'a pu être récupéré...";
+                                } else {
+                                    majShaarliUrl($_POST['shaarli_url'], false);
+                                }
+                            }
+                        }
                     }
-                    majShaarliUrl($_POST['shaarli_url'], $isShaarliPrivate);
                 }
                 // Enregistrement d'un nouveau profil
                 if ('enregistrer' ===  $_POST['action']) {
@@ -82,8 +95,8 @@ class Dashboard extends Controller
                 // Connexion
                 if ('connexion' ===  $_GET['action']) {
                         $password = null; 
-                        if (isset($_GET['password'])) {
-                            $password = $_GET['password'];
+                        if (isset($_POST['password'])) {
+                            $password = $_POST['password'];
                         }
                         $session = getSession($_GET['profil_id'], true, $password);
                         if ($session !== 401) {
@@ -95,19 +108,19 @@ class Dashboard extends Controller
                         $params['message'] = "Ce compte est protégé par un mot de passe";
                         $params['demande_password'] = "Ce compte est protégé par un mot de passe";
                 }
+
                 // Création d'un nouveau profil
                 if ('creation' ===  $_GET['action']) {
-                        $creation = true;
+                    $creation = true;
                 }
             }
-            
+
             if (empty(getAbonnements())) {
                 $pasDeProfil = true;
             }
 
 
             $params['shaarlieurPositionTop'] = getShaarlieurPositionTop();
-            
             $infoAboutAll = file_get_contents('http://shaarli.fr/api.php?do=getInfoAboutAll');
             $infoAboutAll = remove_utf8_bom($infoAboutAll);
             $infoAboutAllDecoded = json_decode($infoAboutAll, true);
@@ -159,7 +172,7 @@ class Dashboard extends Controller
                                         <div class="row">
                                             <div class="columns large-12">
                                                 <h3>Mot de passe</h3>
-                                                <form method="GET">
+                                                <form method="POST">
                                                     <input type="hidden" name="action" value="connexion"/>
                                                     <input type="hidden" name="profil_id" value="<?php echo htmlentities($_GET['profil_id']); ?>"/>
                                                     <input name="password" type="password" value=""/>
@@ -221,72 +234,88 @@ class Dashboard extends Controller
                                     </div>
                                 </div>
                             </div>
-
                             <?php
                         }
                         ?>
-                        <?php
-                        if (!$params['pas_de_profil'] && !$params['creation']) {
-                        ?>
-                        <div class="row">
-                            <div class="column large-12 text-center">
-                                <h1>Profil</h1>
-                            </div>
-                        </div>
-                        <?php } ?>
 
                         <?php
-                        /*
-                         * Bloc top shaarlieur
-                         */
-                        if (!$params['pas_de_profil'] && !$params['creation']) {
-                        ?>
-                        <div class="row">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row text-center">
-                                        <div class="columns large-12">
-                                            <?php
-                                            $idBadge = 1;
-                                            if (!empty($params['shaarlieurPositionTop']) && is_file(sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']))) {
-                                                $idBadge = $params['shaarlieurPositionTop'];
-                                            }
-                                            if (!is_null($params['currentBadge'])) {
-                                                $idBadge = $params['currentBadge'];
-                                            }
+                         if (!$params['pas_de_profil'] && !$params['creation']) {
+                            ?>
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <div class="panel">
 
-                                            $nomImageTopGif = sprintf('img/top/top_%s.gif', $idBadge);
-                                            if (is_file($nomImageTopGif)) {
-                                                ?><a href="badges.php"><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/></a><?php
+                                        <div class="row">
+                                        <?php
+                                            /*
+                                             * Bloc image de profil
+                                             */
+                                            if (isShaarliste()) {
+                                                $imageProfilSrc = getImageProfilSrc();
+                                                if (!is_null($imageProfilSrc)) {
+                                                ?>
+                                                    <div class="columns large-2 medium-3 small-4 text-right">
+                                                        <img class="profil-avatar" src="<?php echo $imageProfilSrc; ?>" alt="image de profil" />
+                                                    </div>
+                                                <?php
+                                                }
                                             }
                                             ?>
+                                            <div class="column large-10 medium-9 small-8">
+                                                <h1><?php echo getUtilisateurId(); ?></h1>
+                                            </div>
                                         </div>
-                                        <?php 
-                                        if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 1000) {
-                                        ?>
-                                        <div class="columns large-12">
-                                            <?php
-                                            if ($params['shaarlieurPositionTop'] == 1) {
-                                                ?>Vous êtes l'utilisateur <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">le plus fidèle</span> du site !!!<?php
-                                            } elseif ($params['shaarlieurPositionTop'] <= 5) {
-                                                ?>Vous êtes l'un des cinq utilisateurs <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">les plus fidèles</span> du site !<?php
-                                            } elseif ($params['shaarlieurPositionTop'] <= 10) {
-                                                ?>Vous faites partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 10</span> des utilisateurs du site :-D<?php
-                                            } elseif ($params['shaarlieurPositionTop'] <= 50) {
-                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 50</span> des utilisateurs du site :-)<?php
-                                            } elseif ($params['shaarlieurPositionTop'] <= 100) {
-                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 100</span> des utilisateurs du site :-)<?php
-                                            } else {
-                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 1000</span> des utilisateurs du site :-)<?php
-                                            }
+                                        
+                                        <hr/>
+                                        <div class="row text-center">
+                                            <div class="columns large-12">
+                                                <?php
+                                                /*
+                                                 * Bloc top shaarlieur
+                                                 */
+                                                $idBadge = 1;
+                                                if (!empty($params['shaarlieurPositionTop']) && is_file(sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']))) {
+                                                    $idBadge = $params['shaarlieurPositionTop'];
+                                                }
+                                                if (!is_null($params['currentBadge'])) {
+                                                    $idBadge = $params['currentBadge'];
+                                                }
+
+                                                $nomImageTopGif = sprintf('img/top/top_%s.gif', $idBadge);
+                                                if (is_file($nomImageTopGif)) {
+                                                    ?><a href="badges.php"><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/></a><?php
+                                                }
+                                                ?>
+                                            </div>
+                                            <?php 
+                                            if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 1000) {
                                             ?>
+                                            <div class="columns large-12">
+                                                <?php
+                                                if ($params['shaarlieurPositionTop'] == 1) {
+                                                    ?>Vous êtes l'utilisateur <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">le plus fidèle</span> du site !!!<?php
+                                                } elseif ($params['shaarlieurPositionTop'] <= 5) {
+                                                    ?>Vous êtes l'un des cinq utilisateurs <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">les plus fidèles</span> du site !<?php
+                                                } elseif ($params['shaarlieurPositionTop'] <= 10) {
+                                                    ?>Vous faites partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 10</span> des utilisateurs du site :-D<?php
+                                                } elseif ($params['shaarlieurPositionTop'] <= 50) {
+                                                    ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 50</span> des utilisateurs du site :-)<?php
+                                                } elseif ($params['shaarlieurPositionTop'] <= 100) {
+                                                    ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 100</span> des utilisateurs du site :-)<?php
+                                                } else {
+                                                    ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 1000</span> des utilisateurs du site :-)<?php
+                                                }
+                                                ?>
+                                            </div>
+                                            <?php } ?>
                                         </div>
-                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <?php } ?>
+                            <?php
+                        }
+                        ?>
+
                         <?php
                         if (!$params['pas_de_profil'] && !$params['creation']) {
                         ?>
@@ -295,7 +324,6 @@ class Dashboard extends Controller
                                 <div class="panel">
                                     <div class="row">
                                         <div class="columns large-12">
-                                            <p><a href="index.php">River</a></p>
                                             <p><a href="abonnements.php">Gérer mes abonnements</a></p>
                                             <?php if (!is_null($params['id_rss'])) { ?>
                                                 <p><a href="index.php?q=shaarli:<?php echo $params['id_rss']; ?>">Messagerie</a></p>
@@ -303,6 +331,24 @@ class Dashboard extends Controller
                                             <?php if (isShaarliste()) { ?>
                                                 <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"></p>
                                                 <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
+                                                <?php if (!isEnAttenteDeModeration()) { ?>
+                                                    <p><a class="link-show" href="#modifier-shaarli">Modifier mon shaarli</a></p>
+                                                <?php } else { ?>
+                                                    <p><em>Shaarli en attente de modération</em></p>
+                                                <?php } ?>
+                                            <?php } else { ?>
+                                                <?php if (!isEnAttenteDeModeration()) { ?>
+                                                    <p><a class="link-show" href="#mon-shaarli">Ajouter mon shaarli à ce site web</a></p>
+                                                <?php } else { ?>
+                                                    <p><em>Shaarli en attente de modération</em></p>
+                                                <?php } ?>
+                                            <?php }  ?>
+                                                <p><a class="link-show" href="#pwd">Modifier le mot de passe du profil</a></p>
+                                                <p><a class="link-show" href="#options">Gérer mes paramètres</a></p>
+                                            
+                                            <?php if (isSerieux()) { ?>
+                                                <p><a class="link-show" href="#report">Reporter un bug/commentaire/conseil</a></p>
+                                                <p><a class="link-show" href="#filtres">Filter les articles selon plusieurs critères</a></p>
                                             <?php } ?>
                                         </div>
                                     </div>
@@ -311,7 +357,7 @@ class Dashboard extends Controller
                         </div>
                         <?php } ?>
                         <?php
-                        if (!$params['pas_de_profil'] && !$params['creation']) {
+                        if (false && !$params['pas_de_profil'] && !$params['creation']) {
                         ?>
                         <div class="row">
                             <div class="columns large-12 center">
@@ -337,7 +383,7 @@ class Dashboard extends Controller
                         <?php
                         if (!$params['pas_de_profil']) {
                         ?>
-                        <div class="row">
+                        <div class="row bloc-show" style="display:none;" id="options">
                             <div class="columns large-12 center">
                                 <div class="panel">
                                     <div class="row">
@@ -559,13 +605,14 @@ class Dashboard extends Controller
 
 
                     <?php if (isSerieux() && !$params['creation']) { ?>
-                    <div class="row">
+                    <div class="row bloc-show" id="report">
                         <div class="columns large-12 center">
                             <div class="panel">
                                 <div class="row">
                                     <div class="columns large-12">
                                         <h3>Reporter un bug/commentaire/conseil</h3>
-                                        <p>Utilisez ce champ si besoin pour toute remarque</p>
+                                        <br/>
+                                        <p>Utilisez ce champ si besoin pour toute remarque :</p>
                                         <form method="POST">
                                                 <textarea name="message" rows="4"></textarea>
                                                 <input type="hidden" name="action" value="report" />
@@ -579,90 +626,88 @@ class Dashboard extends Controller
                     <?php } ?>
 
                     <?php if (isSerieux() && !$params['creation']) { ?>
-                    <div class="row">
-                        <div class="columns large-12 center">
-                            <div class="panel">
-                                <div class="row">
-                                    <div class="columns large-12">
-                                        <h3>Filtre sur les tags</h3>
-                                        
-                                        <form method="POST">
-                                            <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
-                                            <?php 
-                                            if (!empty(getTags())) {
-                                                ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."><?php echo htmlentities(implode(' ', getTags()));?></textarea><?php
-                                            } else {
-                                                ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."></textarea><?php
-                                            }
-                                            ?>
-                                            
-                                            <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
-                                            <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf..."><?php echo htmlentities(implode(' ', getNotAllowedTags()));?> </textarea>
-                                            <input type="hidden" name="action" value="enregistrer_tags" />
-                                            
-                                            <input class="button" type="submit" value="Sauvegarder" />
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="columns large-12 center">
-                            <div class="panel">
-                                <div class="row">
-                                    <div class="columns large-12">
-                                        <h3>Filtre sur les urls</h3>
-                                        <form method="POST">
-                                            <p>Ne jamais afficher de lien vers les sites web suivants :</p>
-                                            <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
-                                            <input type="hidden" name="action" value="enregistrer_urls" />
-                                            
-                                            <input class="button" type="submit" value="Sauvegarder" />
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php } ?>
-                    
-                    <?php if (isShaarliste()) { ?>
-                        <div class="row" id="pwd">
+                    <div id="filtres" class="bloc-show">
+                        <div class="row">
                             <div class="columns large-12 center">
                                 <div class="panel">
                                     <div class="row">
                                         <div class="columns large-12">
-                                            <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
-                                            <?php if (isPassword()) { ?>
-                                                <span>Ce compte est actuellement protégé par un mot de passe.</span>
-                                            <?php } ?>
-                                            <form method="POST" action="?">
-                                                <div class="row">
-                                                    <div class="columns large-12">
-                                                        <input type="hidden" name="action" value="enregistrer_password"/>
-                                                        <input autocomplete="off" placeholder="Mot de passe" type="password" name="password" value="" />
-                                                        <input class="button" type="submit" value="Enregistrer" />
-                                                    </div>
-                                                </div>
+                                            <h3>Filtre sur les tags</h3>
+                                            
+                                            <form method="POST">
+                                                <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
+                                                <?php 
+                                                if (!empty(getTags())) {
+                                                    ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."><?php echo htmlentities(implode(' ', getTags()));?></textarea><?php
+                                                } else {
+                                                    ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."></textarea><?php
+                                                }
+                                                ?>
+                                                <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
+                                                <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf..."><?php echo htmlentities(implode(' ', getNotAllowedTags()));?> </textarea>
+                                                <input type="hidden" name="action" value="enregistrer_tags" />
+                                                
+                                                <input class="button" type="submit" value="Sauvegarder" />
                                             </form>
-                                            <p>La protection du compte permettra d'accéder à des fonctions avancées comme : 
-                                                <ul>
-                                                    <li>Modification de l'url de son shaarli</li>
-                                                    <li>Suppression du shaarli de la page d'abonnement</li>
-                                                    <li>Modification de son avatar</li>
-                                                    <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
-                                                    <li>Affichage du profil aux autres profils (avec des statistiques par exemple)</li>
-                                                </ul>
-                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    <?php } ?>
-                    <?php if (!$params['pas_de_profil'] && !$params['creation'] && !isShaarliste()) { ?>
                         <div class="row">
+                            <div class="columns large-12 center">
+                                <div class="panel">
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h3>Filtre sur les urls</h3>
+                                            <form method="POST">
+                                                <p>Ne jamais afficher de lien vers les sites web suivants :</p>
+                                                <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
+                                                <input type="hidden" name="action" value="enregistrer_urls" />
+                                                <input class="button" type="submit" value="Sauvegarder" />
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <div class="row bloc-show" id="pwd" style="display:none;">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
+                                        <?php if (isPassword()) { ?>
+                                            <span>Ce compte est actuellement protégé par un mot de passe.</span>
+                                        <?php } ?>
+                                        <form method="POST" action="?">
+                                            <div class="row">
+                                                <div class="columns large-12">
+                                                    <input type="hidden" name="action" value="enregistrer_password"/>
+                                                    <input autocomplete="off" placeholder="Mot de passe" type="password" name="password" value="" />
+                                                    <input class="button" type="submit" value="Enregistrer" />
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <p>La protection du compte permettra d'accéder à des fonctions avancées comme : 
+                                            <ul>
+                                                <li>Modification de l'url de son shaarli</li>
+                                                <li>Suppression du shaarli de la page d'abonnement</li>
+                                                <li>Modification de son avatar</li>
+                                                <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
+                                                <li>Affichage du profil aux autres profils (avec des statistiques par exemple)</li>
+                                            </ul>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php if (!$params['pas_de_profil'] && !$params['creation'] && !isShaarliste()) { ?>
+                        <div class="row bloc-show" id="mon-shaarli">
                             <div class="columns large-12 center">
                                 <div class="panel">
                                     <div class="row">
@@ -673,16 +718,6 @@ class Dashboard extends Controller
                                                 <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
                                                 <input type="hidden" name="action" value="mon_shaarli" />
                                                 <input type="hidden" name="action" value="mon_shaarli" />
-
-                                                <div class="row">
-                                                    <div class="columns large-8">
-                                                        <p>Ajouter mon shaarli à la page des abonnements</p>
-                                                    </div>
-                                                    <div class="columns large-4">
-                                                        <input type="radio" <?php if (!isShaarliPrivate()) {echo ' checked="checked" ';}?> name="checkbox-shaarli_private" value="oui"/>oui
-                                                        <input type="radio" <?php if (isShaarliPrivate()) {echo ' checked="checked" ';}?> name="checkbox-shaarli_private" value="non"/>non
-                                                    </div>
-                                                </div>
                                                 <?php
                                                 if (!$params['creation']) {
                                                 ?>
@@ -702,6 +737,67 @@ class Dashboard extends Controller
                             </div>
                         </div>
                     <?php } ?>
+                    <?php if (isShaarliste()) { ?>
+                        <div class="row bloc-show" id="modifier-shaarli">
+                            <div class="columns large-12 center">
+                                <div class="panel">
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h3>Modifier mon shaarli</h3>
+                                        </div>
+                                    </div>
+                                    <br/>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Apparaitre dans la liste des abonnements</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    <hr class="no-margin"/>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>Apparaitre dans la River</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    
+                                    <br/>
+                                    
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h4>Modifier l'url de mon shaarli</h4>
+                                        </div>
+                                        <div class="columns large-12">
+                                            <form method="POST">
+                                                <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                                                <input type="hidden" name="action" value="mon_shaarli" />
+                                                <input type="hidden" name="action" value="mon_shaarli" />
+                                                <?php
+                                                if (!$params['creation']) {
+                                                ?>
+                                                 <div class="row">
+                                                    <div class="columns large-12">
+                                                        <input class="button" type="submit" value="Sauvegarder" />
+                                                    </div>
+                                                </div>
+                                                <?php
+                                                }
+                                                ?>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
+                    
+                    
                     <?php if ($params['creation']) { ?>
                         <div class="row">
                             <div class="column large-12 text-center">
@@ -810,8 +906,12 @@ class Dashboard extends Controller
             $('.checkbox-display_only_unread').click(function() {
                 addOption($(this), 'display_only_unread', $(this).val());
             });
-
-
+            $('.checkbox-on_abonnements').click(function() {
+                addOption($(this), 'on_abonnements', $(this).val());
+            });
+            $('.checkbox-on_river').click(function() {
+                addOption($(this), 'on_river', $(this).val());
+            });
             function addAbo(that, id, action) {
                 var r = new XMLHttpRequest(); 
                 var params = "do="+action+"&id=" + id;
@@ -928,7 +1028,44 @@ class Dashboard extends Controller
                 $('#form-abonnements').submit();
             });
             $(document).foundation();
-           
+
+            function blocShow() {
+                console.log(location.hash);
+                if ('#pwd' == location.hash) {
+                    $(".bloc-show").hide();
+                    $("#pwd").show();
+                }
+                if ('#options' == location.hash) {
+                    $(".bloc-show").hide();
+                    $("#options").show();
+                }
+                if ('#report' == location.hash) {
+                    $(".bloc-show").hide();
+                    $("#report").show();
+                }
+                if ('#filtres' == location.hash) {
+                    $(".bloc-show").hide();
+                    $("#filtres").show();
+                }
+                if ('#modifier-shaarli' == location.hash) {
+                    $(".bloc-show").hide();
+                    $("#modifier-shaarli").show();
+                }
+                if ('#mon-shaarli' == location.hash) {
+                    $(".bloc-show").hide();
+                    $("#mon-shaarli").show();
+                }
+            }
+            
+            $('.link-show').click(function(event) {
+                $(".bloc-show").hide();
+                $($(this).attr('href')).show();
+                event.preventDefault();
+            });
+            
+            $(".bloc-show").hide();
+            blocShow();
+
         </script>
         <?php
     }

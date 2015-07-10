@@ -130,3 +130,18 @@ function eh($string) {
     echo htmlentities($string);
 }
 
+function supprimeDernierPointInterrogation($url) {
+    if (preg_match('#\?$#', $url)) {
+       return substr($url, 0, strlen($url) - 1);
+   }
+
+   return $url;
+}
+
+function getUrlSimplifiee($url) {
+    $urlSimplifiee = str_replace('https://', '', $url);
+    $urlSimplifiee = str_replace('http://', '', $urlSimplifiee);
+    $urlSimplifiee = str_replace('my.shaarli.fr/', 'shaarli.fr/my/', $urlSimplifiee);
+
+    return $urlSimplifiee;
+}

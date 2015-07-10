@@ -389,7 +389,8 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
         LEFT OUTER JOIN mes_rss AS mes_rss_origin ON (rss_origin.id=mes_rss_origin.id_rss AND mes_rss_origin.username='$username')
         LEFT OUTER JOIN mes_rss ON (rss.id=mes_rss.id_rss AND mes_rss.username='$username')
         LEFT OUTER JOIN liens_clic ON (liens_clic.id_commun=liens.id_commun) 
-        WHERE rss.active = '1'
+        LEFT OUTER JOIN shaarlieur ON (liens.id_rss=shaarlieur.shaarli_url_id_ok) 
+        WHERE rss.active = '1' AND (shaarlieur.shaarli_on_river='1' OR shaarlieur.shaarli_on_river IS NULL)
         GROUP BY liens.id 
         ORDER BY liens.article_date DESC");
     }
@@ -526,17 +527,7 @@ function selectAllShaarlistes($mysqli, $onlyActive = true){
     if(!$onlyActive) {
         $condActive = '';
     }
-    $query = sprintf("SELECT r.id, r.rss_titre as title, 
-    r.url as link,
-    r.date_insert as createdateiso,
-    r.date_update as pubdateiso,
-    r.active,
-    count(*) AS nb_items 
-    FROM `liens` as l 
-    LEFT JOIN rss as r ON l.id_rss = r.id where r.id IS NOT NULL $condActive 
-    group by id_rss
-    ORDER BY r.date_insert DESC, r.date_update DESC
-    ");
+
     $query = sprintf("SELECT r.id, r.rss_titre as title, 
     r.url as link,
     r.`404` as is_dead,
@@ -546,7 +537,8 @@ function selectAllShaarlistes($mysqli, $onlyActive = true){
     count(*) AS nb_items 
     FROM `rss` as r
     LEFT JOIN liens as l ON l.id_rss = r.id 
-    where r.id IS NOT NULL $condActive 
+    LEFT JOIN shaarlieur as sh ON l.id_rss = sh.shaarli_url_id_ok 
+    where r.id IS NOT NULL AND (sh.shaarli_on_abonnements = '1' OR sh.shaarli_on_abonnements IS NUll) $condActive 
     group by id_rss
     ORDER BY r.date_insert DESC, r.date_update DESC
     ");
@@ -680,20 +672,46 @@ function majDerniereConnexion($mysqli, $shaarlieurId) {
     $mysqli->query($query);
 }
 
-function updateShaarlieurShaarliUrl($mysqli, $shaarlieurId, $shaarliUrl, $shaarliPrivate) {
+function updateShaarlieurShaarliUrl($mysqli, $shaarlieurId, $shaarliUrl) {
     $dateUpdate = date('YmdHis');
-    $shaarliPrivateSql = '1';
-    if (false === $shaarliPrivate) {
-        $shaarliPrivateSql = '0';
-    }
-    $query = sprintf("UPDATE shaarlieur SET shaarli_url='%s', date_update='%s', shaarli_private='%s' WHERE id='%s'", 
+    $query = sprintf("UPDATE shaarlieur SET shaarli_url='%s', date_update='%s', shaarli_private='0', shaarli_ok='2', shaarli_url_ok='' WHERE id='%s'", 
         $mysqli->real_escape_string($shaarliUrl), 
         $mysqli->real_escape_string($dateUpdate), 
-        $mysqli->real_escape_string($shaarliPrivateSql), 
         $mysqli->real_escape_string($shaarlieurId)
     );
     $mysqli->query($query);
 }
+
+function updateShaarlieurShaarliOnAbonnements($mysqli, $shaarlieurId, $isOnAbonnements) {
+    $dateUpdate = date('YmdHis');
+    if ($isOnAbonnements) {
+        $isOnAbonnementsSql = '1';
+    } else {
+        $isOnAbonnementsSql = '0';
+    }
+    $query = sprintf("UPDATE shaarlieur SET shaarli_on_abonnements='%s', date_update='%s' WHERE id='%s'", 
+        $mysqli->real_escape_string($isOnAbonnementsSql),
+        $mysqli->real_escape_string($dateUpdate),
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+    $mysqli->query($query);
+}
+
+function updateShaarlieurShaarliOnRiver($mysqli, $shaarlieurId, $isOnRiver) {
+    $dateUpdate = date('YmdHis');
+    if ($isOnRiver) {
+        $isOnRiverSql = '1';
+    } else {
+        $isOnRiverSql = '0';
+    }
+    $query = sprintf("UPDATE shaarlieur SET shaarli_on_river='%s', date_update='%s' WHERE id='%s'", 
+        $mysqli->real_escape_string($isOnRiverSql),
+        $mysqli->real_escape_string($dateUpdate),
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+    $mysqli->query($query);
+}
+
 
 function updateShaarlieurShaarliOk($mysqli, $shaarlieurId, $shaarliUrlIdOk, $shaarliUrlOk) {
     $dateUpdate = date('YmdHis');
@@ -868,6 +886,26 @@ function isLienDejaClic($mysqli, $idCommun, $shaarlieurId) {
     }
 
     return false;
+}
+
+/**
+ * Retourne le nombre de followers pour chaque flux
+ * 
+ * @param $mysqli
+ * 
+ * @return array('2654874' => 123, ...)
+ */
+function getTopRss($mysqli) {
+    $query = "SELECT id_rss, count(*) as c FROM `mes_rss` group by id_rss";
+    
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            $results[$row['id_rss']] = $row['c'];
+        }
+    }
+
+    return $results;
 }
 
 
