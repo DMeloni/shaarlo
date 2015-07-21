@@ -10,6 +10,8 @@ class Dashboard extends Controller
 {
         public function run() 
         {
+            //$this->setLocale('en');
+            
             // Accès invité
             if ('enregistrer_temporairement' ===  $this->post('action')) {
                 // Connexion invitée
@@ -222,7 +224,7 @@ class Dashboard extends Controller
         public function render($params=array())
         {
             // Protection des paramètres 
-            $params = $this->htmlentities($params);
+            $params = $this->htmlspecialchars($params);
 
             ?><!doctype html>
             <html class="no-js" lang="en">
@@ -256,7 +258,7 @@ class Dashboard extends Controller
                             <div class="panel" data-equalizer-watch>
                                 <div class="row">
                                     <div class="columns large-12">
-                                        <h3>Mot de passe</h3>
+                                        <h3><?php $this->t('profil_mot_de_passe'); ?></h3>
                                         <form method="POST">
                                             <input type="hidden" name="action" value="connexion"/>
                                             <input type="hidden" name="profil_id" value="<?php eh($this->get('profil_id')); ?>"/>

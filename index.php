@@ -810,7 +810,7 @@ class River extends Controller
     public function render($params=array())
     {
         // Protection des paramètres 
-        $params = $this->htmlentities($params, array('found'));
+        $params = $this->htmlspecialchars($params, array('found'));
 
         if (!$params['displayOnlyArticle']) {
         ?><!doctype html>
