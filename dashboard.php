@@ -1037,7 +1037,7 @@ class Dashboard extends Controller
 
                 <?php
         }
-    public static function renderScript($params)
+    public static function renderScript($params = array())
     {
         parent::renderScript();
         ?>

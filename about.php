@@ -4,34 +4,34 @@ require_once('Controller.class.php');
 
 class Dashboard extends Controller
 {
-	public function run() 
-	{
-		$params = array();
-		$this->render($params);
-	}
+        public function run() 
+        {
+                $params = array();
+                $this->render($params);
+        }
 
-	public function render($params=array())
-	{
-		?><!doctype html>
-		<html class="no-js" lang="en">
-			<?php
-			$this->renderHead();
-		    ?>
+        public function render($params=array())
+        {
+                ?><!doctype html>
+                <html class="no-js" lang="en">
+                        <?php
+                        $this->renderHead();
+                    ?>
 
-		    <body>
+                    <body>
                 <?php
                 $this->renderMenu();
                 ?>
-		        <div class="row">
-		            <div class="column large-12 text-center">
-		                <h1>A propos</h1>
-		            </div>
-		        </div>
+                        <div class="row">
+                            <div class="column large-12 text-center">
+                                <h1>A propos</h1>
+                            </div>
+                        </div>
 
-		    	<div class="row">
-		    		<div class="columns large-12 center">
-		    			<div class="panel">
-		    				<div class="row">
+                        <div class="row">
+                                <div class="columns large-12 center">
+                                        <div class="panel">
+                                                <div class="row">
                                 <div class="columns large-12 text-center">
                                     <img alt="logo-shaarli" src="css/img/logo-shaarli.png" />
                                 </div>
@@ -47,10 +47,10 @@ class Dashboard extends Controller
                                         </div>
                                     </div>
                                 </div>
-		    				</div>
-		    			</div>
-		    		</div>
-		    	</div>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
                 <div class="row">
                     <div class="columns large-12 center">
                         <div class="panel">
@@ -181,9 +181,9 @@ class Dashboard extends Controller
                 </body>
                 </html>
 
-		<?php
-	}
-    public static function renderScript()
+                <?php
+        }
+    public static function renderScript($params = array())
     {
         parent::renderScript();
         ?>
