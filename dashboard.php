@@ -2,13 +2,16 @@
 
 require_once('Controller.class.php');
 
+ini_set("display_errors", 1);
+ini_set("track_errors", 1);
+ini_set("html_errors", 1);
+error_reporting(E_ALL);
 class Dashboard extends Controller
 {
         public function run() 
         {
-
             // Accès invité
-            if ('enregistrer_temporairement' ===  $_POST['action']) {
+            if ('enregistrer_temporairement' ===  $this->post('action')) {
                 // Connexion invitée
                 getSession('', true);
                 header('Location: index.php');
@@ -19,16 +22,18 @@ class Dashboard extends Controller
                 header('Location: index.php');
                 return;
             }
+            
+            $pasDeProfil = false;
             if (empty(getAbonnements())) {
                 $pasDeProfil = true;
             }
             $params = array();
             $creation = false;
             // Nouveau message
-            if (isset($_POST['action'])) {
-                if (isSerieux() && 'report' ===  $_POST['action']) {
+            if ($this->post('action')) {
+                if (isSerieux() && 'report' ===  $this->post('action')) {
                     $mysqli = shaarliMyConnect();
-                    $messageEntite = creerMessage(getUtilisateurId(), $_POST['message']);
+                    $messageEntite = creerMessage(getUtilisateurId(), $this->post('message'));
                     $retourInsertion = insertEntite($mysqli, 'message', $messageEntite);
                     if ($retourInsertion) {
                         $params['message'] = 'Le message a bien été envoyé';
@@ -37,14 +42,14 @@ class Dashboard extends Controller
                     }
                 }
 
-                if ('mon_shaarli' ===  $_POST['action'] && !isEnAttenteDeModeration()) {
-                    if (isset($_POST['shaarli_url'])) {
+                if ('mon_shaarli' ===  $this->post('action') && !isEnAttenteDeModeration()) {
+                    if ($this->post('shaarli_url')) {
                         if (!isShaarliste()) {
                             // Premiere soumission du shaarli, il passera par la modération
-                            majShaarliUrl($_POST['shaarli_url']);
+                            majShaarliUrl($this->post('shaarli_url'));
                         } else {
                             // Deuxieme soumission, on vérifie le flux de prime abord
-                            $url = $_POST['shaarli_url'];
+                            $url = $this->post('shaarli_url');
                             $url = corrigeUrlMy($url);
                             $url = supprimeDernierPointInterrogation($url);
                             if (!empty($url)) {
@@ -53,7 +58,7 @@ class Dashboard extends Controller
                                     if (empty($content)) {
                                         $params['message'] = "Ce flux n'a pu être récupéré...";
                                     } else {
-                                        majShaarliUrl($_POST['shaarli_url'], false);
+                                        majShaarliUrl($this->post('shaarli_url'), false);
                                     }
                                 }
                             } else {
@@ -64,94 +69,93 @@ class Dashboard extends Controller
                     }
                 }
                 // Enregistrement d'un nouveau profil
-                if ('enregistrer' ===  $_POST['action']) {
+                if ('enregistrer' ===  $this->post('action')) {
                     $password = '';
-                    if (isset($_POST['password'])) {
-                        $password = $_POST['password'];
+                    if ($this->post('password')) {
+                        $password = $this->post('password');
                     }
-                    $session = getSession($_POST['profil_id'], false, $password, true);
+                    $session = getSession($this->post('profil_id'), false, $password, true);
                     if ($session !== 401) {
-	                    $abonnements = $_POST['shaarlistes'];
-	                    majAbonnements($abonnements);
-	                    setcookie('shaarlieur', $_POST['profil_id'], time()+31536000, '.shaarli.fr');
-	                    $params['message'] = "Votre profil vient d'être créé";
-	                    $pasDeProfil = false;
+                        $abonnements = $this->post('shaarlistes');
+                        majAbonnements($abonnements);
+                        setcookie('shaarlieur', $this->post('profil_id'), time()+31536000, '.shaarli.fr');
+                        $params['message'] = "Votre profil vient d'être créé";
+                        $pasDeProfil = false;
                     } else {
-                    	header('Location:dashboard?action=creation&erreur=profil_exists');
-                    	return;
+                        header('Location:dashboard?action=creation&erreur=profil_exists');
+                        return;
                     }
 
                 }
 
                 // Enregistrement d'un password
-                if ('enregistrer_password' ===  $_POST['action']) {
+                if ('enregistrer_password' ===  $this->post('action')) {
                     $password = '';
                     $passwordVerif = '';
-                    if (isset($_POST['password'])) {
-                        $password = $_POST['password'];
+                    if ($this->post('password')) {
+                        $password = $this->post('password');
                     }
-                    if (isset($_POST['password_verif'])) {
-                        $passwordVerif = $_POST['password_verif'];
+                    if ($this->post('password_verif')) {
+                        $passwordVerif = $this->post('password_verif');
                     }
 
                     // On vérifie que le gus a tapé deux fois le même mot de passe
                     if ($passwordVerif === $password) {
-	                    $oldPassword = '';
-	                    if (isset($_POST['old_password'])) {
-	                        $oldPassword = $_POST['old_password'];
-	                    }
-	                    if (verifyPassword(getUtilisateurId(), $oldPassword)) {
-		                    $session = updatePassword(getUtilisateurId(), $password);
-		                    $params['message'] = "Le pwd est enregistré";
-		                } else {
-		                	$params['message'] = "L'ancien password est erroné";
-		                }
+                        $oldPassword = '';
+                        if ($this->post('old_password')) {
+                            $oldPassword = $this->post('old_password');
+                        }
+                        if (verifyPassword(getUtilisateurId(), $oldPassword)) {
+                            $session = updatePassword(getUtilisateurId(), $password);
+                            $params['message'] = "Le pwd est enregistré";
+                        } else {
+                            $params['message'] = "L'ancien password est erroné";
+                        }
                     } else {
-                    	$params['message'] = "Les deux mots de passe ne concordent pas";
+                        $params['message'] = "Les deux mots de passe ne concordent pas";
                     }
-                    
-
                 }
+
                 // Enregistrement d'un email
-                if ('enregistrer_email' ===  $_POST['action']) {
+                if ('enregistrer_email' ===  $this->post('action')) {
                     $email = '';
-                    if (isset($_POST['email'])) {
-                        $email = $_POST['email'];
+                    if ($this->post('email')) {
+                        $email = $this->post('email');
                     }
                     if (isValidEmail($email)) {
-	                    $session = updateEmail(getUtilisateurId(), $email);
-	                    $params['message'] = "L'adresse email est enregistrée";
-	                } else {
-	                	$params['message'] = "L'adresse email est invalide";
-	                }
+                        $session = updateEmail(getUtilisateurId(), $email);
+                        $params['message'] = "L'adresse email est enregistrée";
+                    } else {
+                        $params['message'] = "L'adresse email est invalide";
+                    }
                 }
 
 
                 // Maj filtre des tags
-                if ('enregistrer_tags' ===  $_POST['action']) {
-                    $session = getSession($_POST['profil_id']);
-                    updateTags($_POST['tags']);
-                    updateNotAllowedTags($_POST['not_allowed_tags']);
+                if ('enregistrer_tags' ===  $this->post('action')) {
+                    $session = getSession($this->post('profil_id'));
+                    updateTags($this->post('tags'));
+                    updateNotAllowedTags($this->post('not_allowed_tags'));
                     $params['message'] = "La liste des tags à ignorer a été mise à jour";
                 }
                 // Maj filtre des urls
-                if ('enregistrer_urls' ===  $_POST['action']) {
-                    $session = getSession($_POST['profil_id']);
-                    updateNotAllowedUrls($_POST['not_allowed_urls']);
+                if ('enregistrer_urls' ===  $this->post('action')) {
+                    $session = getSession($this->post('profil_id'));
+                    updateNotAllowedUrls($this->post('not_allowed_urls'));
                     $params['message'] = "La liste des sites web à ignorer a été mise à jour";
                 }
             }
 
-            if (isset($_GET['action'])) {
+            if ($this->get('action')) {
                 // Connexion
-                if ('connexion' ===  $_GET['action']) {
+                if ('connexion' ===  $this->get('action')) {
                         $password = null; 
-                        if (isset($_POST['password'])) {
-                            $password = $_POST['password'];
+                        if ($this->post('password')) {
+                            $password = $this->post('password');
                         }
-                        $session = getSession($_GET['profil_id'], true, $password);
+                        $session = getSession($this->get('profil_id'), true, $password);
                         if ($session !== 401) {
-                            setcookie('shaarlieur', $_GET['profil_id'], time()+31536000, '.shaarli.fr');
+                            setcookie('shaarlieur', $this->get('profil_id'), time()+31536000, '.shaarli.fr');
                             header('Location: index.php');
                             return;
                         }
@@ -161,41 +165,39 @@ class Dashboard extends Controller
                 }
 
                 // Création d'un nouveau profil
-                if ('creation' ===  $_GET['action']) {
+                if ('creation' ===  $this->get('action')) {
                     $creation = true;
                 }
                 // Message d'erreur apres redirection
-                if (isset($_GET['erreur']) && $_GET['erreur'] == 'profil_exists') {
+                if ($this->get('erreur') && $this->get('erreur') == 'profil_exists') {
                     $params['message'] = "Ce profil existe deja, merci de choisir un autre pseudo";
                 }
                 
                 // Annulation demande de modération
-                if ('cancel' === $_GET['action']) {
+                if ('cancel' === $this->get('action')) {
                     cancelShaarliUrl();
                     header('Location:dashboard.php');
                     return;
                 }
 
                 // Envoie du mail à l'utilisateur
-                if ($pasDeProfil && 'send_pwd_mail' === $_GET['action'] && !empty($_GET['profil_id'])) {
-                	if (profilHasEmail($_GET['profil_id'])) {
-                		// Envoie du mail
-                		$email = profilGetEmail($_GET['profil_id']);
-                		$nouveauPassword = uniqid();
-                		$retourEnvoi = envoieMailRecuperation($email, $_GET['profil_id'], $nouveauPassword);
-                		if ($retourEnvoi === true) {
-	                		$emailObfusque = obfusqueEmail($email);
-	                		updateNewPassword($_GET['profil_id'], $nouveauPassword);
-	                		$params['message'] = "Un email vient d'être envoyé à votre adresse : $emailObfusque";
+                if ($pasDeProfil && 'send_pwd_mail' === $this->get('action') && !empty($this->get('profil_id'))) {
+                    if (profilHasEmail($this->get('profil_id'))) {
+                        // Envoie du mail
+                        $email = profilGetEmail($this->get('profil_id'));
+                        $nouveauPassword = uniqid();
+                        $retourEnvoi = envoieMailRecuperation($email, $this->get('profil_id'), $nouveauPassword);
+                        if ($retourEnvoi === true) {
+                            $emailObfusque = obfusqueEmail($email);
+                            updateNewPassword($this->get('profil_id'), $nouveauPassword);
+                            $params['message'] = "Un email vient d'être envoyé à votre adresse : $emailObfusque";
 
-                		} else {
-                			$params['message'] = "L'envoi de l'email de récupération a échoué, merci de réessayer plus tard...";
-                		}
-                	}
+                        } else {
+                            $params['message'] = "L'envoi de l'email de récupération a échoué, merci de réessayer plus tard...";
+                        }
+                    }
                 }
             }
-
-
 
 
             $params['shaarlieurPositionTop'] = getShaarlieurPositionTop();
@@ -212,830 +214,834 @@ class Dashboard extends Controller
             $params['creation'] = $creation;
             
             $params['currentBadge'] = getCurrentBadge();
+            $params['script'] = '<script>alert("lol");</script>';
 
             $this->render($params);
         }
 
         public function render($params=array())
         {
-                ?><!doctype html>
-                <html class="no-js" lang="en">
-                        <?php
-                        $this->renderHead();
-                    ?>
+            // Protection des paramètres 
+            $params = $this->htmlentities($params);
 
-                    <body>
+            ?><!doctype html>
+            <html class="no-js" lang="en">
+                <?php
+                    $this->renderHead();
+                ?>
+
+                <body>
+                <?php
+                if (!$params['pas_de_profil'] && !$params['creation']) {
+                    $this->renderMenu();
+                }
+                ?>
                     <?php
-                    if (!$params['pas_de_profil'] && !$params['creation']) {
-                        $this->renderMenu();
+                    if (isset($params['message'])) {
+                        ?>
+                        <div class="row">
+                            <div class="columns large-12 center">
+                                <div class="panel">
+                                        <span class="color-success"><?php eh($params['message']);?></span>
+                                    </div>
+                            </div>
+                        </div>
+                        <?php
                     }
+                    
+                    if (isset($params['demande_password'])) {
                     ?>
-                        <?php
-                        if (isset($params['message'])) {
-                            ?>
-                            <div class="row">
-                                <div class="columns large-12 center">
-                                    <div class="panel">
-                                            <span class="color-success"><?php eh($params['message']);?></span>
-                                        </div>
-                                </div>
-                            </div>
-                            <?php
-                        }
-                        
-                        if (isset($params['demande_password'])) {
-                        ?>
-                            <div class="row" data-equalizer>
-                                <div class="columns large-6 large-centered small-centered text-center">
-                                    <div class="panel" data-equalizer-watch>
-                                        <div class="row">
-                                            <div class="columns large-12">
-                                                <h3>Mot de passe</h3>
-                                                <form method="POST">
-                                                    <input type="hidden" name="action" value="connexion"/>
-                                                    <input type="hidden" name="profil_id" value="<?php eh($_GET['profil_id']); ?>"/>
-                                                    <input name="password" type="password" value=""/>
-                                                    <input class="button success" type="submit" value="Valider" />
-                                                </form>
-                                                <?php 
-                                                if (profilHasEmail($_GET['profil_id'])) {
-                                                	?>
-                                                		<a href="?action=send_pwd_mail&amp;profil_id=<?php eh($_GET['profil_id']); ?>">Mot de passe oublié ?</a>
-                                                	<?php
-                                                }
-                                                ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php
-                        } else {
-                            ?>
-                            <?php
-                            if ($params['pas_de_profil'] && !$params['creation']) {
-                            ?>
-                            <div class="row">
-                                <div class="column large-12 text-center">
-                                    <h1>Bienvenue sur shaarli.fr</h1>
-                                    <p>Réseau social de partage de liens hypertextes</p>
-                                </div>
-                            </div>
-
-                            <div class="row" data-equalizer>
-                                <div class="columns large-4 ">
-                                    <div class="panel" data-equalizer-watch>
-                                        <div class="row">
-                                            <div class="columns large-12 text-center">
-                                            	<h2>Nous rejoindre</h2>
-                                            	<br/><br/>
-                                                <a href="?action=creation" class="button secondary">Créer un profil</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="columns large-4 text-center">
-                                    <div class="panel" data-equalizer-watch>
-                                        <div class="row">
-                                            <div class="columns large-12">
-                                                <h2>Se connecter</h2>
-                                                <form method="GET">
-                                                    <input type="hidden" name="action" value="connexion"/>
-                                                    <input name="profil_id" type="text" placeholder="pseudo" value=""/>
-                                                    <input class="button" type="submit" value="Charger profil" />
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="columns large-4 ">
-                                    <div class="panel" data-equalizer-watch>
-                                        <div class="row">
-                                            <div class="columns large-12 text-center">
-                                            	<h2>Essayer !</h2>
-                                            	<br/><br/>
-                                                <form id="form-abonnements" method="POST">
-                                                    <input type="hidden" name="action" value="enregistrer_temporairement"/>
-                                                    <input type="hidden" name="profil_id" value=""/>
-                                                    <input id="button-tous" type="submit" class="button secondary" value="Accès invité" />
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php
-                        }
-                        ?>
-
-                        <?php
-                         if (!$params['pas_de_profil'] && !$params['creation']) {
-                            ?>
-                            <div class="row">
-                                <div class="columns large-12">
-                                    <div class="panel">
-
-                                        <div class="row">
-                                        <?php
-                                            /*
-                                             * Bloc image de profil
-                                             */
-                                            if (isShaarliste()) {
-                                                $imageProfilSrc = getImageProfilSrc();
-                                                if (!is_null($imageProfilSrc)) {
-                                                ?>
-                                                    <div class="columns large-2 medium-3 small-4 text-right">
-                                                        <img class="profil-avatar" src="<?php echo $imageProfilSrc; ?>" alt="image de profil" />
-                                                    </div>
-                                                <?php
-                                                }
-                                            }
-                                            ?>
-                                            <div class="column large-10 medium-9 small-8">
-                                                <h1><?php echo getUtilisateurId(); ?></h1>
-                                            </div>
-                                        </div>
-                                        
-                                        <hr/>
-                                        <div class="row text-center">
-                                            <div class="columns large-12">
-                                                <?php
-                                                /*
-                                                 * Bloc top shaarlieur
-                                                 */
-                                                $idBadge = 1;
-                                                if (!empty($params['shaarlieurPositionTop']) && is_file(sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']))) {
-                                                    $idBadge = $params['shaarlieurPositionTop'];
-                                                }
-                                                if (!is_null($params['currentBadge'])) {
-                                                    $idBadge = $params['currentBadge'];
-                                                }
-
-                                                $nomImageTopGif = sprintf('img/top/top_%s.gif', $idBadge);
-                                                if (is_file($nomImageTopGif)) {
-                                                    ?><a href="badges.php"><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/></a><?php
-                                                }
-                                                ?>
-                                            </div>
-                                            <?php 
-                                            if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 1000) {
-                                            ?>
-                                            <div class="columns large-12">
-                                                <?php
-                                                if ($params['shaarlieurPositionTop'] == 1) {
-                                                    ?>Vous êtes l'utilisateur <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">le plus fidèle</span> du site !!!<?php
-                                                } elseif ($params['shaarlieurPositionTop'] <= 5) {
-                                                    ?>Vous êtes l'un des cinq utilisateurs <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">les plus fidèles</span> du site !<?php
-                                                } elseif ($params['shaarlieurPositionTop'] <= 10) {
-                                                    ?>Vous faites partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 10</span> des utilisateurs du site :-D<?php
-                                                } elseif ($params['shaarlieurPositionTop'] <= 50) {
-                                                    ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 50</span> des utilisateurs du site :-)<?php
-                                                } elseif ($params['shaarlieurPositionTop'] <= 100) {
-                                                    ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 100</span> des utilisateurs du site :-)<?php
-                                                } else {
-                                                    ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 1000</span> des utilisateurs du site :-)<?php
-                                                }
-                                                ?>
-                                            </div>
-                                            <?php } ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php
-                        }
-                        ?>
-
-                        <?php
-                        if (!$params['pas_de_profil'] && !$params['creation']) {
-                        ?>
-                        <div class="row">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-					                <div class="row">
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<a class="a-block" href="abonnements.php">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_people.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-					        	                    <span class="blue-ocean"><?php eh(getNbAbonnements())?></span> abonnements
-					        	                </div>
-					        	            </a>
-					                    </div>
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<?php if(!isEnAttenteDeModeration()) { ?>
-					                    	<a class="a-block link-show" href="<?php if (isShaarliste()) { ?>#modifier-shaarli<?php } else { ?>#mon-shaarli<?php } ?>">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-		                                            <?php if (isShaarliste()) { ?>
-		                                                <?php if (!isEnAttenteDeModeration()) { ?>
-		                                                    <p><a class="link-show" href="#modifier-shaarli">Liaison shaarli</a></p>
-		                                                <?php } else { ?>
-		                                                    <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
-		                                                <?php } ?>
-		                                            <?php } else { ?>
-		                                                <?php if (!isEnAttenteDeModeration()) { ?>
-		                                                    <p><a class="link-show" href="#mon-shaarli">Liaison shaarli</a></p>
-		                                                <?php } else { ?>
-		                                                    <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
-		                                                <?php } ?>
-		                                            <?php }  ?>
-					        	                </div>
-					        	            </a>
-					        	            <?php } else { ?>
-					                    	<div class="a-block" >
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-		                                            <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
-					        	                </div>
-					        	            </div>
-					        	            <?php }  ?>
-					                    </div>
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<a class="a-block link-show" href="#pwd">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_pwd.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-					        	                	Sécurité
-					        	                </div>
-					        	            </a>
-					                    </div>
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<a class="a-block link-show" href="#options">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_config.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-					        	                	Options d'affichage
-					        	                </div>
-					        	            </a>
-					                    </div>
-					                </div>
-					                <div class="row">
-					                	<?php if (!is_null($params['id_rss'])) { ?>
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<a class="a-block" href="index.php?q=shaarli:<?php echo $params['id_rss']; ?>">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_messagerie.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-					        	                    Messagerie
-					        	                </div>
-					        	            </a>
-					        	        </div>
-					        	        <?php } ?>
-					                	<?php if (isSerieux()) { ?>
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<a class="a-block link-show" href="#filtres">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_filtres.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-					        	                	Filtres des articles
-					        	                </div>
-					        	            </a>
-					                    </div>
-					                    <?php } ?>
-
-					                    <?php if (isSerieux()) { ?>
-					                    <div class="large-3 medium-6 small-12 columns text-center">
-					                    	<a class="a-block link-show" href="#report">
-					        	                <div class="row">
-					        	                    <div style="min-height:150px;background:url('css/img/icon_report.png') no-repeat;background-position:center center;"></div>
-					        	                </div>
-					        	                <div class="row">
-					        	                	Bug/commentaire/conseil
-					        	                </div>
-					        	            </a>
-					                    </div>
-					                    <?php } ?>
-					                </div>
-                                </div>
-                            </div>
-                        </div>
-                        <?php } ?>
-                        <?php
-                        if (false && !$params['pas_de_profil'] && !$params['creation']) {
-                        ?>
-                        <div class="row">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h3>Import/Export profil</h3>
-                                            <p>Copier coller cette clef pour charger ce profil dans un autre navigateur</p>
-                                            <form method="GET">
-                                                    <input type="hidden" name="action" value="connexion"/>
-                                                    <input name="profil_id" type="text" value="<?php echo htmlentities(getUtilisateurId());?>"/>
-                                                    <input class="button" type="submit" value="Charger profil" />
-                                            </form>
-                                            <a href="https://www.shaarli.fr/dashboard.php?action=connexion&amp;profil_id=<?php echo htmlentities(getUtilisateurId());?>">Url de connexion</a>
-                                            <p class="astuce">Astuce : remplacez la clef par quelque chose de simple à retenir</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <?php } ?>
-
-                        <?php
-                        if (!$params['pas_de_profil']) {
-                        ?>
-                        <div class="row bloc-show" style="display:none;" id="options">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row">
-                                        <div class="column large-12">
-                                            <h3>Paramètres</h3>
-                                        </div>
-                                    </div>
-                                    <br/>
-                                    <div class="row">
-                                        <div class="column large-12">
-                                            <h5>Options fonctionnelles</h5>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher les commentaires des shaarlistes non suivis</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                                <input type="radio" <?php if(displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher le bloc "En ce moment sur la shaarlisphère"</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <?php if ($params['shaarli_url']) { ?>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher le bloc de conversation</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <?php } ?>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher les liens sans description</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" class="checkbox-display-empty-description no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" class="checkbox-display-empty-description no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher uniquement les nouveaux liens du jour</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" class="checkbox-display_only_new_articles" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" class="checkbox-display_only_new_articles" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher les boutons "Top du jour/hier/semaine"</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" class="checkbox-use-top-buttons no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" class="checkbox-use-top-buttons no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher un bouton de rafraichissement sur l'article</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" class="checkbox-use-refresh-button no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" class="checkbox-use-refresh-button no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher un lien vers le flux RSS sur la page des flux</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" class="checkbox-display_rss_button no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" class="checkbox-display_rss_button no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>S'inscrire automatiquement aux nouveaux shaarlistes</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <br/>
-                                    <div class="row">
-                                        <div class="column large-12">
-                                            <h5>Options graphiques</h5>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Rendre la barre de menu fixe (rafraichir la page)</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="lock"/>oui
-                                            <input type="radio" <?php if(!isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="open"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                                <span>Compacter les articles longs</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                                <input type="radio" <?php if(isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" class="checkbox-extend no-margin" value="oui"/>oui
-                                                <input type="radio" <?php if(!isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" class="checkbox-extend no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Activer le scroll infini</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher les trucs du style Tipeee</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher les images/avatars <span class="button microscopic alert">NEW</span></span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Afficher uniquement les liens non visités <span class="button microscopic alert">NEW</span></span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    
-                                    <br/>
-                                    <div class="row">
-                                        <div class="column large-12">
-                                            <h5>Options mainstream</h5>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Utiliser <a href="https://github.com/tholman/elevator.js">elevator.js</a> dans la page des flux</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" class="checkbox-use-elevator no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" class="checkbox-use-elevator no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <p class="no-dotsies">Utiliser <a class="no-dotsies" href="http://dotsies.org/">dotsies</a> (Y'en a qui ont essayé !)</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="non"/><span class="no-dotsies">non</span>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="columns large-12 text-right">
-                                            <span><form><input type="submit" class="button" value="Enregistrer"></form></span>
-                                        </div>
-                                    </div>
-                                        <!--
-                                        <div class="row">
-                                            <div class="columns large-8">
-                                                <span>En travaux : Activer le mode river (dégroupe les liens)</span>
-                                            </div>
-                                            <div class="columns large-4">
-                                                <input type="radio" <?php if(isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="oui"/>oui
-                                                <input type="radio" <?php if(!isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="non"/>non
-                                            </div>
-                                        </div>
-                                        -->
-                                </div>
-                            </div>
-                        </div>
-                        <?php } ?>
-
-
-                    <?php if (isSerieux() && !$params['creation']) { ?>
-                    <div class="row bloc-show" id="report">
-                        <div class="columns large-12 center">
-                            <div class="panel">
+                    <div class="row" data-equalizer>
+                        <div class="columns large-6 large-centered small-centered text-center">
+                            <div class="panel" data-equalizer-watch>
                                 <div class="row">
                                     <div class="columns large-12">
-                                        <h3>Reporter un bug/commentaire/conseil</h3>
-                                        <br/>
-                                        <p>Utilisez ce champ si besoin pour toute remarque :</p>
+                                        <h3>Mot de passe</h3>
                                         <form method="POST">
-                                                <textarea name="message" rows="4"></textarea>
-                                                <input type="hidden" name="action" value="report" />
-                                                <input class="button" type="submit" value="Envoyer" />
+                                            <input type="hidden" name="action" value="connexion"/>
+                                            <input type="hidden" name="profil_id" value="<?php eh($this->get('profil_id')); ?>"/>
+                                            <input name="password" type="password" value=""/>
+                                            <input class="button success" type="submit" value="Valider" />
                                         </form>
-                                        <p>Merci à tous ceux qui ont déjà utilisé ce formulaire, votre aide est vraiment précieuse</p>
+                                        <?php 
+                                        if (profilHasEmail($this->get('profil_id'))) {
+                                            ?>
+                                                <a href="?action=send_pwd_mail&amp;profil_id=<?php eh($this->get('profil_id')); ?>">Mot de passe oublié ?</a>
+                                            <?php
+                                        }
+                                        ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <?php } ?>
-
-                    <?php if (isSerieux() && !$params['creation']) { ?>
-                    <div id="filtres" class="bloc-show">
-                        <div class="row">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h3>Filtre sur les tags</h3>
-                                            
-                                            <form method="POST">
-                                                <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
-                                                <?php 
-                                                if (!empty(getTags())) {
-                                                    ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."><?php echo htmlentities(implode(' ', getTags()));?></textarea><?php
-                                                } else {
-                                                    ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."></textarea><?php
-                                                }
-                                                ?>
-                                                <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
-                                                <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf..."><?php echo htmlentities(implode(' ', getNotAllowedTags()));?> </textarea>
-                                                <input type="hidden" name="action" value="enregistrer_tags" />
-                                                
-                                                <input class="button" type="submit" value="Sauvegarder" />
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h3>Filtre sur les urls</h3>
-                                            <form method="POST">
-                                                <p>Ne jamais afficher de lien vers les sites web suivants :</p>
-                                                <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
-                                                <input type="hidden" name="action" value="enregistrer_urls" />
-                                                <input class="button" type="submit" value="Sauvegarder" />
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php } ?>
-
-                    <div class="row bloc-show" id="pwd" style="display:none;">
-                        <div class="columns large-12 center">
-                            <div class="panel">
-                                <div class="row">
-                                    <div class="columns large-12">
-                                        <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
-                                        <form method="POST" action="?">
-                                            <div class="row">
-
-                                                <div class="columns large-12">
-			                                        <?php if (isPassword()) { ?>
-			                                            <span>Ce compte est actuellement protégé par un mot de passe.</span>
-			                                            <input autocomplete="off" placeholder="Ancien mot de passe" type="password" name="old_password" value="" />
-			                                        <?php } ?>
-                                                    <input type="hidden" name="action" value="enregistrer_password"/>
-                                                    <input autocomplete="off" placeholder="Nouveau mot de passe" type="password" name="password" value="" />
-                                                    <input autocomplete="off" placeholder="Nouveau mot de passe Encore ! " type="password" name="password_verif" value="" />
-                                                    <input class="button" type="submit" value="Enregistrer" />
-                                                </div>
-                                            </div>
-                                        </form>
-                                        <p>La protection du compte permettra d'accéder à des fonctions avancées comme : 
-                                            <ul>
-                                                <li>Modification de l'url de son shaarli</li>
-                                                <li>Suppression du shaarli de la page d'abonnement</li>
-                                                <li>Modification de son avatar</li>
-                                                <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
-                                                <li>Affichage d'une page de profil publique (désactivable, avec des statistiques sur le shaarli)</li>
-                                            </ul>
-                                        </p>
-                                        <form method="POST" action="?">
-                                            <div class="row">
-                                                <div class="columns large-12">
-                                                    <span>Email de récupération du compte : </span>
-                                                    <input type="hidden" name="action" value="enregistrer_email"/>
-                                                    <input autocomplete="off" placeholder="moi@mondomaine.tld" type="text" name="email" value="<?php eh(getEmail()); ?>" />
-                                                    <input class="button" type="submit" value="Enregistrer" />
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php if (!$params['pas_de_profil'] && !$params['creation'] && !isShaarliste()) { ?>
-                        <div class="row bloc-show" id="mon-shaarli">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h3>Url de mon shaarli</h3>
-                                            <p>Permet de reshaarlier les liens</p>
-                                            <form method="POST">
-                                                <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
-                                                <input type="hidden" name="action" value="mon_shaarli" />
-                                                <input type="hidden" name="action" value="mon_shaarli" />
-                                                <?php
-                                                if (!$params['creation']) {
-                                                ?>
-                                                 <div class="row">
-                                                    <div class="columns large-12">
-                                                        <input class="button" type="submit" value="Sauvegarder" />
-                                                    </div>
-                                                </div>
-                                                <?php
-                                                }
-                                                ?>
-                                            </form>
-                                            <p class="astuce">Note : votre shaarli apparaitra dans la page des abonnements après modération</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php } ?>
-                    <?php if (isShaarliste() && !isEnAttenteDeModeration()) { ?>
-                        <div class="row bloc-show" id="modifier-shaarli">
-                            <div class="columns large-12 center">
-                                <div class="panel">
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h3>Moi et mon shaarli</h3>
-                                        </div>
-                                    </div>
-                                    <br/>
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h4>Mes choix de confidentialité</h4>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Apparaitre dans la liste des abonnements</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    <hr class="no-margin"/>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <span>Apparaitre dans la River</span>
-                                        </div>
-                                        <div class="columns large-4">
-                                            <input type="radio" <?php if(isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="non"/>non
-                                        </div>
-                                    </div>
-                                    
-                                    <br/>
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h4>Mes actions possibles</h4>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="columns large-8">
-                                            <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"></p>
-                                            <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
-                                        </div>
-                                    </div>
-                                    
-                                    <br/>
-                                    
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <h4>Modifier l'url de mon shaarli</h4>
-                                        </div>
-                                        <div class="columns large-12">
-                                            <form method="POST">
-                                                <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
-                                                <input type="hidden" name="action" value="mon_shaarli" />
-                                                <input type="hidden" name="action" value="mon_shaarli" />
-                                                <?php
-                                                if (!$params['creation']) {
-                                                ?>
-                                                 <div class="row">
-                                                    <div class="columns large-12">
-                                                        <input class="button" type="submit" value="Sauvegarder" />
-                                                    </div>
-                                                </div>
-                                                <?php
-                                                }
-                                                ?>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php } ?>
-                    
-                    
-                    <?php if ($params['creation']) { ?>
+                    <?php
+                    } else {
+                        ?>
+                        <?php
+                        if ($params['pas_de_profil'] && !$params['creation']) {
+                        ?>
                         <div class="row">
                             <div class="column large-12 text-center">
-                                <h1>Créer un profil</h1>
+                                <h1>Bienvenue sur shaarli.fr</h1>
+                                <p>Réseau social de partage de liens hypertextes</p>
                             </div>
                         </div>
-                        <hr/>
-                        <form method="POST" action="?">
-                            <div class="row">
-                                <div class="column large-12 text-center">
-                                    <h2>Sélectionnez les shaarlistes que vous souhaitez suivre</h2>
-                                </div>
-                            </div>
-                            <?php
-                            $this->renderListeShaarlistes($params);
-                            ?>
-                            <div class="row">
-                                <div class="columns large-6 large-centered">
-                                    <div class="panel">
-                                        <div class="row">
-                                            <div class="columns large-12 text-center">
-                                                <h3>C'est presque fini !</h3>
-                                                <p>Choisissez un nom de profil</p>
-                                                <input type="hidden" name="action" value="enregistrer"/>
-                                                <input name="profil_id" type="text" value="<?php echo htmlentities(getUtilisateurId());?>"/>
-                                                <input disabled="disabled" id="input-enregistrer-profil" class="button success" type="submit" value="Enregistrer mon profil" />
-                                            </div>
+
+                        <div class="row" data-equalizer>
+                            <div class="columns large-4 ">
+                                <div class="panel" data-equalizer-watch>
+                                    <div class="row">
+                                        <div class="columns large-12 text-center">
+                                            <h2>Nous rejoindre</h2>
+                                            <br/><br/>
+                                            <a href="?action=creation" class="button secondary">Créer un profil</a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </form>
+                            <div class="columns large-4 text-center">
+                                <div class="panel" data-equalizer-watch>
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h2>Se connecter</h2>
+                                            <form method="GET">
+                                                <input type="hidden" name="action" value="connexion"/>
+                                                <input name="profil_id" type="text" placeholder="pseudo" value=""/>
+                                                <input class="button" type="submit" value="Charger profil" />
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="columns large-4 ">
+                                <div class="panel" data-equalizer-watch>
+                                    <div class="row">
+                                        <div class="columns large-12 text-center">
+                                            <h2>Essayer !</h2>
+                                            <br/><br/>
+                                            <form id="form-abonnements" method="POST">
+                                                <input type="hidden" name="action" value="enregistrer_temporairement"/>
+                                                <input type="hidden" name="profil_id" value=""/>
+                                                <input id="button-tous" type="submit" class="button secondary" value="Accès invité" />
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                    ?>
+
+                    <?php
+                     if (!$params['pas_de_profil'] && !$params['creation']) {
+                        ?>
+                        <div class="row">
+                            <div class="columns large-12">
+                                <div class="panel">
+
+                                    <div class="row">
+                                    <?php
+                                        /*
+                                         * Bloc image de profil
+                                         */
+                                        if (isShaarliste()) {
+                                            $imageProfilSrc = getImageProfilSrc();
+                                            if (!is_null($imageProfilSrc)) {
+                                            ?>
+                                                <div class="columns large-2 medium-3 small-4 text-right">
+                                                    <img class="profil-avatar" src="<?php echo $imageProfilSrc; ?>" alt="image de profil" />
+                                                </div>
+                                            <?php
+                                            }
+                                        }
+                                        ?>
+                                        <div class="column large-10 medium-9 small-8">
+                                            <h1><?php echo getUtilisateurId(); ?></h1>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr/>
+                                    <div class="row text-center">
+                                        <div class="columns large-12">
+                                            <?php
+                                            /*
+                                             * Bloc top shaarlieur
+                                             */
+                                            $idBadge = 1;
+                                            if (!empty($params['shaarlieurPositionTop']) && is_file(sprintf('img/top/top_%s.gif', $params['shaarlieurPositionTop']))) {
+                                                $idBadge = $params['shaarlieurPositionTop'];
+                                            }
+                                            if (!is_null($params['currentBadge'])) {
+                                                $idBadge = $params['currentBadge'];
+                                            }
+
+                                            $nomImageTopGif = sprintf('img/top/top_%s.gif', $idBadge);
+                                            if (is_file($nomImageTopGif)) {
+                                                ?><a href="badges.php"><img src="<?php echo $nomImageTopGif; ?>" alt="top_gif"/></a><?php
+                                            }
+                                            ?>
+                                        </div>
+                                        <?php 
+                                        if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 1000) {
+                                        ?>
+                                        <div class="columns large-12">
+                                            <?php
+                                            if ($params['shaarlieurPositionTop'] == 1) {
+                                                ?>Vous êtes l'utilisateur <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">le plus fidèle</span> du site !!!<?php
+                                            } elseif ($params['shaarlieurPositionTop'] <= 5) {
+                                                ?>Vous êtes l'un des cinq utilisateurs <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">les plus fidèles</span> du site !<?php
+                                            } elseif ($params['shaarlieurPositionTop'] <= 10) {
+                                                ?>Vous faites partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 10</span> des utilisateurs du site :-D<?php
+                                            } elseif ($params['shaarlieurPositionTop'] <= 50) {
+                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 50</span> des utilisateurs du site :-)<?php
+                                            } elseif ($params['shaarlieurPositionTop'] <= 100) {
+                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 100</span> des utilisateurs du site :-)<?php
+                                            } else {
+                                                ?>Vous faites actuellement partie du <span title="Vous êtes le <?php echo $params['shaarlieurPositionTop']; ?>°" class="top-orange">top 1000</span> des utilisateurs du site :-)<?php
+                                            }
+                                            ?>
+                                        </div>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                    ?>
+
+                    <?php
+                    if (!$params['pas_de_profil'] && !$params['creation']) {
+                    ?>
+                    <div class="row">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <a class="a-block" href="abonnements.php">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_people.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                <span class="blue-ocean"><?php eh(getNbAbonnements())?></span> abonnements
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <?php if(!isEnAttenteDeModeration()) { ?>
+                                        <a class="a-block link-show" href="<?php if (isShaarliste()) { ?>#modifier-shaarli<?php } else { ?>#mon-shaarli<?php } ?>">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                <?php if (isShaarliste()) { ?>
+                                                    <?php if (!isEnAttenteDeModeration()) { ?>
+                                                        <p><a class="link-show" href="#modifier-shaarli">Liaison shaarli</a></p>
+                                                    <?php } else { ?>
+                                                        <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+                                                    <?php } ?>
+                                                <?php } else { ?>
+                                                    <?php if (!isEnAttenteDeModeration()) { ?>
+                                                        <p><a class="link-show" href="#mon-shaarli">Liaison shaarli</a></p>
+                                                    <?php } else { ?>
+                                                        <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+                                                    <?php } ?>
+                                                <?php }  ?>
+                                            </div>
+                                        </a>
+                                        <?php } else { ?>
+                                        <div class="a-block" >
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+                                            </div>
+                                        </div>
+                                        <?php }  ?>
+                                    </div>
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <a class="a-block link-show" href="#pwd">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_pwd.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                Sécurité
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <a class="a-block link-show" href="#options">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_config.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                Options d'affichage
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <?php if (!is_null($params['id_rss'])) { ?>
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <a class="a-block" href="index.php?q=shaarli:<?php echo $params['id_rss']; ?>">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_messagerie.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                Messagerie
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <?php } ?>
+                                    <?php if (isSerieux()) { ?>
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <a class="a-block link-show" href="#filtres">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_filtres.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                Filtres des articles
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <?php } ?>
+
+                                    <?php if (isSerieux()) { ?>
+                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                        <a class="a-block link-show" href="#report">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_report.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                Bug/commentaire/conseil
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <?php } ?>
+                    <?php
+                    if (false && !$params['pas_de_profil'] && !$params['creation']) {
+                    ?>
+                    <div class="row">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Import/Export profil</h3>
+                                        <p>Copier coller cette clef pour charger ce profil dans un autre navigateur</p>
+                                        <form method="GET">
+                                                <input type="hidden" name="action" value="connexion"/>
+                                                <input name="profil_id" type="text" value="<?php echo htmlentities(getUtilisateurId());?>"/>
+                                                <input class="button" type="submit" value="Charger profil" />
+                                        </form>
+                                        <a href="https://www.shaarli.fr/dashboard.php?action=connexion&amp;profil_id=<?php echo htmlentities(getUtilisateurId());?>">Url de connexion</a>
+                                        <p class="astuce">Astuce : remplacez la clef par quelque chose de simple à retenir</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <?php
+                    if (!$params['pas_de_profil']) {
+                    ?>
+                    <div class="row bloc-show" style="display:none;" id="options">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="column large-12">
+                                        <h3>Paramètres</h3>
+                                    </div>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <div class="column large-12">
+                                        <h5>Options fonctionnelles</h5>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher les commentaires des shaarlistes non suivis</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                            <input type="radio" <?php if(displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher le bloc "En ce moment sur la shaarlisphère"</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <?php if ($params['shaarli_url']) { ?>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher le bloc de conversation</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <?php } ?>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher les liens sans description</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" class="checkbox-display-empty-description no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" class="checkbox-display-empty-description no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher uniquement les nouveaux liens du jour</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" class="checkbox-display_only_new_articles" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" class="checkbox-display_only_new_articles" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher les boutons "Top du jour/hier/semaine"</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" class="checkbox-use-top-buttons no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" class="checkbox-use-top-buttons no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher un bouton de rafraichissement sur l'article</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" class="checkbox-use-refresh-button no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" class="checkbox-use-refresh-button no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher un lien vers le flux RSS sur la page des flux</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" class="checkbox-display_rss_button no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" class="checkbox-display_rss_button no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>S'inscrire automatiquement aux nouveaux shaarlistes</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <br/>
+                                <div class="row">
+                                    <div class="column large-12">
+                                        <h5>Options graphiques</h5>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Rendre la barre de menu fixe (rafraichir la page)</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="lock"/>oui
+                                        <input type="radio" <?php if(!isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="open"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                            <span>Compacter les articles longs</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                            <input type="radio" <?php if(isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" class="checkbox-extend no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" class="checkbox-extend no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Activer le scroll infini</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher les trucs du style Tipeee</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher les images/avatars <span class="button microscopic alert">NEW</span></span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher uniquement les liens non visités <span class="button microscopic alert">NEW</span></span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                
+                                <br/>
+                                <div class="row">
+                                    <div class="column large-12">
+                                        <h5>Options mainstream</h5>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Utiliser <a href="https://github.com/tholman/elevator.js">elevator.js</a> dans la page des flux</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" class="checkbox-use-elevator no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" class="checkbox-use-elevator no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <p class="no-dotsies">Utiliser <a class="no-dotsies" href="http://dotsies.org/">dotsies</a> (Y'en a qui ont essayé !)</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="non"/><span class="no-dotsies">non</span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="columns large-12 text-right">
+                                        <span><form><input type="submit" class="button" value="Enregistrer"></form></span>
+                                    </div>
+                                </div>
+                                    <!--
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <span>En travaux : Activer le mode river (dégroupe les liens)</span>
+                                        </div>
+                                        <div class="columns large-4">
+                                            <input type="radio" <?php if(isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="oui"/>oui
+                                            <input type="radio" <?php if(!isModeRiver()) {echo ' checked="checked" ';}?> name="checkbox-mode_river" class="checkbox-mode_river" value="non"/>non
+                                        </div>
+                                    </div>
+                                    -->
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+
+                <?php if (isSerieux() && !$params['creation']) { ?>
+                <div class="row bloc-show" id="report">
+                    <div class="columns large-12 center">
+                        <div class="panel">
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <h3>Reporter un bug/commentaire/conseil</h3>
+                                    <br/>
+                                    <p>Utilisez ce champ si besoin pour toute remarque :</p>
+                                    <form method="POST">
+                                            <textarea name="message" rows="4"></textarea>
+                                            <input type="hidden" name="action" value="report" />
+                                            <input class="button" type="submit" value="Envoyer" />
+                                    </form>
+                                    <p>Merci à tous ceux qui ont déjà utilisé ce formulaire, votre aide est vraiment précieuse</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+
+                <?php if (isSerieux() && !$params['creation']) { ?>
+                <div id="filtres" class="bloc-show">
+                    <div class="row">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Filtre sur les tags</h3>
+                                        
+                                        <form method="POST">
+                                            <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
+                                            <?php 
+                                            if (!empty(getTags())) {
+                                                ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."><?php echo htmlentities(implode(' ', getTags()));?></textarea><?php
+                                            } else {
+                                                ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."></textarea><?php
+                                            }
+                                            ?>
+                                            <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
+                                            <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf..."><?php echo htmlentities(implode(' ', getNotAllowedTags()));?> </textarea>
+                                            <input type="hidden" name="action" value="enregistrer_tags" />
+                                            
+                                            <input class="button" type="submit" value="Sauvegarder" />
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Filtre sur les urls</h3>
+                                        <form method="POST">
+                                            <p>Ne jamais afficher de lien vers les sites web suivants :</p>
+                                            <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."><?php echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
+                                            <input type="hidden" name="action" value="enregistrer_urls" />
+                                            <input class="button" type="submit" value="Sauvegarder" />
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+
+                <div class="row bloc-show" id="pwd" style="display:none;">
+                    <div class="columns large-12 center">
+                        <div class="panel">
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
+                                    <form method="POST" action="?">
+                                        <div class="row">
+
+                                            <div class="columns large-12">
+                                                <?php if (isPassword()) { ?>
+                                                    <span>Ce compte est actuellement protégé par un mot de passe.</span>
+                                                    <input autocomplete="off" placeholder="Ancien mot de passe" type="password" name="old_password" value="" />
+                                                <?php } ?>
+                                                <input type="hidden" name="action" value="enregistrer_password"/>
+                                                <input autocomplete="off" placeholder="Nouveau mot de passe" type="password" name="password" value="" />
+                                                <input autocomplete="off" placeholder="Nouveau mot de passe Encore ! " type="password" name="password_verif" value="" />
+                                                <input class="button" type="submit" value="Enregistrer" />
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <p>La protection du compte permettra d'accéder à des fonctions avancées comme : 
+                                        <ul>
+                                            <li>Modification de l'url de son shaarli</li>
+                                            <li>Suppression du shaarli de la page d'abonnement</li>
+                                            <li>Modification de son avatar</li>
+                                            <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
+                                            <li>Affichage d'une page de profil publique (désactivable, avec des statistiques sur le shaarli)</li>
+                                        </ul>
+                                    </p>
+                                    <form method="POST" action="?">
+                                        <div class="row">
+                                            <div class="columns large-12">
+                                                <span>Email de récupération du compte : </span>
+                                                <input type="hidden" name="action" value="enregistrer_email"/>
+                                                <input autocomplete="off" placeholder="moi@mondomaine.tld" type="text" name="email" value="<?php eh(getEmail()); ?>" />
+                                                <input class="button" type="submit" value="Enregistrer" />
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php if (!$params['pas_de_profil'] && !$params['creation'] && !isShaarliste()) { ?>
+                    <div class="row bloc-show" id="mon-shaarli">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Url de mon shaarli</h3>
+                                        <p>Permet de reshaarlier les liens</p>
+                                        <form method="POST">
+                                            <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                                            <input type="hidden" name="action" value="mon_shaarli" />
+                                            <input type="hidden" name="action" value="mon_shaarli" />
+                                            <?php
+                                            if (!$params['creation']) {
+                                            ?>
+                                             <div class="row">
+                                                <div class="columns large-12">
+                                                    <input class="button" type="submit" value="Sauvegarder" />
+                                                </div>
+                                            </div>
+                                            <?php
+                                            }
+                                            ?>
+                                        </form>
+                                        <p class="astuce">Note : votre shaarli apparaitra dans la page des abonnements après modération</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php } ?>
+                <?php if (isShaarliste() && !isEnAttenteDeModeration()) { ?>
+                    <div class="row bloc-show" id="modifier-shaarli">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h3>Moi et mon shaarli</h3>
+                                    </div>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h4>Mes choix de confidentialité</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Apparaitre dans la liste des abonnements</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Apparaitre dans la River</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                
+                                <br/>
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h4>Mes actions possibles</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"></p>
+                                        <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
+                                    </div>
+                                </div>
+                                
+                                <br/>
+                                
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <h4>Modifier l'url de mon shaarli</h4>
+                                    </div>
+                                    <div class="columns large-12">
+                                        <form method="POST">
+                                            <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                                            <input type="hidden" name="action" value="mon_shaarli" />
+                                            <input type="hidden" name="action" value="mon_shaarli" />
+                                            <?php
+                                            if (!$params['creation']) {
+                                            ?>
+                                             <div class="row">
+                                                <div class="columns large-12">
+                                                    <input class="button" type="submit" value="Sauvegarder" />
+                                                </div>
+                                            </div>
+                                            <?php
+                                            }
+                                            ?>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 <?php } ?>
                 
-                <?php
-                $this->renderScript($params);
-                ?>
-                    </body>
-                </html>
+                
+                <?php if ($params['creation']) { ?>
+                    <div class="row">
+                        <div class="column large-12 text-center">
+                            <h1>Créer un profil</h1>
+                        </div>
+                    </div>
+                    <hr/>
+                    <form method="POST" action="?">
+                        <div class="row">
+                            <div class="column large-12 text-center">
+                                <h2>Sélectionnez les shaarlistes que vous souhaitez suivre</h2>
+                            </div>
+                        </div>
+                        <?php
+                        $this->renderListeShaarlistes($params);
+                        ?>
+                        <div class="row">
+                            <div class="columns large-6 large-centered">
+                                <div class="panel">
+                                    <div class="row">
+                                        <div class="columns large-12 text-center">
+                                            <h3>C'est presque fini !</h3>
+                                            <p>Choisissez un nom de profil</p>
+                                            <input type="hidden" name="action" value="enregistrer"/>
+                                            <input name="profil_id" type="text" value="<?php echo htmlentities(getUtilisateurId());?>"/>
+                                            <input disabled="disabled" id="input-enregistrer-profil" class="button success" type="submit" value="Enregistrer mon profil" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                <?php } ?>
+            <?php } ?>
+            
+            <?php
+            $this->renderScript($params);
+            ?>
+                </body>
+            </html>
 
-                <?php
+            <?php
         }
     public static function renderScript($params = array())
     {

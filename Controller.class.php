@@ -178,6 +178,63 @@ class Controller
             ?>
         <?php
         }
+
+        /*
+         * Méthode permettant d'htmlentiter tous les paramètres d'un render
+         * 
+         * @param array $params
+         * @param array $clefsIgnorees : les éléments à ignorer
+         */
+        public function htmlentities($params, $clefsIgnorees = array())
+        {
+            foreach ($params as $k => $param) {
+                if (in_array($k, $clefsIgnorees)) {
+                    continue;
+                }
+
+                if (!is_array($param)) {
+                    $params[$k] = htmlentities($param);
+                } else {
+                    $params[$k] = $this->htmlentities($param);
+                }
+            }
+            
+            return $params;
+        }
+        
+        /*
+         * Récupère la variable $_POST
+         * de manière saine
+         * 
+         * @param string $nom : le nom du paramètre
+         * 
+         * @return mixed : valeur du paramètre
+         */
+        public function post($nom)
+        {
+            if (isset($_POST[$nom])) {
+                return $_POST[$nom];
+            }
+            
+            return null;
+        }
+
+        /*
+         * Récupère la variable $_GET
+         * de manière saine
+         * 
+         * @param string $nom : le nom du paramètre
+         * 
+         * @return mixed : valeur du paramètre
+         */
+        public function get($nom)
+        {
+            if (isset($_GET[$nom])) {
+                return $_GET[$nom];
+            }
+            
+            return null;
+        }
         
         public static function renderScript($params = array())
         {
