@@ -186,17 +186,23 @@ function getShaarlieur($shaarlieurId) {
     return $shaarlieur;
 }
 
-function getSession($sessionId = null, $connexion = false, $password = '') {
+function getSession($sessionId = null, $connexion = false, $password = '', $creation = false) {
     global $SESSION_CHARGEE;
     if (session_status() == PHP_SESSION_NONE) {
         session_start();
+    }
+
+    if ($sessionId === '' && $connexion === true) {
+        setcookie('shaarli', null, -1, '.shaarli.fr');
+        setcookie('shaarlieur', '', time()+31536000, '.shaarli.fr');
+        setcookie('shaarlieur_hash', null, -1, '.shaarli.fr');
     }
 
     if (!empty($SESSION_CHARGEE) && is_null($sessionId)) {
         return $_SESSION;
     }
 
-    if ($sessionId == null && !empty($_COOKIE['shaarlieur']) && is_null($_SESSION['shaarlieur_id'])) {
+    if ($sessionId == null && !empty($_COOKIE['shaarlieur']) && (!isset($_SESSION['shaarlieur_id']) || is_null($_SESSION['shaarlieur_id']))) {
         $sessionId = $_COOKIE['shaarlieur'];
         $connexion = true;
     }
@@ -225,11 +231,11 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
     $shaarlieurSqlData = selectShaarlieur($mysqli, $sessionId);
 
     // Création du shaarlieur en bdd
-    if (is_null($shaarlieurSqlData)) {
+    if (is_null($shaarlieurSqlData) && $creation) {
         $data = array('abonnements' => array(), 'display_shaarlistes_non_suivis' => true);
         $passwordHash = '';
         if (!empty($password)) {
-            $passwordHash = createShaarlieurHash($shaarlieurId, $password);
+            $passwordHash = createShaarlieurHash(null, $password);
         }
         $shaarlieurEntite = creerShaarlieur($sessionId, $passwordHash, json_encode($data));
         insertEntite($mysqli, 'shaarlieur', $shaarlieurEntite);
@@ -243,22 +249,29 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
             if ($connexion) {
                 // On regarde dans le cookie
                 if (!empty($_COOKIE["shaarlieur_hash"])) {
-                    if (true !== validate_password($shaarlieurId . $shaarlieurSqlData['pwd'], $_COOKIE["shaarlieur_hash"])) {
+                    if (true !== validate_password($shaarlieurSqlData['pwd'], $_COOKIE["shaarlieur_hash"])) {
+                        if (true === validate_password($password, $shaarlieurSqlData["pwd"])) {
+                            setcookie('shaarlieur_hash', createShaarlieurHash(null, $shaarlieurSqlData["pwd"]), time()+31536000, '.shaarli.fr');
+                        }
                         return 401;
                     }
                 } else {
                     // Sinon dans le password donné
-                    if (true !== validate_password($shaarlieurId . $password, $shaarlieurSqlData["pwd"])) {
+
+                    if (true !== validate_password($password, $shaarlieurSqlData["pwd"])) {
                         return 401;
                     }
                     // Si la connexion avec la bdd a marché, on met un cookie
-                    setcookie('shaarlieur_hash', createShaarlieurHash($shaarlieurId, $shaarlieurSqlData["pwd"]), time()+31536000, '.shaarli.fr');
+                    setcookie('shaarlieur_hash', createShaarlieurHash(null, $shaarlieurSqlData["pwd"]), time()+31536000, '.shaarli.fr');
                 }
+            } elseif($creation) {
+                // Le compte existe deja en creation de compte
+                return 401;
             }
         } else {
             // Si le compte existe mais qu'aucun password n'est encore enregistré et qu'un password est entré
             if (!empty($password)) {
-                $passwordHash = createShaarlieurHash($shaarlieurId, $password);
+                $passwordHash = createShaarlieurHash(null, $password);
                 majPasswordHash($passwordHash);
             }
         }
@@ -277,6 +290,7 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
     }
     $_SESSION['shaarlieur_shaarli_ok'] = $shaarlieurSqlData['shaarli_ok'];
     $_SESSION['shaarlieur_nb_connexion'] = $shaarlieurSqlData['nb_connexion'];
+    $_SESSION['shaarlieur_email'] = $shaarlieurSqlData['email'];
     $_SESSION['shaarlieur_inscription_auto'] =  $shaarlieurSqlData['inscription_auto'];
     $_SESSION['shaarlieur_date_insert'] = $shaarlieurSqlData['date_insert'];
     $_SESSION['shaarlieur_data']  = json_decode($shaarlieurSqlData['data'], true);
@@ -284,15 +298,68 @@ function getSession($sessionId = null, $connexion = false, $password = '') {
     $_SESSION['shaarlieur_shaarli_url'] = $shaarlieurSqlData['shaarli_url'];
     $_SESSION['shaarlieur_shaarli_private'] = $shaarlieurSqlData['shaarli_private'];
     $_SESSION['shaarlieur_id_rss'] = $shaarlieurSqlData['id_rss'];
+    $_SESSION['shaarlieur_shaarli_url_ok'] = $shaarlieurSqlData['shaarli_url_ok'];
     $_SESSION['shaarlieur_shaarli_url_id_ok'] = $shaarlieurSqlData['shaarli_url_id_ok'];
     $_SESSION['shaarlieur_shaarli_on_abonnements'] = (bool)$shaarlieurSqlData['shaarli_on_abonnements'];
     $_SESSION['shaarlieur_shaarli_on_river'] = (bool)$shaarlieurSqlData['shaarli_on_river'];
-
     if (!is_null($sessionId) && $connexion) {
         majDerniereConnexion($mysqli, $sessionId);
     }
 
     return $_SESSION;
+}
+
+/**
+ * Indique si le password entré est bien celui de l'utilisateur
+ * 
+ * @string $shaarlieurId : le pseudo de l'utilisateur
+ * @string $password  : le mot de passe
+ * 
+ * @return bool true|false
+ */
+function verifyPassword($shaarlieurId, $password) {
+    // récupération du compte en bdd
+    $mysqli = shaarliMyConnect();
+    $shaarlieurSqlData = selectShaarlieur($mysqli, $shaarlieurId);
+    shaarliMyDisConnect($mysqli);
+
+    if (is_null($shaarlieurSqlData)) {
+        return false;
+    }
+    // Pas de mot de passe associé au compte
+    if (empty($shaarlieurSqlData['pwd'])) {
+        return true;
+    }
+
+    return validate_password($password, $shaarlieurSqlData["pwd"]);
+}
+
+/**
+ * Enregistre un password pour le compte demandé sans passer par les sessions
+ * 
+ * @string $shaarlieurId : le pseudo de l'utilisateur
+ * @string $password  : le mot de passe
+ * 
+ * @return bool true|false
+ */
+function updateNewPassword($shaarlieurId, $password) {
+    // récupération du compte en bdd
+    $mysqli = shaarliMyConnect();
+    $shaarlieurSqlData = selectShaarlieur($mysqli, $shaarlieurId);
+
+    // Création du shaarlieur en bdd
+    if (!is_null($shaarlieurSqlData)) {
+        // Si le compte existe qu'un password est entré
+        if (!empty($password)) {
+            $passwordHash = createShaarlieurHash(null, $password);
+            updateShaarlieurPassword($mysqli, $shaarlieurId, $passwordHash);
+            shaarliMyDisConnect($mysqli);
+            return true;
+        }
+    }
+    shaarliMyDisConnect($mysqli);
+
+    return false;
 }
 
 /**
@@ -310,17 +377,39 @@ function updatePassword($sessionId, $password) {
 
     // Création du shaarlieur en bdd
     if (!is_null($shaarlieurSqlData)) {
-        // Si le compte existe qu'un password est entré
+        // Si un password est rentré, on l'hash avant l'enregistrement
         if (!empty($password)) {
-            $passwordHash = createShaarlieurHash($shaarlieurId, $password);
+            $passwordHash = createShaarlieurHash(null, $password);
             majPasswordHash($passwordHash);
             $_SESSION['shaarlieur_pwd'] = true;
-            return true;
+        } else {
+            // Si pas de password, le compte devient non protégé
+            majPasswordHash('');
+            $_SESSION['shaarlieur_pwd'] = false;
         }
+        return true;
     }
 
     return false;
 }
+
+/**
+ * Enregistre un email pour le compte demandé
+ * 
+ * @string $sessionId : le pseudo de l'utilisateur
+ * @string $password  : l'email
+ * 
+ * @return bool true|false
+ */
+function updateEmail($sessionId, $email) {
+    $session = getSession();
+    $session['shaarlieur_email'] = $email;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurEmail($mysqli, getUtilisateurId(), $email);
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
 
 function setSession($session) {
     $_SESSION = $session;
@@ -380,6 +469,29 @@ function majShaarliUrl($shaarliUrl) {
     shaarliMyDisConnect($mysqli);
 }
 
+// Supprime le lien shaarli/profil
+function supprimeShaarliUrl() {
+    $session = getSession();
+    $mysqli = shaarliMyConnect();
+    $session['shaarlieur_shaarli_url'] = '';
+    $session['shaarlieur_shaarli_url_ok'] = '';
+    $session['shaarlieur_shaarli_ok'] = '0';
+    supprimeShaarlieurShaarliUrl($mysqli, getUtilisateurId());
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+// Annule la demande de modification du shaarli
+function cancelShaarliUrl() {
+    $session = getSession();
+    $mysqli = shaarliMyConnect();
+    $session['shaarlieur_shaarli_url'] = $session['shaarlieur_shaarli_url_ok'];
+    $session['shaarlieur_shaarli_ok'] = '0';
+    cancelShaarlieurShaarliUrl($mysqli, getUtilisateurId());
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
 /**
  * Retourne le nombre de liens de l'utilisateur
  * 
@@ -418,6 +530,40 @@ function getShaarlieurPositionTop() {
 function getShaarliUrl() {
     $session = getSession();
     return $session['shaarlieur_shaarli_url'];
+}
+
+
+// Retourne l'email de l'utilisateur
+function getEmail() {
+    $session = getSession();
+    if (!empty($session['shaarlieur_email'])) {
+        return $session['shaarlieur_email'];
+    }
+
+    return '';
+}
+
+// Indique si l'utilisateur a un email
+function hasEmail() {
+    return !empty(getEmail());
+}
+
+// Indique si le compte en question a un email
+function profilHasEmail($shaarlieurId) {
+    $mysqli = shaarliMyConnect();
+    $hasEmail = hasEmailByShaarlieurId($mysqli, $shaarlieurId);
+    shaarliMyDisConnect($mysqli);
+
+    return $hasEmail;
+}
+
+// Retourne le mail d'un utilisateur
+function profilGetEmail($shaarlieurId) {
+    $mysqli = shaarliMyConnect();
+    $email = getEmailByShaarlieurId($mysqli, $shaarlieurId);
+    shaarliMyDisConnect($mysqli);
+
+    return $email;
 }
 
 /**
@@ -489,10 +635,16 @@ function isEnAttenteDeModeration() {
 }
 
 // Retourne la liste des abonnements de l'utilisateur
-function getAbonnements($sessionId=null) {
-    $session = getSession($sessionId);
+function getAbonnements() {
+    $session = getSession();
     return $session['shaarlieur_data']['abonnements'];
 }
+
+// Retourne le nombre d'abonnement d'un compte
+function getNbAbonnements() {
+    return count(getAbonnements());
+}
+
 
 // Retourne l'id du flux rss du site
 function getIdRss() {
@@ -534,8 +686,10 @@ function estAbonne($idRss) {
 
 //Indique si l'utilisateur est connecté
 function isConnected() {
-    $session = getSession();
-    return isset($session['shaarlieur_id']);
+    global $SESSION_CHARGEE;
+    if ($SESSION_CHARGEE === 'oui')
+        return true;
+    return false;
 }
 
 //Indique si l'utilisateur a un pwd
@@ -908,5 +1062,13 @@ function getImageProfilSrc() {
     return null;
 }
 
+/**
+ * Indique si l'utilisateur connecté est invité
+ * 
+ * @return true|false
+ */
+function isInvite() {
+    return getUtilisateurId() === '';
+}
 
 

@@ -185,6 +185,7 @@ class Dashboard extends Controller
 	}
     public static function renderScript()
     {
+        parent::renderScript();
         ?>
         <script>
             

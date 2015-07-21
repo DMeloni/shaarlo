@@ -10,6 +10,7 @@ require_once('config.php');
 require_once('fct/fct_rss.php');
 require_once('fct/fct_session.php');
 require_once('fct/fct_url.php');
+require_once('fct/fct_mail.php');
 
 class Controller
 {
@@ -21,13 +22,17 @@ class Controller
                         <meta charset="utf-8" />
                         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                         <meta name="description" content="La communauté partage ses liens" />
+
+                        <meta property="og:title" content="Shaarli.fr" />
+                        <meta property="og:description" content="shaarli.fr est un nouveau réseau social où les gens partagent leurs liens web" />
+                        <meta property="og:url" content="https://www.shaarli.fr" />
+                        <meta property="og:image" content="css/img/logo_shaarlo_og.png" />
+						<meta property="keywords" content="Reséau social, shaarli, liens, url, partage, communauté, shaarlistes">
                         <title>Shaarli.fr</title>
                         <link rel="stylesheet" href="css/foundation.min.css" />
                         <link rel="stylesheet" href="css/foundation-overload.css?v=5" />
-                        <link rel="stylesheet" href="css/style-light.css?v=19" />
-                        <script src="js/vendor/jquery.js"></script>
-                        <script src="js/vendor/modernizr.js"></script>
-                        <script src="js/foundation.min.js"></script>
+                        <link rel="stylesheet" href="css/style-light.css?v=20" />
+                        
                         <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png">
                         <link rel="apple-touch-icon" sizes="60x60" href="img/apple-icon-60x60.png">
                         <link rel="apple-touch-icon" sizes="72x72" href="img/apple-icon-72x72.png">
@@ -174,9 +179,11 @@ class Controller
         <?php
         }
         
-        public static function renderScript()
+        public static function renderScript($params = array())
         {
-
+            ?>
+            <script src="js/jquery-modernizr-foundation.min.js"></script>
+            <?php
         }
         
         /** 

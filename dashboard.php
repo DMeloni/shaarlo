@@ -11,13 +11,17 @@ class Dashboard extends Controller
             if ('enregistrer_temporairement' ===  $_POST['action']) {
                 // Connexion invitée
                 getSession('', true);
+                header('Location: index.php');
+                return;
             }
 
             if (getUtilisateurId() === '') {
                 header('Location: index.php');
                 return;
             }
-
+            if (empty(getAbonnements())) {
+                $pasDeProfil = true;
+            }
             $params = array();
             $creation = false;
             // Nouveau message
@@ -41,14 +45,20 @@ class Dashboard extends Controller
                         } else {
                             // Deuxieme soumission, on vérifie le flux de prime abord
                             $url = $_POST['shaarli_url'];
+                            $url = corrigeUrlMy($url);
                             $url = supprimeDernierPointInterrogation($url);
-                            if ($url !== getShaarliUrl()) {
-                                $content = getRss($url . '?do=rss');
-                                if (empty($content)) {
-                                    $params['message'] = "Ce flux n'a pu être récupéré...";
-                                } else {
-                                    majShaarliUrl($_POST['shaarli_url'], false);
+                            if (!empty($url)) {
+                                if ($url !== getShaarliUrl()) {
+                                    $content = getRss($url . '?do=rss');
+                                    if (empty($content)) {
+                                        $params['message'] = "Ce flux n'a pu être récupéré...";
+                                    } else {
+                                        majShaarliUrl($_POST['shaarli_url'], false);
+                                    }
                                 }
+                            } else {
+                                // Suppression du lien shaarli/profil
+                                supprimeShaarliUrl();
                             }
                         }
                     }
@@ -59,22 +69,63 @@ class Dashboard extends Controller
                     if (isset($_POST['password'])) {
                         $password = $_POST['password'];
                     }
-                    $session = getSession($_POST['profil_id'], false, $password);
-                    $abonnements = $_POST['shaarlistes'];
-                    majAbonnements($abonnements);
-                    $params['message'] = "Votre profil vient d'être créé";
+                    $session = getSession($_POST['profil_id'], false, $password, true);
+                    if ($session !== 401) {
+	                    $abonnements = $_POST['shaarlistes'];
+	                    majAbonnements($abonnements);
+	                    setcookie('shaarlieur', $_POST['profil_id'], time()+31536000, '.shaarli.fr');
+	                    $params['message'] = "Votre profil vient d'être créé";
+	                    $pasDeProfil = false;
+                    } else {
+                    	header('Location:dashboard?action=creation&erreur=profil_exists');
+                    	return;
+                    }
+
                 }
 
                 // Enregistrement d'un password
                 if ('enregistrer_password' ===  $_POST['action']) {
                     $password = '';
+                    $passwordVerif = '';
                     if (isset($_POST['password'])) {
                         $password = $_POST['password'];
                     }
-                    $session = updatePassword(getUtilisateurId(), $password);
+                    if (isset($_POST['password_verif'])) {
+                        $passwordVerif = $_POST['password_verif'];
+                    }
 
-                    $params['message'] = "Le pwd est enregistré";
+                    // On vérifie que le gus a tapé deux fois le même mot de passe
+                    if ($passwordVerif === $password) {
+	                    $oldPassword = '';
+	                    if (isset($_POST['old_password'])) {
+	                        $oldPassword = $_POST['old_password'];
+	                    }
+	                    if (verifyPassword(getUtilisateurId(), $oldPassword)) {
+		                    $session = updatePassword(getUtilisateurId(), $password);
+		                    $params['message'] = "Le pwd est enregistré";
+		                } else {
+		                	$params['message'] = "L'ancien password est erroné";
+		                }
+                    } else {
+                    	$params['message'] = "Les deux mots de passe ne concordent pas";
+                    }
+                    
+
                 }
+                // Enregistrement d'un email
+                if ('enregistrer_email' ===  $_POST['action']) {
+                    $email = '';
+                    if (isset($_POST['email'])) {
+                        $email = $_POST['email'];
+                    }
+                    if (isValidEmail($email)) {
+	                    $session = updateEmail(getUtilisateurId(), $email);
+	                    $params['message'] = "L'adresse email est enregistrée";
+	                } else {
+	                	$params['message'] = "L'adresse email est invalide";
+	                }
+                }
+
 
                 // Maj filtre des tags
                 if ('enregistrer_tags' ===  $_POST['action']) {
@@ -113,11 +164,38 @@ class Dashboard extends Controller
                 if ('creation' ===  $_GET['action']) {
                     $creation = true;
                 }
+                // Message d'erreur apres redirection
+                if (isset($_GET['erreur']) && $_GET['erreur'] == 'profil_exists') {
+                    $params['message'] = "Ce profil existe deja, merci de choisir un autre pseudo";
+                }
+                
+                // Annulation demande de modération
+                if ('cancel' === $_GET['action']) {
+                    cancelShaarliUrl();
+                    header('Location:dashboard.php');
+                    return;
+                }
+
+                // Envoie du mail à l'utilisateur
+                if ($pasDeProfil && 'send_pwd_mail' === $_GET['action'] && !empty($_GET['profil_id'])) {
+                	if (profilHasEmail($_GET['profil_id'])) {
+                		// Envoie du mail
+                		$email = profilGetEmail($_GET['profil_id']);
+                		$nouveauPassword = uniqid();
+                		$retourEnvoi = envoieMailRecuperation($email, $_GET['profil_id'], $nouveauPassword);
+                		if ($retourEnvoi === true) {
+	                		$emailObfusque = obfusqueEmail($email);
+	                		updateNewPassword($_GET['profil_id'], $nouveauPassword);
+	                		$params['message'] = "Un email vient d'être envoyé à votre adresse : $emailObfusque";
+
+                		} else {
+                			$params['message'] = "L'envoi de l'email de récupération a échoué, merci de réessayer plus tard...";
+                		}
+                	}
+                }
             }
 
-            if (empty(getAbonnements())) {
-                $pasDeProfil = true;
-            }
+
 
 
             $params['shaarlieurPositionTop'] = getShaarlieurPositionTop();
@@ -132,6 +210,7 @@ class Dashboard extends Controller
             $params['shaarli_url'] = getShaarliUrl();
             $params['pas_de_profil'] = $pasDeProfil;
             $params['creation'] = $creation;
+            
             $params['currentBadge'] = getCurrentBadge();
 
             $this->render($params);
@@ -157,7 +236,7 @@ class Dashboard extends Controller
                             <div class="row">
                                 <div class="columns large-12 center">
                                     <div class="panel">
-                                            <span class="color-success"><?php echo $params['message'];?></span>
+                                            <span class="color-success"><?php eh($params['message']);?></span>
                                         </div>
                                 </div>
                             </div>
@@ -167,17 +246,24 @@ class Dashboard extends Controller
                         if (isset($params['demande_password'])) {
                         ?>
                             <div class="row" data-equalizer>
-                                <div class="columns large-6 text-center">
+                                <div class="columns large-6 large-centered small-centered text-center">
                                     <div class="panel" data-equalizer-watch>
                                         <div class="row">
                                             <div class="columns large-12">
                                                 <h3>Mot de passe</h3>
                                                 <form method="POST">
                                                     <input type="hidden" name="action" value="connexion"/>
-                                                    <input type="hidden" name="profil_id" value="<?php echo htmlentities($_GET['profil_id']); ?>"/>
+                                                    <input type="hidden" name="profil_id" value="<?php eh($_GET['profil_id']); ?>"/>
                                                     <input name="password" type="password" value=""/>
                                                     <input class="button success" type="submit" value="Valider" />
                                                 </form>
+                                                <?php 
+                                                if (profilHasEmail($_GET['profil_id'])) {
+                                                	?>
+                                                		<a href="?action=send_pwd_mail&amp;profil_id=<?php eh($_GET['profil_id']); ?>">Mot de passe oublié ?</a>
+                                                	<?php
+                                                }
+                                                ?>
                                             </div>
                                         </div>
                                     </div>
@@ -192,42 +278,46 @@ class Dashboard extends Controller
                             <div class="row">
                                 <div class="column large-12 text-center">
                                     <h1>Bienvenue sur shaarli.fr</h1>
+                                    <p>Réseau social de partage de liens hypertextes</p>
                                 </div>
                             </div>
+
                             <div class="row" data-equalizer>
-                                <div class="columns large-6 text-center">
+                                <div class="columns large-4 ">
+                                    <div class="panel" data-equalizer-watch>
+                                        <div class="row">
+                                            <div class="columns large-12 text-center">
+                                            	<h2>Nous rejoindre</h2>
+                                            	<br/><br/>
+                                                <a href="?action=creation" class="button secondary">Créer un profil</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="columns large-4 text-center">
                                     <div class="panel" data-equalizer-watch>
                                         <div class="row">
                                             <div class="columns large-12">
-                                                <h3>Charger un profil</h3>
+                                                <h2>Se connecter</h2>
                                                 <form method="GET">
                                                     <input type="hidden" name="action" value="connexion"/>
-                                                    <input name="profil_id" type="text" value=""/>
-                                                    <input class="button success" type="submit" value="Charger profil" />
+                                                    <input name="profil_id" type="text" placeholder="pseudo" value=""/>
+                                                    <input class="button" type="submit" value="Charger profil" />
                                                 </form>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="columns large-6 ">
+                                <div class="columns large-4 ">
                                     <div class="panel" data-equalizer-watch>
-                                        <div class="row hide-for-large-up">
+                                        <div class="row">
                                             <div class="columns large-12 text-center">
-                                                <a href="?action=creation" class="button success">Créer un profil</a>
+                                            	<h2>Essayer !</h2>
+                                            	<br/><br/>
                                                 <form id="form-abonnements" method="POST">
                                                     <input type="hidden" name="action" value="enregistrer_temporairement"/>
                                                     <input type="hidden" name="profil_id" value=""/>
-                                                    <input id="button-tous" type="submit" class="button " value="Accès invité" />
-                                                </form>
-                                            </div>
-                                        </div>
-                                        <div class="row valign-center show-for-large-up">
-                                            <div class="columns large-12 text-center">
-                                                <a href="?action=creation" class="button success">Créer un profil</a>
-                                                <form id="form-abonnements" method="POST">
-                                                    <input type="hidden" name="action" value="enregistrer_temporairement"/>
-                                                    <input type="hidden" name="profil_id" value=""/>
-                                                    <input id="button-tous" type="submit" class="button " value="Accès invité" />
+                                                    <input id="button-tous" type="submit" class="button secondary" value="Accès invité" />
                                                 </form>
                                             </div>
                                         </div>
@@ -322,36 +412,110 @@ class Dashboard extends Controller
                         <div class="row">
                             <div class="columns large-12 center">
                                 <div class="panel">
-                                    <div class="row">
-                                        <div class="columns large-12">
-                                            <p><a href="abonnements.php">Gérer mes abonnements</a></p>
-                                            <?php if (!is_null($params['id_rss'])) { ?>
-                                                <p><a href="index.php?q=shaarli:<?php echo $params['id_rss']; ?>">Messagerie</a></p>
-                                            <?php } ?>
-                                            <?php if (isShaarliste()) { ?>
-                                                <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"></p>
-                                                <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
-                                                <?php if (!isEnAttenteDeModeration()) { ?>
-                                                    <p><a class="link-show" href="#modifier-shaarli">Modifier mon shaarli</a></p>
-                                                <?php } else { ?>
-                                                    <p><em>Shaarli en attente de modération</em></p>
-                                                <?php } ?>
-                                            <?php } else { ?>
-                                                <?php if (!isEnAttenteDeModeration()) { ?>
-                                                    <p><a class="link-show" href="#mon-shaarli">Ajouter mon shaarli à ce site web</a></p>
-                                                <?php } else { ?>
-                                                    <p><em>Shaarli en attente de modération</em></p>
-                                                <?php } ?>
-                                            <?php }  ?>
-                                                <p><a class="link-show" href="#pwd">Modifier le mot de passe du profil</a></p>
-                                                <p><a class="link-show" href="#options">Gérer mes paramètres</a></p>
-                                            
-                                            <?php if (isSerieux()) { ?>
-                                                <p><a class="link-show" href="#report">Reporter un bug/commentaire/conseil</a></p>
-                                                <p><a class="link-show" href="#filtres">Filter les articles selon plusieurs critères</a></p>
-                                            <?php } ?>
-                                        </div>
-                                    </div>
+					                <div class="row">
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<a class="a-block" href="abonnements.php">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_people.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+					        	                    <span class="blue-ocean"><?php eh(getNbAbonnements())?></span> abonnements
+					        	                </div>
+					        	            </a>
+					                    </div>
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<?php if(!isEnAttenteDeModeration()) { ?>
+					                    	<a class="a-block link-show" href="<?php if (isShaarliste()) { ?>#modifier-shaarli<?php } else { ?>#mon-shaarli<?php } ?>">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+		                                            <?php if (isShaarliste()) { ?>
+		                                                <?php if (!isEnAttenteDeModeration()) { ?>
+		                                                    <p><a class="link-show" href="#modifier-shaarli">Liaison shaarli</a></p>
+		                                                <?php } else { ?>
+		                                                    <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+		                                                <?php } ?>
+		                                            <?php } else { ?>
+		                                                <?php if (!isEnAttenteDeModeration()) { ?>
+		                                                    <p><a class="link-show" href="#mon-shaarli">Liaison shaarli</a></p>
+		                                                <?php } else { ?>
+		                                                    <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+		                                                <?php } ?>
+		                                            <?php }  ?>
+					        	                </div>
+					        	            </a>
+					        	            <?php } else { ?>
+					                    	<div class="a-block" >
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+		                                            <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+					        	                </div>
+					        	            </div>
+					        	            <?php }  ?>
+					                    </div>
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<a class="a-block link-show" href="#pwd">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_pwd.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+					        	                	Sécurité
+					        	                </div>
+					        	            </a>
+					                    </div>
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<a class="a-block link-show" href="#options">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_config.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+					        	                	Options d'affichage
+					        	                </div>
+					        	            </a>
+					                    </div>
+					                </div>
+					                <div class="row">
+					                	<?php if (!is_null($params['id_rss'])) { ?>
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<a class="a-block" href="index.php?q=shaarli:<?php echo $params['id_rss']; ?>">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_messagerie.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+					        	                    Messagerie
+					        	                </div>
+					        	            </a>
+					        	        </div>
+					        	        <?php } ?>
+					                	<?php if (isSerieux()) { ?>
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<a class="a-block link-show" href="#filtres">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_filtres.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+					        	                	Filtres des articles
+					        	                </div>
+					        	            </a>
+					                    </div>
+					                    <?php } ?>
+
+					                    <?php if (isSerieux()) { ?>
+					                    <div class="large-3 medium-6 small-12 columns text-center">
+					                    	<a class="a-block link-show" href="#report">
+					        	                <div class="row">
+					        	                    <div style="min-height:150px;background:url('css/img/icon_report.png') no-repeat;background-position:center center;"></div>
+					        	                </div>
+					        	                <div class="row">
+					        	                	Bug/commentaire/conseil
+					        	                </div>
+					        	            </a>
+					                    </div>
+					                    <?php } ?>
+					                </div>
                                 </div>
                             </div>
                         </div>
@@ -492,7 +656,7 @@ class Dashboard extends Controller
                                     <br/>
                                     <div class="row">
                                         <div class="column large-12">
-                                            <h5>Options d'affichage</h5>
+                                            <h5>Options graphiques</h5>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -618,6 +782,7 @@ class Dashboard extends Controller
                                                 <input type="hidden" name="action" value="report" />
                                                 <input class="button" type="submit" value="Envoyer" />
                                         </form>
+                                        <p>Merci à tous ceux qui ont déjà utilisé ce formulaire, votre aide est vraiment précieuse</p>
                                     </div>
                                 </div>
                             </div>
@@ -680,14 +845,17 @@ class Dashboard extends Controller
                                 <div class="row">
                                     <div class="columns large-12">
                                         <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
-                                        <?php if (isPassword()) { ?>
-                                            <span>Ce compte est actuellement protégé par un mot de passe.</span>
-                                        <?php } ?>
                                         <form method="POST" action="?">
                                             <div class="row">
+
                                                 <div class="columns large-12">
+			                                        <?php if (isPassword()) { ?>
+			                                            <span>Ce compte est actuellement protégé par un mot de passe.</span>
+			                                            <input autocomplete="off" placeholder="Ancien mot de passe" type="password" name="old_password" value="" />
+			                                        <?php } ?>
                                                     <input type="hidden" name="action" value="enregistrer_password"/>
-                                                    <input autocomplete="off" placeholder="Mot de passe" type="password" name="password" value="" />
+                                                    <input autocomplete="off" placeholder="Nouveau mot de passe" type="password" name="password" value="" />
+                                                    <input autocomplete="off" placeholder="Nouveau mot de passe Encore ! " type="password" name="password_verif" value="" />
                                                     <input class="button" type="submit" value="Enregistrer" />
                                                 </div>
                                             </div>
@@ -698,9 +866,19 @@ class Dashboard extends Controller
                                                 <li>Suppression du shaarli de la page d'abonnement</li>
                                                 <li>Modification de son avatar</li>
                                                 <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
-                                                <li>Affichage du profil aux autres profils (avec des statistiques par exemple)</li>
+                                                <li>Affichage d'une page de profil publique (désactivable, avec des statistiques sur le shaarli)</li>
                                             </ul>
                                         </p>
+                                        <form method="POST" action="?">
+                                            <div class="row">
+                                                <div class="columns large-12">
+                                                    <span>Email de récupération du compte : </span>
+                                                    <input type="hidden" name="action" value="enregistrer_email"/>
+                                                    <input autocomplete="off" placeholder="moi@mondomaine.tld" type="text" name="email" value="<?php eh(getEmail()); ?>" />
+                                                    <input class="button" type="submit" value="Enregistrer" />
+                                                </div>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -737,16 +915,21 @@ class Dashboard extends Controller
                             </div>
                         </div>
                     <?php } ?>
-                    <?php if (isShaarliste()) { ?>
+                    <?php if (isShaarliste() && !isEnAttenteDeModeration()) { ?>
                         <div class="row bloc-show" id="modifier-shaarli">
                             <div class="columns large-12 center">
                                 <div class="panel">
                                     <div class="row">
                                         <div class="columns large-12">
-                                            <h3>Modifier mon shaarli</h3>
+                                            <h3>Moi et mon shaarli</h3>
                                         </div>
                                     </div>
                                     <br/>
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h4>Mes choix de confidentialité</h4>
+                                        </div>
+                                    </div>
                                     <div class="row">
                                         <div class="columns large-8">
                                             <span>Apparaitre dans la liste des abonnements</span>
@@ -764,6 +947,19 @@ class Dashboard extends Controller
                                         <div class="columns large-4">
                                             <input type="radio" <?php if(isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="oui"/>oui
                                             <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="non"/>non
+                                        </div>
+                                    </div>
+                                    
+                                    <br/>
+                                    <div class="row">
+                                        <div class="columns large-12">
+                                            <h4>Mes actions possibles</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="columns large-8">
+                                            <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"></p>
+                                            <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
                                         </div>
                                     </div>
                                     
@@ -823,9 +1019,6 @@ class Dashboard extends Controller
                                                 <p>Choisissez un nom de profil</p>
                                                 <input type="hidden" name="action" value="enregistrer"/>
                                                 <input name="profil_id" type="text" value="<?php echo htmlentities(getUtilisateurId());?>"/>
-
-                                                <label>Facultatif : un mot de passe</label>
-                                                <input placeholder="Mot de passe" type="password" name="password" value="" />
                                                 <input disabled="disabled" id="input-enregistrer-profil" class="button success" type="submit" value="Enregistrer mon profil" />
                                             </div>
                                         </div>
@@ -846,6 +1039,7 @@ class Dashboard extends Controller
         }
     public static function renderScript($params)
     {
+        parent::renderScript();
         ?>
         <script>
             $('.checkbox-lock-menu').click(function() {

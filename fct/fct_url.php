@@ -138,6 +138,11 @@ function supprimeDernierPointInterrogation($url) {
    return $url;
 }
 
+function corrigeUrlMy($url) {
+    $url = str_replace('my.shaarli.fr/', 'shaarli.fr/my/', $url);
+    return $url;
+}
+
 function getUrlSimplifiee($url) {
     $urlSimplifiee = str_replace('https://', '', $url);
     $urlSimplifiee = str_replace('http://', '', $urlSimplifiee);
@@ -145,3 +150,4 @@ function getUrlSimplifiee($url) {
 
     return $urlSimplifiee;
 }
+

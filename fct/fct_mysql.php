@@ -1,11 +1,12 @@
 <?php
-/*
+
 ini_set("display_errors", 1);
 ini_set("track_errors", 1);
 ini_set("html_errors", 1);
-error_reporting(E_ALL);*/
+error_reporting(E_ALL);
 // Retour une objet mysqli
 require_once('fct/fct_session.php');
+//require_once('fct/mysqli_air.php');
 
 function shaarliMyConnect() {
     global $MYSQL_USER, $MYSQL_SERVER, $MYSQL_PASSWORD, $MYSQL_DB;
@@ -664,6 +665,11 @@ function updateShaarlieurPassword($mysqli, $shaarlieurId, $password) {
     $mysqli->query($query);
 }
 
+function updateShaarlieurEmail($mysqli, $shaarlieurId, $email) {
+    $dateUpdate = date('YmdHis');
+    $query = sprintf("UPDATE shaarlieur SET email='%s' WHERE id='%s'", $mysqli->real_escape_string($email), $mysqli->real_escape_string($shaarlieurId));
+    $mysqli->query($query);
+}
 
 
 function majDerniereConnexion($mysqli, $shaarlieurId) {
@@ -674,13 +680,32 @@ function majDerniereConnexion($mysqli, $shaarlieurId) {
 
 function updateShaarlieurShaarliUrl($mysqli, $shaarlieurId, $shaarliUrl) {
     $dateUpdate = date('YmdHis');
-    $query = sprintf("UPDATE shaarlieur SET shaarli_url='%s', date_update='%s', shaarli_private='0', shaarli_ok='2', shaarli_url_ok='' WHERE id='%s'", 
+    $query = sprintf("UPDATE shaarlieur SET shaarli_url='%s', date_update='%s', shaarli_private='0', shaarli_ok='2' WHERE id='%s'", 
         $mysqli->real_escape_string($shaarliUrl), 
         $mysqli->real_escape_string($dateUpdate), 
         $mysqli->real_escape_string($shaarlieurId)
     );
     $mysqli->query($query);
 }
+
+function cancelShaarlieurShaarliUrl($mysqli, $shaarlieurId) {
+    $dateUpdate = date('YmdHis');
+    $query = sprintf("UPDATE shaarlieur SET shaarli_url=shaarli_url_ok, date_update='%s', shaarli_ok='0' WHERE id='%s'", 
+        $mysqli->real_escape_string($dateUpdate), 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+    $mysqli->query($query);
+}
+
+function supprimeShaarlieurShaarliUrl($mysqli, $shaarlieurId) {
+    $dateUpdate = date('YmdHis');
+    $query = sprintf("UPDATE shaarlieur SET shaarli_url='', shaarli_url_id_ok='', 'shaarli_on_abonnements'='1', 'shaarli_on_river'='1', shaarli_url_ok='', date_update='%s', shaarli_ok='0' WHERE id='%s'", 
+        $mysqli->real_escape_string($dateUpdate), 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+    $mysqli->query($query);
+}
+
 
 function updateShaarlieurShaarliOnAbonnements($mysqli, $shaarlieurId, $isOnAbonnements) {
     $dateUpdate = date('YmdHis');
@@ -909,4 +934,120 @@ function getTopRss($mysqli) {
 }
 
 
+/**
+ * Indique si un profil a un email
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return bool true | false
+ */
+function hasEmailByShaarlieurId($mysqli,  $shaarlieurId) {
+    $query = sprintf("SELECT count(*) AS c FROM shaarlieur WHERE id='%s' AND email !=''", 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
 
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['c']) && $row['c'] > 0) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Retourne le mail d'un utilisateur
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return bool true | false
+ */
+function getEmailByShaarlieurId($mysqli,  $shaarlieurId) {
+    $query = sprintf("SELECT email FROM shaarlieur WHERE id='%s'", 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['email'])) {
+                return $row['email'];
+            }
+        }
+    }
+
+    return null;
+}
+
+
+/**
+ * Retourne les catégories d'un article
+ * 
+ * @param $mysqli
+ * @param array $tags
+ * 
+ * @return array('informatique' => '80', 'société' => 20);
+ */
+function getCategoriesFromTags($mysqli, $tags) 
+{
+    $tagsIN = arrayToIN($mysqli, $tags);
+
+    $query = "SELECT categorie, count(*) as c 
+        FROM categories
+        WHERE tag $tagsIN
+        GROUP BY categorie";
+
+    $total = 0;
+    $results = array();
+    $resultsTmp = array();
+    
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (!isset($resultsTmp[$row['categorie']])) {
+                $resultsTmp[$row['categorie']] = 0;
+            }
+            $total += $row['c'];
+            $resultsTmp[$row['categorie']] += $row['c'];
+        }
+    }
+
+    foreach ($resultsTmp as $categorie => $c) {
+        $results[$categorie] = round($c/$total * 100);
+    }
+    
+
+    return $results;
+}
+
+/**
+ * Retourne la catégorie la plus probable d'un article
+ * 
+ * @param $mysqli
+ * @param array $tags
+ * 
+ * @return string 'informatique'
+ */
+function getTopCategorieFromTags($mysqli, $tags) 
+{
+    $tagsIN = arrayToIN($mysqli, $tags);
+    $query = "SELECT categorie, count(*) as c 
+        FROM categories
+        WHERE tag $tagsIN
+        GROUP BY categorie
+        order by c
+        LIMIT 1
+        ";
+
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row['categorie'];
+        }
+    }
+
+    return '';
+}

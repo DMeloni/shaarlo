@@ -8,6 +8,11 @@ ini_set('display_startup_errors',1);
 error_reporting(-1);
 */
 
+if (getUtilisateurId() === '') {
+    header('HTTP/1.1 304 Not modified', true, 304);
+    return;
+}
+
 if(isset($_POST['do']) && $_POST['do'] == 'ireadit') {
     if(!isset($_SESSION['ireadit'])) {
         $_SESSION['ireadit'] = array();
@@ -39,6 +44,7 @@ if(isset($_POST['do']) && $_POST['do'] == 'ireadit') {
     return;
 } 
 
+            
 /*
  * Ignorage d'un article
 */

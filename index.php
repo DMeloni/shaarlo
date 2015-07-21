@@ -86,9 +86,12 @@ class River extends Controller
             // Affichage de la messagerie du shaarliste 
             $matches = array();
             if (preg_match_all('#^shaarli:([0-9a-f]{32})$#', urldecode($q), $matches) === 1) {
-                $afficherMessagerie = true;
-                $filtreDePopularite = 2;
-                $titrePageMessagerie = sprintf('Messagerie de %s', getRssTitleFromId($mysqli, $matches[1][0]));
+                $idRssMessagerie = $matches[1][0];
+                if ($idRssMessagerie === getIdOkRss()) {
+                    $afficherMessagerie = true;
+                    $filtreDePopularite = 2;
+                    $titrePageMessagerie = sprintf('Messagerie de %s', getRssTitleFromId($mysqli, $matches[1][0]));
+                }
             }
         }
         $filterOn = null;
@@ -164,7 +167,7 @@ class River extends Controller
         }else{
             $abonnements = getAbonnements();
             if(empty($abonnements)) {
-                header('Location: dashboard.php');
+                header('Location: dashboard.php', true, 301);
                 return;
             }else{
                 $usernameRecherche=$username;
@@ -285,7 +288,7 @@ class River extends Controller
             }
             //if(isset($found[$article['id_commun']]) && !empty($article['rss_titre_origin'])) {
             if(!empty($article['rss_titre_origin']) && $article['id_rss_origin'] != $article['id_rss']) {
-                $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a>', $rssTitreAffiche, $article['article_url'], $article['rss_titre_origin']);
+                $rssTitreAffiche = sprintf('%s > <a href="%s">%s</a> ', $rssTitreAffiche, $article['article_url'], $article['rss_titre_origin']);
             } 
             
             $faviconPath ='';
@@ -496,7 +499,15 @@ class River extends Controller
             $tagsExploded = explode(',', trim($article['tags']));
             $tagsExploded = array_unique($tagsExploded);
             $found[$k]['tags_array'] = $tagsExploded;
+            
+            // Evaluation de la catégorie de l'article
+            //if (count($found[$k]['tags_array'])  > 0 && count($found[$k]['tags_array']) < 1024) {
+            //    $found[$k]['categorie'] = getTopCategorieFromTags($mysqli, $found[$k]['tags_array']);
+            //}
+            $found[$k]['categorie'] = '';
         }
+        
+
 
         /*
         * Récupération du "meilleur" article du jour
@@ -1121,7 +1132,7 @@ class River extends Controller
             <div class="columns large-12">
                 <div class="panel fake-panel article <?php eh($found['read-class']); ?> persist-area">
                     <div class="columns large-11 <?php if(useRefreshButton()) { ?>small-9<? } else {?>small-11<?php } ?>">
-                        <h3 class="<?php echo $class; ?>">
+                        <h3 class="<?php echo $class; ?> no-margin-bottom">
                             <a title="Go to original place" href="<?php eh($found['link']); ?>" onmouseup="ireadit(this, '<?php eh($found['id_commun']); ?>')"><?php eh($found['title']); ?>
                             <?php 
                             if (count($discussions) > 1) { 
@@ -1132,15 +1143,18 @@ class River extends Controller
                         </h3>
                     </div>
                     
-                    <?php if(useRefreshButton()) { ?>
-                    <div class="columns large-1 small-3 text-right">
-                        <span data-article-id="<?php eh($found['id_commun']); ?>" class="a-refresh-article cercle-fleche"><span id="img-article-refresh-<?php eh($found['id_commun']); ?>" >↺</span></span>
-                        <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
-                    </div>
-                    <?php } else { ?>
-                    <div class="columns large-1 small-1 text-right">
-                        <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
-                    </div>
+                    
+                    <?php if(!isInvite()) { ?>
+                        <?php if(useRefreshButton()) { ?>
+                        <div class="columns large-1 small-3 text-right">
+                            <span data-article-id="<?php eh($found['id_commun']); ?>" class="a-refresh-article cercle-fleche"><span id="img-article-refresh-<?php eh($found['id_commun']); ?>" >↺</span></span>
+                            <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
+                        </div>
+                        <?php } else { ?>
+                        <div class="columns large-1 small-1 text-right">
+                            <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
+                        </div>
+                        <?php } ?>
                     <?php } ?>
                     
                     <div class="columns large-12">
@@ -1230,7 +1244,7 @@ class River extends Controller
                         <?php 
                         foreach ($found['tags_array'] as $tag) {
                             if (!empty($tag)) {
-                                ?><a href="?tags=<?php eh($tag);?>" class="button microscopic secondary"><?php echo $tag; ?><a href="?do=add_ignored_tag&tag=<?php eh($tag);?>" onclick="return(confirm('Les articles portant ce tag ne seront plus affichés, continuer ? '));" class="button microscopic secondary">X</a></a> <?php
+                                ?><a href="?tags=<?php eh($tag);?>" class="button microscopic secondary"><?php echo $tag; ?><?php if(!isInvite()) { ?><a href="?do=add_ignored_tag&tag=<?php eh($tag);?>" onclick="return(confirm('Les articles portant ce tag ne seront plus affichés, continuer ? '));" class="button microscopic secondary">X</a><?php } ?></a> <?php
                             }
                         }
 
@@ -1242,7 +1256,7 @@ class River extends Controller
                         ?>
                         </div>
                         <div class="columns large-2 text-right">
-                            <span style="font-size:12px;" class="nb-clics"><?php echo $nbClics; ?></span>
+                            <span title="<?php echo $found['categorie']; ?>" style="font-size:12px;" class="nb-clics"><?php echo $nbClics; ?></span>
                         </div>
                     </div>
                     
@@ -1252,8 +1266,9 @@ class River extends Controller
         <?php
     }
 
-    public static function renderScript($params)
+    public static function renderScript($params = array())
     {
+        parent::renderScript($params);
         ?>
         <script>
             function getMy(){

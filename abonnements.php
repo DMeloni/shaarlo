@@ -6,6 +6,11 @@ class Abonnements extends Controller
 {
     public function run() 
     {
+        if (getUtilisateurId() === '') {
+            header('Location: index.php');
+            return;
+        }
+        
         getSession();
         $infoAboutAll = file_get_contents('http://shaarli.fr/api.php?do=getInfoAboutAll');
         $infoAboutAll = remove_utf8_bom($infoAboutAll);
@@ -69,6 +74,7 @@ class Abonnements extends Controller
 
     public static function renderScript()
     {
+        parent::renderScript();
         ?>
         <script>
 
