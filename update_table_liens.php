@@ -32,7 +32,7 @@ $i = 0;
 
 if (is_file($pidFile) && is_null(get('force'))) {
     $lastvisit = @filemtime($pidFile);
-    $difference = mktime() - $lastvisit;
+    $difference = time() - $lastvisit;
     $max_time = 60; // On ne peut lancer le script qu'une fois par minute
     if ($difference < $max_time) {
         die('lancement deja en cours');
@@ -56,14 +56,13 @@ foreach($allShaarlistes as $url) {
     $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 
     if (is_file($fluxFile)) {
-            if (!is_null(get('force'))) {
-                echo "Traitement  de : " . $fluxFile;
-            }
+        echo "Traitement  de : " . $fluxFile . "<br/>";
         
         $content = file_get_contents($fluxFile);
 
         //Fri, 13 Mar 2015 16:09:22 +0400
         if (strpos($content, date('D, d M Y')) === false && !isset($_GET['full'])) {
+            echo "Rien de neuf" . "<br/>";
             continue;
         }
         
@@ -92,16 +91,19 @@ foreach($allShaarlistes as $url) {
         }
         
         foreach($rssListArrayed as $rssItem) {
-
+            
             $link = $rssItem['link'];
             
             $link = str_replace('my.shaarli.fr/', 'www.shaarli.fr/my/', $link);
             
             $rssTimestamp = strtotime($rssItem['pubDate']);
             $articleDateJour = date('Ymd', $rssTimestamp);
-            if($articleDateJour !== date('Ymd') && $articleDateJour !== '20141106' && !isset($_GET['full'])) {
+            if($articleDateJour !== date('Ymd') 
+            && !isset($_GET['full'])) {
                 break;
             }
+            
+            echo "Ajout  de : " . $link . "<br/>";
             $guid = $rssItem['guid'];
             if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $guid)) {
                 $guid = str_replace('mode=links&', '', $guid);
@@ -147,10 +149,11 @@ foreach($allShaarlistes as $url) {
             }
             
             // Creation miniature
-            captureUrl($link, $idCommun, 200, 200, true);
-            captureUrl($link, $idCommun, 256, 256, true);
-            captureUrl($link, $idCommun, 450, 450, true);
-            
+            if (!isset($_GET['skip-mini'])) {
+                captureUrl($link, $idCommun, 200, 200, true);
+                captureUrl($link, $idCommun, 256, 256, true);
+                captureUrl($link, $idCommun, 450, 450, true);
+            }
             $articleDate = date('YmdHis', $rssTimestamp);
             $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin, $category);
             
