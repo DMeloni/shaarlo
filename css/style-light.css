@@ -373,8 +373,6 @@ hr.mini {
     #dashboard,#dashboard_icon{position: inherit;} .article-image{display:none;} 
     .thumbnail-modal-reveal {
         margin-top: 4px;
-        width: auto;
-
     }
     .hidden-on-smartphone {
         display:none;

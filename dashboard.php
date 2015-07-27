@@ -10,8 +10,6 @@ class Dashboard extends Controller
 {
         public function run() 
         {
-            //$this->setLocale('en');
-            
             // Accès invité
             if ('enregistrer_temporairement' ===  $this->post('action')) {
                 // Connexion invitée
@@ -574,8 +572,8 @@ class Dashboard extends Controller
                                         <span>Afficher les commentaires des shaarlistes non suivis</span>
                                     </div>
                                     <div class="columns large-4">
-                                            <input type="radio" <?php if(displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" class="checkbox-display-shaarlistes-non-suivis no-margin" value="non"/>non
+                                            <input type="radio" <?php if(displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?> name="checkbox-shaarlistes-suivis" data-option="display_shaarlistes_non_suivis" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayShaarlistesNonSuivis()) {echo ' checked="checked" ';}?>    name="checkbox-shaarlistes-suivis" data-option="display_shaarlistes_non_suivis" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -584,8 +582,8 @@ class Dashboard extends Controller
                                         <span>Afficher le bloc "En ce moment sur la shaarlisphère"</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" class="checkbox-display-best-article no-margin" value="non"/>non
+                                        <input type="radio" <?php if(displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article"  data-option="display_best_article" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayBestArticle()) {echo ' checked="checked" ';}?> name="checkbox-display-best-article" data-option="display_best_article" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -595,8 +593,8 @@ class Dashboard extends Controller
                                         <span>Afficher le bloc de conversation</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" class="checkbox-display_bloc_conversation no-margin" value="non"/>non
+                                        <input type="radio" <?php if(displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" data-option="display_bloc_conversation" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayBlocConversation()) {echo ' checked="checked" ';}?> name="checkbox-display_bloc_conversation" data-option="display_bloc_conversation" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <?php } ?>
@@ -606,8 +604,8 @@ class Dashboard extends Controller
                                         <span>Afficher les liens sans description</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" class="checkbox-display-empty-description no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" class="checkbox-display-empty-description no-margin" value="non"/>non
+                                        <input type="radio" <?php if(displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" data-option="display_empty_description" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayEmptyDescription()) {echo ' checked="checked" ';}?> name="checkbox-display-empty-description" data-option="display_empty_description" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -616,8 +614,8 @@ class Dashboard extends Controller
                                         <span>Afficher uniquement les nouveaux liens du jour</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" class="checkbox-display_only_new_articles" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" class="checkbox-display_only_new_articles" value="non"/>non
+                                        <input type="radio" <?php if(displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles"  data-option="display_only_new_articles" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayOnlyNewArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_new_articles" data-option="display_only_new_articles" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -626,8 +624,8 @@ class Dashboard extends Controller
                                         <span>Afficher les boutons "Top du jour/hier/semaine"</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" class="checkbox-use-top-buttons no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" class="checkbox-use-top-buttons no-margin" value="non"/>non
+                                        <input type="radio" <?php if(useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons"  data-option="use_top_buttons" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useTopButtons()) {echo ' checked="checked" ';}?> name="checkbox-use-top-buttons" data-option="use_top_buttons" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -636,28 +634,29 @@ class Dashboard extends Controller
                                         <span>Afficher un bouton de rafraichissement sur l'article</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" class="checkbox-use-refresh-button no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" class="checkbox-use-refresh-button no-margin" value="non"/>non
+                                        <input type="radio" <?php if(useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button"  data-option="use_refresh_button" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useRefreshButton()) {echo ' checked="checked" ';}?> name="checkbox-use-refresh-button" data-option="use_refresh_button" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
                                 <div class="row">
                                     <div class="columns large-8">
-                                        <span>Afficher un lien vers le flux RSS sur la page des flux</span>
+                                        <span>Afficher les discussions entre shaarlistes <span class="button microscopic alert">NEW</span></span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" class="checkbox-display_rss_button no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" class="checkbox-display_rss_button no-margin" value="non"/>non
+                                        <input type="radio" <?php if(displayDiscussions()) {echo ' checked="checked" ';}?> name="checkbox-display_discussions"  data-option="display_discussions" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayDiscussions()) {echo ' checked="checked" ';}?> name="checkbox-display_discussions" data-option="display_discussions" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
+
                                 <div class="row">
                                     <div class="columns large-8">
                                         <span>S'inscrire automatiquement aux nouveaux shaarlistes</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" class="checkbox-inscription_auto no-margin" value="non"/>non
+                                        <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto"  data-option="inscription_auto" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" data-option="inscription_auto" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -672,8 +671,18 @@ class Dashboard extends Controller
                                         <span>Rendre la barre de menu fixe (rafraichir la page)</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="lock"/>oui
-                                        <input type="radio" <?php if(!isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" class="checkbox-lock-menu no-margin" value="open"/>non
+                                        <input type="radio" <?php if(isMenuLocked()) {echo ' checked="checked" ';}?>  name="checkbox-lock-menu" data-option="lock" class="no-margin" value="lock"/>oui
+                                        <input type="radio" <?php if(!isMenuLocked()) {echo ' checked="checked" ';}?> name="checkbox-lock-menu" data-option="lock" class="no-margin" value="open"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Afficher un lien vers le flux RSS sur la page des flux</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button"  data-option="display_rss_button" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayRssButton()) {echo ' checked="checked" ';}?> name="checkbox-display_rss_button" data-option="display_rss_button" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -682,8 +691,8 @@ class Dashboard extends Controller
                                             <span>Compacter les articles longs</span>
                                     </div>
                                     <div class="columns large-4">
-                                            <input type="radio" <?php if(isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" class="checkbox-extend no-margin" value="oui"/>oui
-                                            <input type="radio" <?php if(!isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" class="checkbox-extend no-margin" value="non"/>non
+                                            <input type="radio" <?php if(isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend"  data-option="extend" class="no-margin" value="oui"/>oui
+                                            <input type="radio" <?php if(!isExtended()) {echo ' checked="checked" ';}?> name="checkbox-extend" data-option="extend" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -692,8 +701,8 @@ class Dashboard extends Controller
                                         <span>Activer le scroll infini</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" class="checkbox-use_scroll_infini no-margin" value="non"/>non
+                                        <input type="radio" <?php if(useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini"  data-option="use_scroll_infini" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useScrollInfini()) {echo ' checked="checked" ';}?> name="checkbox-use_scroll_infini" data-option="use_scroll_infini" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -702,28 +711,28 @@ class Dashboard extends Controller
                                         <span>Afficher les trucs du style Tipeee</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" class="checkbox-use_tipeee no-margin" value="non"/>non
+                                        <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee"  data-option="use_tipeee" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" data-option="use_tipeee" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
                                 <div class="row">
                                     <div class="columns large-8">
-                                        <span>Afficher les images/avatars <span class="button microscopic alert">NEW</span></span>
+                                        <span>Afficher les images/avatars</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" class="checkbox-display_img no-margin" value="non"/>non
+                                        <input type="radio" <?php if(displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img"  data-option="display_img" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayImages()) {echo ' checked="checked" ';}?> name="checkbox-display_img" data-option="display_img" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
                                 <div class="row">
                                     <div class="columns large-8">
-                                        <span>Afficher uniquement les liens non visités <span class="button microscopic alert">NEW</span></span>
+                                        <span>Afficher uniquement les liens non visités</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" class="checkbox-display_only_unread no-margin" value="non"/>non
+                                        <input type="radio" <?php if(displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread"  data-option="display_only_unread" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayOnlyUnreadArticles()) {echo ' checked="checked" ';}?> name="checkbox-display_only_unread" data-option="display_only_unread" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -740,8 +749,8 @@ class Dashboard extends Controller
                                         <span>Utiliser <a href="https://github.com/tholman/elevator.js">elevator.js</a> dans la page des flux</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" class="checkbox-use-elevator no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" class="checkbox-use-elevator no-margin" value="non"/>non
+                                        <input type="radio" <?php if(useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator"  data-option="use_elevator" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useElevator()) {echo ' checked="checked" ';}?> name="checkbox-use-elevator" data-option="use_elevator" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -750,8 +759,8 @@ class Dashboard extends Controller
                                         <p class="no-dotsies">Utiliser <a class="no-dotsies" href="http://dotsies.org/">dotsies</a> (Y'en a qui ont essayé !)</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" class="checkbox-use-dotsies no-margin" value="non"/><span class="no-dotsies">non</span>
+                                        <input type="radio" <?php if(useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies"  data-option="use_dotsies" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!useDotsies()) {echo ' checked="checked" ';}?> name="checkbox-use-dotsies" data-option="use_dotsies" class="no-margin" value="non"/><span class="no-dotsies">non</span>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -916,7 +925,7 @@ class Dashboard extends Controller
                                             }
                                             ?>
                                         </form>
-                                        <p class="astuce">Note : votre shaarli apparaitra dans la page des abonnements après modération</p>
+                                        <p class="astuce">Note : votre shaarli apparaitra dans la page des abonnements après modération.</p>
                                     </div>
                                 </div>
                             </div>
@@ -943,8 +952,8 @@ class Dashboard extends Controller
                                         <span>Apparaitre dans la liste des abonnements</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" class="checkbox-on_abonnements no-margin" value="non"/>non
+                                        <input type="radio" <?php if(isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements"  data-option="on_abonnements" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!isOnAbonnements()) {echo ' checked="checked" ';}?> name="checkbox-on_abonnements" data-option="on_abonnements" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -953,8 +962,8 @@ class Dashboard extends Controller
                                         <span>Apparaitre dans la River</span>
                                     </div>
                                     <div class="columns large-4">
-                                        <input type="radio" <?php if(isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" class="checkbox-on_river no-margin" value="non"/>non
+                                        <input type="radio" <?php if(isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river"  data-option="on_river" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" data-option="on_river" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 
@@ -1050,70 +1059,10 @@ class Dashboard extends Controller
         parent::renderScript();
         ?>
         <script>
-            $('.checkbox-lock-menu').click(function() {
-                addOption($(this), 'lock', $(this).val());
+            $('input[data-option]').click(function() {
+                addOption($(this), $(this).attr('data-option'), $(this).val());
             });
 
-            $('.checkbox-display-shaarlistes-non-suivis').click(function() {
-                addOption($(this), 'display_shaarlistes_non_suivis', $(this).val());
-            });
-            $('.checkbox-display-empty-description').click(function() {
-                addOption($(this), 'display_empty_description', $(this).val());
-            });
-            $('.checkbox-display_bloc_conversation').click(function() {
-                addOption($(this), 'display_bloc_conversation', $(this).val());
-            });
-            $('.checkbox-display_only_new_articles').click(function() {
-                addOption($(this), 'display_only_new_articles', $(this).val());
-            });
-            $('.checkbox-display-best-article').click(function() {
-                addOption($(this), 'display_best_article', $(this).val());
-            });
-            $('.checkbox-inscription_auto').click(function() {
-                addOption($(this), 'inscription_auto', $(this).val());
-            });
-            $('.checkbox-use_scroll_infini').click(function() {
-                addOption($(this), 'use_scroll_infini', $(this).val());
-            });
-            $('.checkbox-extend').click(function() {
-                addOption($(this), 'extend', $(this).val());
-            });
-            $('.checkbox-mode_river').click(function() {
-                addOption($(this), 'mode_river', $(this).val());
-            });
-            $('.checkbox-use-elevator').click(function() {
-                addOption($(this), 'use_elevator', $(this).val());
-            });
-            $('.checkbox-use-useless-options').click(function() {
-                addOption($(this), 'use_useless_options', $(this).val());
-            });
-            $('.checkbox-use-dotsies').click(function() {
-                addOption($(this), 'use_dotsies', $(this).val());
-            });
-            $('.checkbox-use-top-buttons').click(function() {
-                addOption($(this), 'use_top_buttons', $(this).val());
-            });
-            $('.checkbox-use-refresh-button').click(function() {
-                addOption($(this), 'use_refresh_button', $(this).val());
-            });
-            $('.checkbox-display_rss_button').click(function() {
-                addOption($(this), 'display_rss_button', $(this).val());
-            });
-            $('.checkbox-use_tipeee').click(function() {
-                addOption($(this), 'use_tipeee', $(this).val());
-            });
-            $('.checkbox-display_img').click(function() {
-                addOption($(this), 'display_img', $(this).val());
-            });
-            $('.checkbox-display_only_unread').click(function() {
-                addOption($(this), 'display_only_unread', $(this).val());
-            });
-            $('.checkbox-on_abonnements').click(function() {
-                addOption($(this), 'on_abonnements', $(this).val());
-            });
-            $('.checkbox-on_river').click(function() {
-                addOption($(this), 'on_river', $(this).val());
-            });
             function addAbo(that, id, action) {
                 var r = new XMLHttpRequest(); 
                 var params = "do="+action+"&id=" + id;

@@ -4,59 +4,59 @@ require_once('Controller.class.php');
 
 class Dashboard extends Controller
 {
-	public function run() 
-	{
-		$params = array();
+    public function run() 
+    {
+        $params = array();
         if (isset($_SESSION['username'])) {
             header(sprintf('Location: https://my.shaarli.fr/%s/', $_SESSION['pseudo']));
             return;
         }
-        if($_POST['action'] == 'new') {
+        if ($this->post('action') == 'new') {
             // Maj url de son shaarli
-            majShaarliUrl(sprintf('https://my.shaarli.fr/%s/', $_POST['pseudo']), true);
-            header(sprintf('Location: https://my.shaarli.fr/%s/?do=login', $_POST['pseudo']));
+            majShaarliUrl(sprintf('https://my.shaarli.fr/%s/', $this->post('pseudo')), true);
+            header(sprintf('Location: https://my.shaarli.fr/%s/?do=login', $this->post('pseudo')));
             return;
         }
 
-		$this->render($params);
-	}
+        $this->render($params);
+    }
 
-	public function render($params=array())
-	{
-		?><!doctype html>
-		<html class="no-js" lang="en">
-			<?php
-			$this->renderHead();
-		    ?>
+    public function render($params=array())
+    {
+        ?><!doctype html>
+        <html class="no-js" lang="en">
+            <?php
+            $this->renderHead();
+            ?>
 
-		    <body>
+            <body>
                 <?php
                 $this->renderMenu();
                 ?>
-		        <?php
-		        if (isset($params['message'])) {
-		        	?>
-			    	<div class="row">
-			    		<div class="columns large-12 center">
-			    			<div class="panel">
-						  	<span class="color-success"><?php echo $params['message'];?></span>
-						  	</div>
-						</div>
-					</div>
-		        	<?php
-		        }
-		        ?>
-		        <div class="row">
-		            <div class="column large-12 text-center">
-		                <h1>Service My</h1>
-		            </div>
-		        </div>
+                <?php
+                if (isset($params['message'])) {
+                    ?>
+                    <div class="row">
+                        <div class="columns large-12 center">
+                            <div class="panel">
+                            <span class="color-success"><?php echo $params['message'];?></span>
+                            </div>
+                        </div>
+                    </div>
+                    <?php
+                }
+                ?>
+                <div class="row">
+                    <div class="column large-12 text-center">
+                        <h1>Service My</h1>
+                    </div>
+                </div>
 
-		    	<div class="row">
-		    		<div class="columns large-12 center">
-		    			<div class="panel">
-		    				<div class="row">
-		    					<div class="columns large-12">
+                <div class="row">
+                    <div class="columns large-12 center">
+                        <div class="panel">
+                            <div class="row">
+                                <div class="columns large-12">
                                     <h3>Accès à un shaarli hebergé sur shaarli.fr</h3>
                                     <p>
                                     Le service My vous permet d'utiliser l'outil shaarli sans payer d'hébergement.
@@ -79,20 +79,20 @@ class Dashboard extends Controller
                                         </form>
                                     </div>
                                 </div>
-		    				</div>
-		    			</div>
-		    		</div>
-		    	</div>
-	
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
                 <?php
                 $this->renderScript();
                 ?>
-		    </body>
-		</html>
+            </body>
+        </html>
 
-		<?php
-	}
-    public static function renderScript()
+        <?php
+    }
+    public static function renderScript($params=array())
     {
         ?>
         <script>

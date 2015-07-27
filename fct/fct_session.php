@@ -532,6 +532,11 @@ function getShaarliUrl() {
     return $session['shaarlieur_shaarli_url'];
 }
 
+// Retourne l'url du shaarli de l'utilisateur
+function getShaarliUrlOk() {
+    $session = getSession();
+    return $session['shaarlieur_shaarli_url_ok'];
+}
 
 // Retourne l'email de l'utilisateur
 function getEmail() {
@@ -876,7 +881,14 @@ function useTipeee() {
     return true;
 }
 
+function displayDiscussions() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_discussions']) && $session['shaarlieur_data']['display_discussions'] === false) {
+        return false;
+    }
 
+    return true;
+}
 
 function displayOnlyNewArticles() {
     $session = getSession();

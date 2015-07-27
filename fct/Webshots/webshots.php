@@ -9,7 +9,7 @@ class webshots
 	
 	function __construct()
 	{
-		$this->api_url = 'http://vps154208.ovh.net/screen/shot.php';
+		$this->api_url = 'http://ns3010509.ip-46-105-120.eu:85/shot.php';
 		$this->profile_secret_code = ''; 	// user profile secret code
 		$this->profile_secret_key = '';		// user profile secret key
 	}

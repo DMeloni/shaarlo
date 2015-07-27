@@ -130,6 +130,20 @@ function eh($string) {
     echo htmlentities($string);
 }
 
+
+/**
+* Affiche de manière protégée une url
+* 
+* @param string $url : http://toto?coucou=toi&moi
+* 
+* @return string : http://toto%3Fcoucou=toi%26moi
+*/
+function ehu($string) {
+    $string = str_replace('?', '%3F', $string);
+    $string = str_replace('&', '%26', $string);
+    echo htmlentities($string);
+}
+
 function supprimeDernierPointInterrogation($url) {
     if (preg_match('#\?$#', $url)) {
        return substr($url, 0, strlen($url) - 1);

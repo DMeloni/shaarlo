@@ -1,10 +1,11 @@
 <?php
 
+/*
 ini_set("display_errors", 1);
 ini_set("track_errors", 1);
 ini_set("html_errors", 1);
 error_reporting(E_ALL);
-
+*/
 require_once('config.php');
 
 require_once('fct/fct_rss.php');
@@ -34,7 +35,7 @@ class Controller
                 <title>Shaarli.fr</title>
                 <link rel="stylesheet" href="css/foundation.min.css" />
                 <link rel="stylesheet" href="css/foundation-overload.css?v=5" />
-                <link rel="stylesheet" href="css/style-light.css?v=20" />
+                <link rel="stylesheet" href="css/style-light.css?v=21" />
                 
                 <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png">
                 <link rel="apple-touch-icon" sizes="60x60" href="img/apple-icon-60x60.png">
@@ -318,12 +319,6 @@ class Controller
                 $onclick = ' onclick="scroll(0, 0);"';
         }
 
-        // Liens vers page My
-        $myHref = 'my.php';
-        if (isset($_SESSION['username'])) {
-            $myHref = sprintf("https://my.shaarli.fr/%s/", htmlentities($_SESSION['username']));
-        }
-
         ?>
         <div id="menu-top" class="<?php echo $class.$onclick; ?>">
             <h1 class="show-for-medium-up">
@@ -339,6 +334,13 @@ class Controller
             </h1>
             <ul class="show-for-medium-up" >
                 <li><a href="index.php">River</a></li>
+                <?php 
+                if (isShaarliste()) {
+                    ?><li><a href="<?php eh(getShaarliUrlOk()); ?>">Shaarli</a></li><?php
+                } else {
+                    ?><li><a href="my.php">My</a></li><?php
+                }
+                ?>
                 <?php
                 if (getUtilisateurId() !== '') {
                 ?>
@@ -346,8 +348,8 @@ class Controller
                 <?php
                 }
                 ?>
+
                 <li><a href="index.php?sortBy=rand&amp;from=2000-09-16">Aléatoire</a></li>
-                <li><a href="<?php echo htmlentities($myHref); ?>">My</a></li>
                 <li><a href="opml.php">OPML</a></li>
                 <li><a href="about.php">A propos</a></li>
 
@@ -362,6 +364,13 @@ class Controller
             </ul>
             <ul class="show-for-small-only" >
                 <li><a href="index.php">River</a></li>
+                <?php 
+                if (isShaarliste()) {
+                    ?><li><a href="<?php eh(getShaarliUrlOk()); ?>">Shaarli</a></li><?php
+                } else {
+                    ?><li><a href="my.php">My</a></li><?php
+                }
+                ?>
                 <?php
                 if (getUtilisateurId() !== '') {
                 ?>
@@ -369,8 +378,9 @@ class Controller
                 <?php
                 }
                 ?>
+
                 <li><a href="index.php?sortBy=rand&amp;from=2000-09-16">Aléa</a></li>
-                <li><a href="<?php echo htmlentities($myHref); ?>">My</a></li>
+
                 <?php
                 if (displayRssButton() && !empty($rssUrl)) {
                     ?>

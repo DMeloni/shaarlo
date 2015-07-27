@@ -214,7 +214,7 @@ class Abonnements extends Controller
             <?php
     }
 
-    public static function renderScript()
+    public static function renderScript($params=array())
     {
         parent::renderScript();
         ?>
