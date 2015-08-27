@@ -14,6 +14,7 @@ include_once('fct/fct_capture.php');
 // Vérification de la clef
 // TODO
 
+// rafraichir uniquement un seul flux : https://www.shaarli.fr/update_table_liens.php?id_rss=5753035717920ba422758ff2035bd851&full=true
 
 global $SHAARLO_DOMAIN;
 
@@ -53,6 +54,9 @@ foreach($allShaarlistes as $url) {
     
     //echo $url ;
     $fluxName = md5(($urlRssSimplifiee));
+    if (isset($_GET['id_rss']) && $_GET['id_rss'] != $fluxName) {
+        continue;
+    }
     $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 
     if (is_file($fluxFile)) {
@@ -65,6 +69,8 @@ foreach($allShaarlistes as $url) {
             echo "Rien de neuf" . "<br/>";
             continue;
         }
+        
+        $content = str_replace('&eacute;', 'é', $content);
         
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
@@ -105,12 +111,55 @@ foreach($allShaarlistes as $url) {
             
             echo "Ajout  de : " . $link . "<br/>";
             $guid = $rssItem['guid'];
+            if (preg_match('#^https://deleurme.net/#', $link)) {
+                $link = str_replace('https://deleurme.net', 'http://deleurme.net', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+            if (preg_match('#^https://www.mypersonnaldata.eu/#', $link)) {
+                $link = str_replace('https://www.mypersonnaldata.eu/', 'http://www.mypersonnaldata.eu/', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+            if (preg_match('#^http://mypersonnaldata.eu/shaarli#', $link)) {
+                $link = str_replace('http://mypersonnaldata.eu/shaarli', 'http://www.mypersonnaldata.eu/shaarli', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+
+            if (preg_match('#^https://www.youtube.com/watch\?v=#', $link)) {
+                $link = str_replace('https://www.youtube.com/watch?v=', 'https://youtu.be/', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+            
+            // Remplacement des http://domaine:80/machin en http://domaine/machin
+            if (strpos($link, ':80') > 0 ) {
+                $link = str_replace(':80', '', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+            // Remplacement des http://domaine:80/machin en http://domaine/machin
+            if (strpos($guid, ':80') > 0 ) {
+                $guid = str_replace(':80', '', $guid);
+                echo "Modification en : " . $guid . "<br/>";
+            }
+
+            if (strpos('#^http://mypersonnaldata.eu/shaarli#', $link)) {
+                $link = str_replace('http://mypersonnaldata.eu/shaarli', 'http://www.mypersonnaldata.eu/shaarli', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+            
+            
+            if (preg_match('#^http://deleurme.net/liens/index.php5/?\?[_a-zA-Z0-9\-]{6}$#', $link)) {
+                $link = str_replace('index.php5/', '', $link);
+                $link = str_replace('index.php5', '', $link);
+                echo "Modification en : " . $link . "<br/>";
+            }
+
             if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $guid)) {
                 $guid = str_replace('mode=links&', '', $guid);
             }
             if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $link)) {
                 $link = str_replace('mode=links&', '', $link);
             }
+            
+            
             
             $title = $rssItem['title'];
             $description = $rssItem['description'];
@@ -182,7 +231,7 @@ foreach($allShaarlistes as $url) {
     
     insertEntites($mysqli, 'tags', $tags);
     $tags = array();
-                
+    var_dump($articles);
     insertArticles($mysqli, $articles);
     $articles = array();
     

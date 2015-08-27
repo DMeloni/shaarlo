@@ -91,7 +91,8 @@ if ($_GET['do'] === 'buildAllRss') {
     $fluxDir = 'flux';
     $dataDir = 'data';
 
-    $uneJourneeEnSeconde = 1 * 4 * 60;
+    $uneJourneeEnSeconde = 24 * 4 * 60;
+    $mysqli = shaarliMyConnect();
 
     $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
     if(isset($_GET['nbthreads']) && isset($_GET['thread'])) {
@@ -104,12 +105,16 @@ if ($_GET['do'] === 'buildAllRss') {
         $fluxName = md5(($urlSimplifiee));
         $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
 
+        // Recuperation du delai à attendre entre chaque mise à jour
+        $delai = getDelaiBeforeCall($mysqli, $fluxName);
+        $delaiEnSeconde = $delai * 60 * 24;
+
         if(is_file($fluxFile)) {
             $lastvisit = @filemtime($fluxFile);
-            $difference = mktime() - $lastvisit;
+            $difference = time() - $lastvisit;
             // Dans le cas où le fichier est encore récent, on garde celui des 4 dernieres minutes
-            if ($difference < $uneJourneeEnSeconde) {
-                echo sprintf("%s - %s : recent \n", $fluxFile, $shaarliste);
+            if ($difference < $delaiEnSeconde) {
+                echo sprintf("%s - %s : recent %s - delai : %s min<br/>\n", $fluxFile, $shaarliste, $difference, $delai);
                 continue;
             }
         }
@@ -119,10 +124,11 @@ if ($_GET['do'] === 'buildAllRss') {
             $rss = getRss(sprintf('%s%s', $shaarliste, $params));
         }
         if (!empty($rss)) {
-            echo sprintf("%s - %s : nouveau \n", $fluxFile, $shaarliste);
+            echo sprintf("%s - %s : nouveau <br/>\n", $fluxFile, $shaarliste);
             file_put_contents($fluxFile, $rss); 
         }else{
-           echo sprintf("%s - %s \n", $fluxFile, $shaarliste);
+           echo sprintf("%s - %s : injoignable <br/>\n", $fluxFile, $shaarliste);
+           updateRssErreur($mysqli, $fluxName, 'injoignable');
         }
     }
 }

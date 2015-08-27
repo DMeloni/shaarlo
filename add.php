@@ -44,6 +44,66 @@ if(isset($_POST['do']) && $_POST['do'] == 'ireadit') {
     return;
 } 
 
+// Don d'un poussin à un shaarlieur
+if(isset($_POST['do']) && $_POST['do'] == 'poussin'
+&& isset($_POST['shaarlieur'])
+&& isset($_POST['id_lien'])
+) {
+    $shaarlieurCible = $_POST['shaarlieur'];
+    $idLien = $_POST['id_lien'];
+    
+    $mysqli = shaarliMyConnect();
+    $shaarlieurId = getUtilisateurId();
+
+    // Pas possible de se donner à soi même
+    if ($shaarlieurId == $shaarlieurCible) {
+        header('HTTP/1.1 304 Not modified', true, 304);
+        return;
+    }
+
+    $nbPoussinsLimite = getNbPoussinsLimiteByShaarlieurId($mysqli,  $shaarlieurId);
+    
+    $dateJour = date('Ymd');
+    
+    $nbPoussinsUtilises = getNbPoussinsUtilisesByShaarlieurId($mysqli,  $shaarlieurId, $dateJour);
+    
+    $nbPoussinsDisponibles = $nbPoussinsLimite - $nbPoussinsUtilises;
+     
+    // Plus de poussins disponibles
+    if ($nbPoussinsDisponibles <= 0) {
+        header('HTTP/1.1 304 Not modified', true, 304);
+        return;
+    }
+
+    $transactionPoussin = creerTransactionPoussin($shaarlieurId, $shaarlieurCible, $dateJour, $idLien);
+    $retourInsertion = insertEntite($mysqli, 'poussins_transactions', $transactionPoussin);
+
+    if (true !== $retourInsertion) {
+        header('HTTP/1.1 304 Not modified', true, 304);
+        return;
+    }
+
+    $nbPoussinsUtilises = getNbPoussinsUtilisesByShaarlieurId($mysqli,  $shaarlieurId, $dateJour);
+
+    // Transaction validée
+    if ($nbPoussinsUtilises <= $nbPoussinsLimite) {
+        // On ajoute un poussin au solde du shaarlieur cible
+        $retourAjoutPoussin = addPoussinToShaarlieurByShaarlieurId($mysqli, $shaarlieurCible);
+        
+        if ($retourAjoutPoussin) {
+            header('HTTP/1.1 200 OK', true, 200);
+            return;
+        }
+    }
+    
+    // Probleme : l'utilisateur a surement essayer de spammer le don
+    // Dans ce cas on annule la transaction
+    deleteTransactionPoussin($mysqli, $shaarlieurSource, $shaarlieurCible, $dateJour);
+
+    header('HTTP/1.1 304 Not modified', true, 304);
+    return;
+} 
+
             
 /*
  * Ignorage d'un article
@@ -83,25 +143,6 @@ if(isset($_POST['do']) && $_POST['do'] == 'lock') {
     return;
 }
 
-/*
- * Enregistrement affichage des shaarlistes non suivis
- */
-if(isset($_POST['do']) && $_POST['do'] == 'display_shaarlistes_non_suivis' && isset($_POST['value'])) {
-    if($_POST['value'] == 'oui') {
-        $session = getSession();
-        $session['shaarlieur_data']['display_shaarlistes_non_suivis'] = true;
-        setSession($session);
-    } 
-    if($_POST['value'] == 'non') {
-        $session = getSession();
-        $session['shaarlieur_data']['display_shaarlistes_non_suivis'] = false;
-        setSession($session);
-
-    }   
-
-    header('HTTP/1.1 200 OK', true, 200);
-    return;
-}
 
 /*
  * Enregistrement affichage du bloc en ce moment
@@ -150,8 +191,11 @@ if(isset($_POST['do']) && $_POST['do'] == 'badge' && isset($_POST['value'])) {
 
 
 
-$optionsAutorisees = array('extend', 'mode_river', 'display_empty_description', 
-    'use_elevator', 'use_useless_options','use_dotsies',
+$optionsAutorisees = array('extend', 'mode_river', 
+    'display_empty_description', 
+    'use_elevator', 
+    'use_useless_options',
+    'use_dotsies',
     'use_top_buttons',
     'use_refresh_button',
     'display_rss_button',
@@ -161,6 +205,10 @@ $optionsAutorisees = array('extend', 'mode_river', 'display_empty_description',
     'use_tipeee',
     'display_img',
     'display_only_unread',
+    'display_discussions',
+    'display_shaarlistes_non_suivis',
+    'display_little_img',
+    'display_poussins'
 );
 
 if(isset($_POST['do']) && in_array($_POST['do'], $optionsAutorisees) && isset($_POST['value'])) {
@@ -209,7 +257,7 @@ if (isset($_SESSION['shaarlieur_id'])) {
         return;
     }
     //Ajoute un shaarli
-    if($_POST['id']) {
+    if(isset($_POST['id'])) {
         $mysqli = shaarliMyConnect();
         $abonnements = getAbonnements();
         if(isset($_POST['do']) && $_POST['do'] == 'delete') {

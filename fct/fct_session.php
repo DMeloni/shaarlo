@@ -302,6 +302,8 @@ function getSession($sessionId = null, $connexion = false, $password = '', $crea
     $_SESSION['shaarlieur_shaarli_url_id_ok'] = $shaarlieurSqlData['shaarli_url_id_ok'];
     $_SESSION['shaarlieur_shaarli_on_abonnements'] = (bool)$shaarlieurSqlData['shaarli_on_abonnements'];
     $_SESSION['shaarlieur_shaarli_on_river'] = (bool)$shaarlieurSqlData['shaarli_on_river'];
+    $_SESSION['shaarlieur_poussins_solde'] = (int)$shaarlieurSqlData['poussins_solde'];
+
     if (!is_null($sessionId) && $connexion) {
         majDerniereConnexion($mysqli, $sessionId);
     }
@@ -421,11 +423,10 @@ function setSession($session) {
 // Met à jour la liste d'abonnement d'un shaarlieur
 function majAbonnements($abonnements) {
     $session = getSession();
-    $session['shaarlieur_data']['abonnements'] = $abonnements;
-    setSession($session);
-    $mysqli = shaarliMyConnect();
-    updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
 
+
+    $mysqli = shaarliMyConnect();
+    
     // Suppression des anciens abonnements 
     deleteMesRss($mysqli, $session['shaarlieur_id']);
 
@@ -434,6 +435,11 @@ function majAbonnements($abonnements) {
         $monRss = creerMonRss($session['shaarlieur_id'], $shaarlisteId, '', '');
         insertEntite($mysqli, 'mes_rss', $monRss);
     }
+
+    
+    $session['shaarlieur_data']['abonnements'] = getAllAbonnementsId($mysqli, $session['shaarlieur_id']);
+    setSession($session);
+    updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
 
     shaarliMyDisConnect($mysqli);
 }
@@ -465,6 +471,16 @@ function majShaarliUrl($shaarliUrl) {
     $session['shaarlieur_shaarli_ok'] = '2';
     $mysqli = shaarliMyConnect();
     updateShaarlieurShaarliUrl($mysqli, $session['shaarlieur_id'], $shaarliUrl);
+    setSession($session);
+    shaarliMyDisConnect($mysqli);
+}
+
+// Met à jour le delai d'appel a son shaarli
+function majShaarliDelai($shaarliDelai) {
+    $session = getSession();
+    $session['shaarlieur_shaarli_delai'] = $shaarliDelai;
+    $mysqli = shaarliMyConnect();
+    updateShaarlieurShaarliDelai($mysqli, $session['shaarlieur_id'], $shaarliDelai);
     setSession($session);
     shaarliMyDisConnect($mysqli);
 }
@@ -532,11 +548,37 @@ function getShaarliUrl() {
     return $session['shaarlieur_shaarli_url'];
 }
 
+// Retourne le delai d'appel du shaarli de l'utilisateur
+function getShaarliDelai() {
+    $session = getSession();
+    if (!isset($session['shaarlieur_shaarli_delai'])) {
+        $session['shaarlieur_shaarli_delai'] = 1;
+    }
+
+    return $session['shaarlieur_shaarli_delai'];
+}
+
 // Retourne l'url du shaarli de l'utilisateur
-function getShaarliUrlOk() {
+function getShaarliUrlOk($shaarlieurId = null) {
+    if (!empty($shaarlieurId)) {
+        $mysqli = shaarliMyConnect();
+        $urlOk = getUrlOkByShaarlieurId($mysqli, $shaarlieurId);
+        shaarliMyDisConnect($mysqli);
+        return $urlOk;
+    }
     $session = getSession();
     return $session['shaarlieur_shaarli_url_ok'];
 }
+
+// Retourne le nombre d'abonné d'un id rss
+function getNbAbonnes($idRss) {
+    $mysqli = shaarliMyConnect();
+    $nbAbonnes = getNbShaarlistesAbonnesByIdRss($mysqli, $idRss);
+    shaarliMyDisConnect($mysqli);
+
+    return $nbAbonnes;
+}
+
 
 // Retourne l'email de l'utilisateur
 function getEmail() {
@@ -645,9 +687,42 @@ function getAbonnements() {
     return $session['shaarlieur_data']['abonnements'];
 }
 
+/**
+ * Retourne la liste des abonnements de l'utilisateur
+ * 
+ * @param string $shaarlieurId : 'stuper'.
+ * 
+ * @return array $abonnements
+ * 
+ */
+function getAbonnementsByShaarlieurId($shaarlieurId) {
+    $mysqli = shaarliMyConnect();
+    $abonnements = getAllAbonnementsId($mysqli, $shaarlieurId);
+    shaarliMyDisConnect($mysqli);
+
+    return $abonnements;
+}
+
 // Retourne le nombre d'abonnement d'un compte
-function getNbAbonnements() {
+function getNbAbonnements($shaarlieurId = null) {
+    if (!empty($shaarlieurId)) {
+        return count(getAbonnementsByShaarlieurId($shaarlieurId));
+    }
+    
     return count(getAbonnements());
+}
+
+// Retourne le nombre d'abonnement d'un compte
+function getPoussinsSolde() {
+    $session = getSession();
+    if (!isset($session['shaarlieur_poussins_solde'])) {
+        $mysqli = shaarliMyConnect();
+        $session['shaarlieur_poussins_solde'] = getPoussinsSoldeByShaarlieurId($mysqli, getUtilisateurId());
+        setSession($session);
+        shaarliMyDisConnect($mysqli);
+    }
+    
+    return $session['shaarlieur_poussins_solde'];
 }
 
 
@@ -658,7 +733,13 @@ function getIdRss() {
 }
 
 // Retourne l'id du flux rss du site
-function getIdOkRss() {
+function getIdOkRss($shaarlieurId = null) {
+    if (!empty($shaarlieurId)) {
+        $mysqli = shaarliMyConnect();
+        $idRssOk = getIdOkRssByShaarlieurId($mysqli, $shaarlieurId);
+        shaarliMyDisConnect($mysqli);
+        return $idRssOk;
+    }
     $session = getSession();
     return $session['shaarlieur_shaarli_url_id_ok'];
 }
@@ -832,6 +913,16 @@ function displayRssButton() {
     return false;
 }
 
+function displayPoussins() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_poussins']) && $session['shaarlieur_data']['display_poussins'] === true) {
+        return true;
+    }
+
+    return false;
+}
+
+
 function displayOnlyUnreadArticles() {
     $session = getSession();
     if (isset($session['shaarlieur_data']['display_only_unread']) && $session['shaarlieur_data']['display_only_unread'] === true) {
@@ -850,6 +941,15 @@ function displayImages() {
     }
 
     return true;
+}
+
+function displayLittleImages() {
+    $session = getSession();
+    if (isset($session['shaarlieur_data']['display_little_img']) && $session['shaarlieur_data']['display_little_img'] === true) {
+        return true;
+    }
+
+    return false;
 }
 
 function displayBlocConversation() {
@@ -1050,14 +1150,26 @@ function getTopTagsFromTags($tags) {
     return $topTags;
 }
 
+/**
+ * Retourne les pseudos poussinés par l'utilisateur
+ * 
+ * @return array('pseudo_1', 'pseudo2')..
+ */
+function getShaarlieursPoussinesDuJour()
+{
+    $mysqli = shaarliMyConnect();
+    $shaarlieursPoussines = getShaarlieursPoussinesByShaarlieurId($mysqli, getUtilisateurId(), date('Ymd'));
+
+    return $shaarlieursPoussines;
+}
 
 /**
  * Retourne l'url de l'icone de profil
  * 
  * @return string 'img/favicon/145487454.ico'
  */
-function getImageProfilSrc() {
-    $idRss = getIdOkRss();
+function getImageProfilSrc($shaarlieurId = null) {
+    $idRss = getIdOkRss($shaarlieurId);
     if (empty($idRss)) {
         return null;
     }
@@ -1083,4 +1195,28 @@ function isInvite() {
     return getUtilisateurId() === '';
 }
 
+
+/**
+ * Retourne le nombre 
+ * de poussins disponibles
+ * 
+ * @return (int)
+ */
+function getNbPoussinsDisponibles()
+{
+    $mysqli = shaarliMyConnect();
+    $shaarlieurId = getUtilisateurId();
+
+    $nbPoussinsLimite = getNbPoussinsLimiteByShaarlieurId($mysqli,  $shaarlieurId);
+    
+    $dateJour = date('Ymd');
+    
+    $nbPoussinsUtilises = getNbPoussinsUtilisesByShaarlieurId($mysqli,  $shaarlieurId, $dateJour);
+    
+    $nbPoussinsDisponibles = $nbPoussinsLimite - $nbPoussinsUtilises;
+
+    shaarliMyDisConnect($mysqli);
+
+    return $nbPoussinsDisponibles;
+}
 

@@ -215,7 +215,7 @@ class River extends Controller
         }
 
         $displayOnlyUnreadArticles = false;
-        if (!$afficherMessagerie) {
+        if (!$afficherMessagerie && !preg_match('#^id:([0-9a-f]{32})$#', $q)) {
             $displayOnlyUnreadArticles = displayOnlyUnreadArticles();
         }
                 
@@ -250,14 +250,28 @@ class River extends Controller
             }
             $rssTitre = $article['rss_titre'];
             $followUrl = '';
+
+            
+            // Le shaarliste est aussi un shaarlieur
+            $discussion['shaarlieur_pseudo'] = null;
+            // Seul les comptes protégés par mdp peuvent se faire poussinés
+            if (!empty($article['shaarlieur_pwd'])) {
+                $discussion['shaarlieur_pseudo'] = $article['shaarlieur_pseudo'];
+                //$followUrl .= ' (<a href="dashboard.php?shaarliste='.($discussion['shaarlieur_pseudo']).'" >Profil</a>)';
+            }
+            
             
             if (getUtilisateurId() !== '') {
-                if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
-                    if(!in_array($article['id_rss'], $abonnements)) {
-                        $followUrl = ' (<a href="#" onclick="javascript:addAbo(this,\'' . $article['id_rss'] . '\', \'add\');return false;">Suivre</a>)';
-                    }else{
-                        $followUrl = ' (<a href="#" onclick="javascript:addAbo(this,\'' . $article['id_rss'] . '\', \'delete\');return false;">Se désabonner</a>)';
-                    }            
+                if (empty($article['shaarlieur_pseudo'])) {
+                    if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
+                        if(!in_array($article['id_rss'], $abonnements)) {
+                            $followUrl = ' (<a href="#" onclick="javascript:lienAddAbo(this,\'' . $article['id_rss'] . '\', \'add\');return false;">Suivre</a>)';
+                        }else{
+                            $followUrl = ' (<a href="#" onclick="javascript:lienAddAbo(this,\'' . $article['id_rss'] . '\', \'delete\');return false;">Se désabonner</a>)';
+                        }            
+                    }
+                } else {
+                    $followUrl = ' (<a href="dashboard.php?shaarliste='.htmlentities($article['shaarlieur_pseudo']).'">Profil</a>)';
                 }
             }
 
@@ -269,7 +283,7 @@ class River extends Controller
                    $followUrl = ' (<a href="#" onclick="javascript:validerLien(this,\'' . $article['id'] . '\', \'validerLien\');return false;">Débloquer ce lien</a>)';
                 }
             }
-            
+
             $rssTitreAffiche = htmlspecialchars($rssTitre);
             
             if(strpos($article['article_uuid'], 'my.shaarli.fr') > 0) {
@@ -364,8 +378,13 @@ class River extends Controller
 
             $discussion['article_uuid'] = $article['article_uuid'];
             $discussion['description'] = $description;
+            //$discussion['description'] = '';
             $discussion['article_url'] = $article['article_url'];
             $discussion['article_date'] = $articleDateTime->format('YmdHis');
+            $discussion['id_commun'] = $article['id_commun'];
+            $discussion['id'] = $article['id'];
+            $discussion['id_rss'] = $article['id_rss'];
+            
 
             $articleFirstDate = $article['article_date'];
             if(isset($found[$article['id_commun']])) {
@@ -467,8 +486,47 @@ class River extends Controller
             }
         }
  
- 
+    
+        function detectSublink(&$noeud, &$discussionsOrigine)
+        {
+            
+            $articleUrlSansHttps = str_replace('https://', 'http://', $discussionsOrigine['article_url']);
+            if (isset($noeud[md5($articleUrlSansHttps)])) {   
+                $discussionsOrigine['article_url'] = $articleUrlSansHttps;
+            }
+
+            // Le lien d'origine est trouvé \o/
+            if (isset($noeud[md5($discussionsOrigine['article_url'])])) {
+                if (!isset($noeud[md5($discussionsOrigine['article_url'])]['sublink'])) {
+                    $noeud[md5($discussionsOrigine['article_url'])]['sublink'] = array();
+                }
+                // Reshaare du lien d'origine uniquement
+                $noeud[md5($discussionsOrigine['article_url'])]['sublink'][md5($discussionsOrigine['article_uuid'])] = $discussionsOrigine;
+
+                return true;
+            }
+            // Peut etre sur un de ces sublink ? 
+            foreach ($noeud as $d => $disc) {
+                //  Si présence de commentaire, on teste
+                if (!empty($noeud[$d]['sublink'])) {
+                    return detectSublink($noeud[$d]['sublink'], $discussionsOrigine);
+                }
+            }
+
+            return false;
+        }
         
+        function sortNoeudSublink(&$noeud) {
+            //  Si présence de commentaire, on tri sur eux avant
+            if (!empty($noeud['sublink'])) {
+                foreach ($noeud['sublink'] as $d => $disc) {
+                    sortNoeudSublink($noeud['sublink'][$d]);
+                }
+                usort($noeud['sublink'], "triParDate");
+            }
+        }
+
+
         
         // A partir d'ici, pour chaque discussion, on réarrangent les liens dedans pour faire des groupes
         $foundGroupes = array();
@@ -487,7 +545,7 @@ class River extends Controller
                     $foundGroupes[$idCommun]['discussions'][md5($discussion['article_uuid'])] = $discussion;
 
                     // Pour le flux rss, on construit la chaine ici
-                    $foundGroupes[$idCommun]['description'] .= sprintf('<b>%s</b><br/>%s', $discussion['shaarliste_titre'], $discussion['description']);
+                    $foundGroupes[$idCommun]['description'] .= sprintf('<b>%s</b><br/>%s<br/><br/>', $discussion['shaarliste_titre'], $discussion['description']);
                     // On l'enlève du found d'origine
                     unset($found[$idCommun]['discussions'][$idOriginal]);
                     $lienTypeShaarli = true;
@@ -503,81 +561,75 @@ class River extends Controller
                         $foundGroupes[$idCommun]['discussions'][md5($discussion['article_uuid'])] = $discussion;
 
                         // Pour le flux rss, on construit la chaine ici
-                        $foundGroupes[$idCommun]['description'] .= sprintf('<b>%s</b><br/>%s', $discussion['shaarliste_titre'], $discussion['description']);
+                        $foundGroupes[$idCommun]['description'] .= sprintf('<b>%s</b><br/>%s<br/>', $discussion['shaarliste_titre'], $discussion['description']);
                         
                         // On l'enlève du found d'origine
                         unset($found[$idCommun]['discussions'][$idOriginal]);
                     }
                 }
             }
+
             if(displayDiscussions()) {
-                // On traite maintenant les commentaires liés aux reshaares
-                foreach ($found[$idCommun]['discussions'] as $idOriginal => $discussion) {
-                    // Le lien d'origine est introuvable :'(
-                    if (!isset($foundGroupes[$idCommun]['discussions'][md5($discussion['article_url'])])) {
-                        continue;
-                    }
-                    
-                    if (!isset($foundGroupes[$idCommun]['discussions'][md5($discussion['article_url'])]['sublink'])) {
-                        $foundGroupes[$idCommun]['discussions'][md5($discussion['article_url'])]['sublink'] = array();
-                    }
-                    // Reshaare du lien d'origine uniquement
-                    $foundGroupes[$idCommun]['discussions'][md5($discussion['article_url'])]['sublink'][md5($discussion['article_uuid'])] = $discussion;
-                    // On l'enlève du found d'origine
-                    unset($found[$idCommun]['discussions'][$idOriginal]);
-                }
-                
-                // On traite maintenant les commentaires liés aux commentaires 
-                foreach ($found[$idCommun]['discussions'] as $idOriginal => $discussion) {
-                    // Le commentaire principal n'est pas trouvé
-                    foreach ($foundGroupes[$idCommun]['discussions'] as $d => $disc) {
-                        
-                        //  Pas de commentaires, on passe
-                        if (empty($disc['sublink'])) {
-                            continue;
-                        }
-                        foreach ($disc['sublink'] as $idCommentaire => $commentaire) {
-                            if ($idCommentaire == md5($discussion['article_url'])) {
-                                if (!isset($foundGroupes[$idCommun]['discussions'][$d]['sublink'][$idCommentaire]['sublink'])) {
-                                    $foundGroupes[$idCommun]['discussions'][$d]['sublink'][$idCommentaire]['sublink'] = array();
-                                }
-                                // Commentaire sur commentaire
-                                $foundGroupes[$idCommun]['discussions'][$d]['sublink'][$idCommentaire]['sublink'][md5($discussion['article_uuid'])] = $discussion;
-                    
-                                // On l'enlève du found d'origine
-                                unset($found[$idCommun]['discussions'][$idOriginal]);
-                                break 2;
-                            }
+                $profondeurMax = 10;
+                $profondeurCourante = 0;
+                do {
+                    // On traite maintenant les commentaires liés aux reshaares
+                    foreach ($found[$idCommun]['discussions'] as $idOriginal => $discussion) {
+                        if (true == detectSublink($foundGroupes[$idCommun]['discussions'], $found[$idCommun]['discussions'][$idOriginal])) {
+                            unset($found[$idCommun]['discussions'][$idOriginal]);
                         }
                     }
-                }
+                    $profondeurCourante++;
+                } while($profondeurCourante < $profondeurMax && count($found[$idCommun]['discussions']) != 0);
             }
             // Faire pareil pour les commentaires de commentaires de commentaires etc...
-            
         }
 
+
+        // Maintenant on vire les articles des gens auxquels on n'est pas abonné
+        function unsetNoeudSiPasAbonne(&$noeud, $abonnements) {
+            //  Si présence de commentaire, on tri sur eux avant
+            if (!empty($noeud['sublink'])) {
+                foreach ($noeud['sublink'] as $d => $disc) {
+                    if (!in_array($disc['id_rss'], $abonnements )) {
+                        unset($noeud['sublink'][$d]);
+                        continue;
+                    }
+                    unsetNoeudSiPasAbonne($noeud['sublink'][$d], $abonnements);
+                }
+            }
+        }
+        if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
+            foreach ($foundGroupes as $idCommun => $article) {
+                foreach ($article['discussions'] as $d => $disc) {
+                    // Si l'utilisateur original de la discussion n'est pas dans
+                    // la liste des abonnements, on supprime la discussion
+                    if (!in_array($disc['id_rss'], $abonnements )) {
+                        unset($foundGroupes[$idCommun]['discussions'][$d]);
+                        continue;
+                    }
+                    // Si l'utilisateur souhaite tout de même voir les commentaires des shaarlistes non suivi, on ne filtre par les sous discussions
+                    if (displayShaarlistesNonSuivis()) {
+                        continue;
+                    }
+                    unsetNoeudSiPasAbonne($foundGroupes[$idCommun]['discussions'][$d], $abonnements);
+                }
+                // Si le nombre de discussions est vide, on supprime l'article
+                if (count($foundGroupes[$idCommun]['discussions']) === 0) {
+                    unset($foundGroupes[$idCommun]);
+                }
+            }
+        }
+        
+        
         // Tri par date que maintenant car les clefs des tableaux se barrent via le usort
         foreach ($foundGroupes as $idCommun => $article) {
             foreach ($article['discussions'] as $d => $disc) {
-                //  Pas de commentaires, on passe
-                if (empty($disc['sublink'])) {
-                    continue;
-                }
-                foreach ($disc['sublink'] as $idCommentaire => $commentaire) {
-                    // On inverse le tri pour les dates pour chaque subsub
-                    if (isset($foundGroupes[$idCommun]['discussions'][$d]['sublink'][$idCommentaire]['sublink'])) {
-                        usort($foundGroupes[$idCommun]['discussions'][$d]['sublink'][$idCommentaire]['sublink'], "triParDate");
-                    }
-                }
-                // On inverse le tri pour les dates
-                if (isset($foundGroupes[$idCommun]['discussions'][$d]['sublink'])) {
-                    usort($foundGroupes[$idCommun]['discussions'][$d]['sublink'] , "triParDate");
-                }
+                sortNoeudSublink($foundGroupes[$idCommun]['discussions'][$d]);
             }
         }
 
         $found = $foundGroupes;
-
 
         // Suppression des tags en doublon       
         foreach ($found as $k => $article) {
@@ -845,6 +897,8 @@ class River extends Controller
             }
 
 
+            $nbPoussinsDisponibles = getNbPoussinsDisponibles();
+
             $params = array('sort' => $reversedSorts[$sort]
                 , 'sortBy' => $sortBy
                 , 'date_to' => $toDateTime->format('Y-m-d')
@@ -884,6 +938,8 @@ class River extends Controller
                 , 'displayOnlyArticle' => $displayOnlyArticle
                 , 'displayBlocConversation' => displayBlocConversation()
                 , 'tags_json'   => json_encode($tags)
+                , 'shaarlieurs_poussines' => getShaarlieursPoussinesDuJour()
+                , 'nb_poussins_disponibles' => $nbPoussinsDisponibles
                 );
             header('Content-Type: text/html; charset=utf-8');
             $this->render($params);
@@ -907,28 +963,8 @@ class River extends Controller
                 $this->renderMenu('Shaarli.fr', $params['rss_url']);
                 ?>
 
-                <?php
-                if (useTopButtons() && !$params['afficher_messagerie']) {
-                    ?>
-                    <div class="row">
-                        <div class="columns large-12 text-center show-for-medium-up">
-                            <a class="button" href="<?php eh($params['href_top_jour']); ?>">Top du jour</a>
-                            <a class="button" href="<?php eh($params['href_top_hier']); ?>">Top d'hier</a>
-                            <a class="button" href="<?php eh($params['href_top_semaine']);?>">Top hebdo</a>
-                            <!--<a class="button" href="<?php eh($params['href_top_mois']); ?>">Top du mois</a>-->
-                        </div>
-                        <div class="columns large-12 text-center show-for-small-only">
-                            <a class="button tiny" href="<?php eh($params['href_top_jour']); ?>">Top du jour</a>
-                            <a class="button tiny" href="<?php eh($params['href_top_hier']); ?>">Top d'hier</a>
-                            <a class="button tiny" href="<?php eh($params['href_top_semaine']);?>">Top hebdo</a>
-                            <!--<a class="button" href="<?php eh($params['href_top_mois']); ?>">Top du mois</a>-->
-                        </div>
-                    </div>
-                    <br/>
-                    <?php
-                }
-                ?>
                 <?php if (!$params['afficher_messagerie']) { ?>
+                <br/>
                 <form method="GET" action="index.php" id="searchform" class="<?php if('yes' == $params['filter_on']) { echo 'hidden'; } ?>">
                     <div>
                         <div class="columns large-12">
@@ -1063,7 +1099,9 @@ class River extends Controller
                 <div class="clear"></div>
                 
                 <br/>
-                <?php if (!$params['afficher_messagerie'] && $params['displayBlocConversation'] && !empty($params['my_shaarli'])) { ?>
+                <?php if (!$params['afficher_messagerie'] && $params['displayBlocConversation'] && !empty($params['my_shaarli'])
+                       && getUtilisateurId() !== ''
+                ) { ?>
                 <div class="">
                     <div class="columns large-12">
                         <div class="fake-panel">
@@ -1204,7 +1242,7 @@ class River extends Controller
             }
         }
     }
-    public static function renderArticle($params, $found)
+    public function renderArticle($params, $found)
     {
         $class = '';
         $discussions = array_reverse($found['discussions'], true);
@@ -1215,11 +1253,12 @@ class River extends Controller
 
         ?>
         <div id="div-article-<?php eh($found['id_commun']); ?>" data-id-commun="<?php eh($found['id_commun']); ?>">
+            <a href="?q=id:<?php eh($found['id_commun']); ?>" style="display:none">Permalien</a>
             <div class="columns large-12">
-                <div class="panel fake-panel article <?php eh($found['read-class']); ?> persist-area">
-                    <div class="columns large-11 <?php if(useRefreshButton()) { ?>small-9<? } else {?>small-11<?php } ?>">
+                <div id="article-<?php eh($found['id_commun']); ?>" class="panel fake-panel article <?php eh($found['read-class']); ?> persist-area">
+                    <div class="columns large-11 small-12">
                         <h3 class="<?php echo $class; ?> no-margin-bottom">
-                            <a title="Go to original place" href="<?php eh($found['link']); ?>" onmouseup="ireadit(this, '<?php eh($found['id_commun']); ?>')"><?php eh($found['title']); ?>
+                            <a title="Go to original place" href="<?php eh($found['link']); ?>" onmouseup="ireadit('<?php eh($found['id_commun']); ?>')"><?php eh($found['title']); ?>
                             <?php 
                             if (count($discussions) > 1) { 
                                 echo sprintf('[%s]', count($discussions));
@@ -1232,12 +1271,12 @@ class River extends Controller
                     
                     <?php if(!isInvite()) { ?>
                         <?php if(useRefreshButton()) { ?>
-                        <div class="columns large-1 small-3 text-right">
+                        <div class="columns large-1 show-for-medium-up text-right">
                             <span data-article-id="<?php eh($found['id_commun']); ?>" class="a-refresh-article cercle-fleche"><span id="img-article-refresh-<?php eh($found['id_commun']); ?>" >↺</span></span>
                             <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
                         </div>
                         <?php } else { ?>
-                        <div class="columns large-1 small-1 text-right">
+                        <div class="columns large-1 show-for-medium-up text-right">
                             <span onclick="return confirmIgnoreIt(<?php eh($found['id_commun']); ?>);" class="croix noselect" data-article-id="<?php eh($found['id_commun']); ?>" title="Cette discussion ne m'intéresse pas">x</span>
                         </div>
                         <?php } ?>
@@ -1254,190 +1293,15 @@ class River extends Controller
                                 <?php 
                                 $d = 0;
                                 foreach($discussions as $discussion) {
-                                    $discussionClass = 'div-discussion';
-                                    
-                                    // Le premier article a une hauteur max si option !extented
-                                    if ($d == 0 && $params['extended']) {
-                                        $discussionClass .= ' div-discussion-max-height';
-                                    }
-                                    
-                                    if ($d > 0 && $params['extended']) {
-                                        $discussionClass .= ' div-discussion-hidden hidden';
-                                    }
-                                    if (isset($discussion['edit_link']) || isset($discussion['comment_link'])) {
-                                        $discussionClass .= ' div-discussion-edit';
-                                    }
-                                    ?><div data-discussion-id="<?php eh($found['id_commun']); ?>" class="<?php echo $discussionClass;?>">
-                                        
-                                        
-                                        <?php 
-                                        if (isset($discussion['edit_link'])) {
-                                            ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? eh($discussion['edit_link']); ?>" target="_blank"> </a><?php
-                                        } 
-                                        elseif (isset($discussion['comment_link'])) {
-                                            // Lien de réponse
-                                            ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? eh($discussion['comment_link']); ?>" target="_blank"> </a><?php
-                                        }
-
-                                        ?>
-                                        <div class="row">
-                                        <?php
-                                        if (displayImages()) {
-                                        ?>
-                                            <div class="columns large-1 small-3">
-                                                <a href="<?php eh($discussion['shaarliste_href']);?>">
-                                                    <img class="entete-avatar" width="44" height="44" src="<?php eh($discussion['avatar_src']);?>"/>
-                                                </a>
-                                            </div>
-                                        <?php
-                                        }
-                                        ?>
-                                            <div class="columns large-11 small-9"> 
-                                                <span class="entete-pseudo">
-                                                    <b>
-                                                        <a <?php if ($discussion['shaarliste_class']) {?>class="<?php eh($discussion['shaarliste_class']);?>"<?php }?> href="<?php eh($discussion['shaarliste_href']);?>"><?php eh($discussion['shaarliste_titre']);?></a>
-                                                    </b>
-                                                    <span class="mini-on-smartphone opacity-test-3"><?php eh($discussion['article_date_humaine']);?></span>
-                                                </span>
-                                            </div>
-                                            <br/>
-                                            <div class="columns large-11 small-9 <?php if (displayImages()) { ?>right<?php } ?>"> 
-                                                <?php
-                                                echo $discussion['description'];
-                                                ?>
-                                            </div>
-                                        </div>
-                                        <br/><br/>
-                                        <div class="clear"></div>
-                                    </div>
-                                    
-                                    
-                                    <?php
-                                    $d++;
-                                    
-                                    // Commentaires sur un shaare
-                                    if (isset($discussion['sublink'])) {
-                                        foreach ($discussion['sublink'] as $sublink) {
-                                            $discussionClass = 'div-discussion';
-                                            if ($d > 0 && $params['extended']) {
-                                                $discussionClass .= ' div-discussion-hidden hidden';
-                                            }
-                                            if (isset($sublink['edit_link']) || isset($sublink['comment_link'])) {
-                                                $discussionClass .= ' div-discussion-edit';
-                                            }
-                                            ?>
-                                            <div class="row">
-                                                <div class="columns large-11 right">
-                                                    <div class="<?php echo $discussionClass;?>">
-                                                        <?php
-                                                            if (isset($sublink['edit_link'])) {
-                                                                ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? eh($sublink['edit_link']); ?>" target="_blank"> </a><?php
-                                                            } 
-                                                            elseif (isset($sublink['comment_link'])) {
-                                                                // Lien de réponse
-                                                                ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? eh($sublink['comment_link']); ?>" target="_blank"> </a><?php
-                                                            }
-                                                        ?>
-                                                        <div class="row">
-                                                        <?php
-                                                        if (displayImages()) {
-                                                        ?>
-                                                            <div class="columns large-1 small-3">
-                                                                <a href="<?php eh($sublink['shaarliste_href']);?>">
-                                                                    <img class="entete-avatar" width="44" height="44" src="<?php eh($sublink['avatar_src']);?>"/>
-                                                                </a>
-                                                            </div>
-                                                        <?php
-                                                        }
-                                                        ?>
-                                                            <div class="columns large-11 small-9"> 
-                                                                <span class="entete-pseudo">
-                                                                    <b>
-                                                                        <a <?php if ($sublink['shaarliste_class']) {?>class="<?php eh($sublink['shaarliste_class']);?>"<?php }?> href="<?php eh($sublink['shaarliste_href']);?>"><?php eh($sublink['shaarliste_titre']);?></a>
-                                                                    </b>
-                                                                    <span class="mini-on-smartphone opacity-test-3"><?php eh($sublink['article_date_humaine']);?></span>
-                                                                </span>
-                                                            </div>
-                                                            <br/>
-                                                            <div class="columns large-11 small-9 <?php if (displayImages()) { ?>right<?php } ?>"> 
-                                                                <?php
-                                                                echo $sublink['description'];
-                                                                ?>
-                                                            </div>
-                                                        </div>
-                                                        <br/><br/>
-                                                        <div class="clear"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <?php
-                                            $d++;
-                                            if (!empty($sublink['sublink'])) {
-                                                foreach ($sublink['sublink'] as $subsublink) {
-                                                    $discussionClass = 'div-discussion';
-                                                    if ($d > 0 && $params['extended']) {
-                                                        $discussionClass .= ' div-discussion-hidden hidden';
-                                                    }
-                                                    if (isset($sublink['edit_link']) || isset($subsublink['comment_link'])) {
-                                                        $discussionClass .= ' div-discussion-edit';
-                                                    }
-                                                    ?>
-                                                    <div class="row">
-                                                        <div class="columns large-10 right">
-                                                            <div class="<?php echo $discussionClass;?>">
-                                                                <?php
-                                                                    if (isset($subsublink['edit_link'])) {
-                                                                        ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? eh($subsublink['edit_link']); ?>" target="_blank"> </a><?php
-                                                                    } 
-                                                                    elseif (isset($subsublink['comment_link'])) {
-                                                                        // Lien de réponse
-                                                                        ?><a data-article-id="<?php eh($found['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? eh($subsublink['comment_link']); ?>" target="_blank"> </a><?php
-                                                                    }
-                                                                ?>
-                                                                <div class="row">
-                                                                <?php
-                                                                if (displayImages()) {
-                                                                ?>
-                                                                    <div class="columns large-1 small-3">
-                                                                        <a href="<?php eh($subsublink['shaarliste_href']);?>">
-                                                                            <img class="entete-avatar" width="44" height="44" src="<?php eh($subsublink['avatar_src']);?>"/>
-                                                                        </a>
-                                                                    </div>
-                                                                <?php
-                                                                }
-                                                                ?>
-                                                                    <div class="columns large-11 small-9"> 
-                                                                        <span class="entete-pseudo">
-                                                                            <b>
-                                                                                <a <?php if ($subsublink['shaarliste_class']) {?>class="<?php eh($subsublink['shaarliste_class']);?>"<?php }?> href="<?php eh($subsublink['shaarliste_href']);?>"><?php eh($subsublink['shaarliste_titre']);?></a>
-                                                                            </b>
-                                                                            <span class="mini-on-smartphone opacity-test-3"><?php eh($subsublink['article_date_humaine']);?></span>
-                                                                        </span>
-                                                                    </div>
-                                                                    <br/>
-                                                                    <div class="columns large-11 small-9 <?php if (displayImages()) { ?>right<?php } ?>"> 
-                                                                        <?php
-                                                                        echo $subsublink['description'];
-                                                                        ?>
-                                                                    </div>
-                                                                </div>
-                                                                <br/><br/>
-                                                                <div class="clear"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <?php
-                                                    $d++;
-                                                }
-                                            }
-                                        }
-                                    }
+                                    $this->renderDiscussion($discussion, $params, $d);
                                 }
                                 ?>
 
                                 <?php 
                                 // Bloc commenter
-                                if (!empty($params['my_shaarli']) && strpos($found['description'], $params['my_shaarli']) === false ) {
+                                if (!empty($params['my_shaarli']) && strpos($found['description'], $params['my_shaarli']) === false 
+                                  && getUtilisateurId() !== ''
+                                ) {
                                 ?>
                                 <div class="columns <?php if (displayImages()) {?>large-11 small-9 right<?php } else {?>large-12 small-12 <?php } ?>">
                                     <form target="_blank" method="GET" action="<?php echo $params['my_shaarli']; ?>">
@@ -1465,7 +1329,7 @@ class River extends Controller
                     <?php if (displayImages()) { ?>
                     <div class="columns large-2 small-2">
                         <?php if (!empty($found['url_image'])) { ?>
-                        <a class="thumbnail-modal-reveal visible-on-hover" data-reveal-id="thumbnail-<?php eh($found['id_commun']); ?>" title="Zoom it" href="<?php eh($found['link']); ?>">
+                        <a data-article-id="<?php eh($found['id_commun']); ?>" class="thumbnail-modal-reveal visible-on-hover" data-reveal-id="thumbnail-<?php eh($found['id_commun']); ?>" title="Zoom it" href="<?php eh($found['link']); ?>">
                             <div class="article-thumbnail" style="background:url('<?php eh($found['url_image']); ?>'); "></div>
                         </a>
                         <div id="thumbnail-<?php eh($found['id_commun']); ?>" class="reveal-modal large" data-reveal aria-labelledby="Miniature" aria-hidden="true" role="dialog">
@@ -1509,6 +1373,116 @@ class River extends Controller
         </div>
         <?php
     }
+    protected function renderDiscussion($sublink, $params, &$d, $profondeur = 1) {
+        $discussionClass = 'div-discussion';
+
+        // Le premier article a une hauteur max si option !extented
+        if ($d == 0 && $params['extended']) {
+            $discussionClass .= ' div-discussion-max-height';
+        }
+        
+        if ($d > 0 && $params['extended']) {
+            $discussionClass .= ' div-discussion-hidden hidden div-discussion-border-left';
+        }
+        if (isset($sublink['edit_link']) || isset($sublink['comment_link'])) {
+            $discussionClass .= ' div-discussion-edit';
+        }
+        $columnsClass = 'columns large-12';
+        $largeurColonne = max(1, 13 - $profondeur);
+        if ($profondeur > 0) {
+            $columnsClass = "columns large-$largeurColonne right";
+        }
+        
+        ?>
+        <div class="row">
+            <div class="<?php echo $columnsClass; ?>">
+                <div class="columns <?php echo $discussionClass;?>" data-discussion-id="<?php eh($sublink['id_commun']); ?>">
+                    <?php
+                        if (isset($sublink['edit_link'])) {
+                            ?><a data-article-id="<?php eh($sublink['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? eh($sublink['edit_link']); ?>" target="_blank"> </a><?php
+                        } 
+                        elseif (isset($sublink['comment_link'])) {
+                            // Lien de réponse
+                            ?><a data-article-id="<?php eh($sublink['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? eh($sublink['comment_link']); ?>" target="_blank"> </a><?php
+                        }
+                        // Lien don de poussins                       
+                        if (isShaarliste() && displayPoussins() && !empty($sublink['shaarlieur_pseudo']) && $sublink['shaarlieur_pseudo'] !== getUtilisateurId()) {
+                            // Pseudo déjà poussiné
+                            if (isset($params['shaarlieurs_poussines'][$sublink['shaarlieur_pseudo']][$sublink['id']])) {
+                                ?><span class="icon-poussin-ok" > </span><?php
+                            } elseif($params['nb_poussins_disponibles'] > 0) {
+                                ?><span data-shaarlieur-id="<?php eh($sublink['shaarlieur_pseudo']); ?>" data-lien-id="<?php eh($sublink['id']); ?>" class="icon-poussin a-poussin" > </span><?php
+                            }
+                        }
+                    ?>
+                    <div class="row">
+                    <?php
+                    if (displayImages()) {
+                    ?>
+                        <?php
+                        if (displayLittleImages()) {
+                        ?>
+                        <div class="columns large-1 small-3 text-right no-padding" style="padding-right: 10px;">
+                            <a href="<?php eh($sublink['shaarliste_href']);?>">
+                                <img style="display: inline-block;vertical-align: baseline;" class="entete-avatar-mini" width="16" height="16" src="<?php eh($sublink['avatar_src']);?>"/>
+                            </a>
+                        </div>
+                        <?php
+                        } else {
+                        ?>
+                        <div class="columns large-1 small-3 text-center">
+                            <a href="<?php eh($sublink['shaarliste_href']);?>">
+                                <img style="display: inline-block;vertical-align: baseline;" class="entete-avatar" width="44" height="44" src="<?php eh($sublink['avatar_src']);?>"/>
+                            </a>
+                        </div>
+                        <?php
+                        }
+                        ?>
+                    <?php
+
+                    }
+                    ?>
+                        <div class="column large-11 small-9 <?php if (displayLittleImages()) { ?>no-padding<?php } ?>"> 
+                            <span class="entete-pseudo">
+                                <b>
+                                    <a <?php if ($sublink['shaarliste_class']) {?>class="<?php eh($sublink['shaarliste_class']);?>"<?php }?> href="<?php eh($sublink['shaarliste_href']);?>"><?php eh($sublink['shaarliste_titre']);?></a>
+                                    <?php 
+                                    if (!empty($sublink['shaarliste_cible_titre'])) {
+                                    ?>
+                                        <a href="<?php eh($sublink['shaarliste_cible_href']);?>">&gt; <?php eh($sublink['shaarliste_cible_titre']); ?></a>
+                                    <?php
+                                    }
+                                    ?>
+                                </b>
+                                
+                            </span>
+                            <br/>
+                            <span class="mini-on-smartphone opacity-test-3 tiny"><?php eh($sublink['article_date_humaine']);?></span>
+                        </div>
+                        <br/>
+                        <div class="column large-11 small-9 <?php if (displayImages()) { ?>right<?php } ?>"> 
+                            <?php
+                            echo $sublink['description'];
+                            ?>
+                        </div>
+                    </div>
+                    <br/><br/>
+                    <div class="clear"></div>
+                </div>
+            </div>
+        </div>
+        <?php
+        $d++;
+
+        // Itération sur les commentaires et les commentaires de commentaires etc...
+        if (isset($sublink['sublink'])) {
+            $profondeur++;
+            foreach ($sublink['sublink'] as $subsublink) {
+                $this->renderDiscussion($subsublink, $params, $d, $profondeur);
+            }
+        }
+    }
+ 
 
     public static function renderScript($params = array())
     {
@@ -1600,7 +1574,7 @@ class River extends Controller
                 r.send(params);
             }
             
-            function ireadit(him, id) 
+            function ireadit(id) 
             {
                 var r = new XMLHttpRequest(); 
                 var params = "do=ireadit&id=" + id;
@@ -1609,9 +1583,25 @@ class River extends Controller
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
                         if(r.status == 200){
-                            var blocArticle = him.parentNode.parentNode.parentNode;
-                            removeClass(blocArticle, 'not-read');
-                            addClass(blocArticle, 'read');
+                            var blocArticle = $('#article-' + id);
+                            blocArticle.removeClass('not-read');
+                            blocArticle.addClass('read');
+                        }
+                        return true; 
+                    }
+                };
+                r.send(params);
+            }
+
+            function ipoussinhim(shaarlieurId, lienId) 
+            {
+                var r = new XMLHttpRequest(); 
+                var params = "do=poussin&shaarlieur=" + shaarlieurId +"&id_lien=" + lienId;
+                r.open("POST", "add.php", true); 
+                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                r.onreadystatechange = function () {
+                    if (r.readyState == 4) {
+                        if(r.status == 200){
                         }
                         return true; 
                     }
@@ -1666,33 +1656,6 @@ class River extends Controller
                 return true;
             }
 
-            function addAbo(that, id, action) {
-                var r = new XMLHttpRequest(); 
-                var params = "do="+action+"&id=" + id;
-                r.open("POST", "add.php", true); 
-                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                r.onreadystatechange = function () {
-                    if (r.readyState == 4) {
-                        if(r.status == 200){
-                            if(action == 'add') {
-                                that.text = 'Se désabonner';
-                                that.innerHTML = 'Se désabonner';
-                                that.onclick = function () { addAbo(that, id, 'delete'); return false; };
-                            }else {
-                                that.text = 'Suivre';
-                                that.innerHTML = 'Suivre';
-                                that.onclick = function () { addAbo(that, id, 'add'); return false; };
-                            }
-                            return; 
-                        }
-                        else {
-                            that.text = '-Erreur-';
-                            return; 
-                        }
-                    }
-                }; 
-                r.send(params);
-            }
             
             function validerLien(that, id, action) {
                 var r = new XMLHttpRequest(); 
@@ -1729,7 +1692,7 @@ class River extends Controller
         $(document).on("click", '.a-reshaarlier', function() {
             var articleId = $(this).attr('data-article-id');
             $(this).closest("form").submit();
-            $('#textarea-conversation-' + articleId).attr('disabled', 'disabled');
+            $('#textarea-conversation-' + articleId).attr('readonly', 'readonly');
             $(this).attr('disabled', 'disabled');
             
             var shaarliUrl = '<?php echo getShaarliUrl() . '?' ;?>';
@@ -1778,7 +1741,7 @@ class River extends Controller
         $('#conversation').on("click", function() {
             $('#form-conversation').submit();
             $('#form-conversation').find('input').attr('disabled', 'disabled');
-            $('#form-conversation').find('textarea').attr('disabled', 'disabled');
+            $('#form-conversation').find('textarea').attr('readonly', false);
             $(window).focus(function(){
                 synchroShaarliLastArticle();
                 $(window).unbind('focus');
@@ -1809,13 +1772,15 @@ class River extends Controller
 
                     // On reactive le champs de conversation
                     $('#form-conversation').find('input').attr('disabled', false);
-                    $('#form-conversation').find('textarea').attr('disabled', false);
+                    $('#form-conversation').find('textarea').attr('readonly', false);
                     $('#conversation').hide();
                 }
             });
         }
         
-        synchroShaarli();
+        $(function() {
+            synchroShaarli();
+        });
 
         function refreshArticle(articleId, ssiTextePresent) {
             $('#img-article-refresh-' + articleId).addClass('refresh-on');
@@ -1834,7 +1799,7 @@ class River extends Controller
                     });
                 } else {
                     // On ne raffraichie pas car le commentaire n'est pas retrouvé
-                    $('#textarea-conversation-' + articleId).attr('disabled', false);
+                    $('#textarea-conversation-' + articleId).attr('readonly', false);
                     $('#input-conversation-' + articleId).attr('disabled', false);
                 }
             });
@@ -1906,11 +1871,20 @@ class River extends Controller
 
         $(document).on("click", '.thumbnail-modal-reveal', function() {
             var id = $(this).attr("data-reveal-id");
+            
             var imgElement = $("#"+id+"-src");
             imgElement.attr('src', imgElement.attr('data-src'));
+            ireadit($(this).attr("data-article-id"));
         });
         
-
+        $(document).on("click", '.a-poussin', function() {
+            var shaarlieurId = $(this).attr("data-shaarlieur-id");
+            var lienId = $(this).attr("data-lien-id");
+            ipoussinhim(shaarlieurId, lienId);
+            $(this).removeClass('icon-poussin');
+            $(this).addClass('icon-poussin-ok');
+            $(this).removeClass('a-poussin');
+        });
 
         $(document).foundation(); 
         

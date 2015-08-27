@@ -101,6 +101,19 @@ class Dashboard extends Controller
                     </div>
                     <div class="column large-12">
                         <div class="panel">
+                            <h3>Contributions Juillet 2015</h3>
+                            <div class="row">
+                                <div class="column large-12">
+                                  Merci à toi Zouzou pour ton don de Juillet également !
+                                </div>
+                                <div class="column large-12">
+                                  Je remercie évidemment de même toutes les personnes qui ont fait un don financier ou non :-)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column large-12">
+                        <div class="panel">
                             <h3>Contributions Juin 2015</h3>
                             <div class="row">
                                 <div class="column large-12">
@@ -119,6 +132,10 @@ class Dashboard extends Controller
                             </div>
                         </div>
                     </div>
+                    <!--
+                        Je tiens à remercier tinu qui me soutient tous les jours dans cette belle aventure !
+                        Un bisou discret pour toi -> :*
+                    -->
                 </div>
                 
                 <div class="row">

@@ -40,7 +40,7 @@ function captureUrl($url, $id, $width = 450, $height = 450, $cache = false) {
         // On regarde le Content-Type de l'url
         $headersMeilleurArticleDuJour = @get_headers($url, 1);
         // Si c'est une image, on l'enregistre directement
-        if (isset($headersMeilleurArticleDuJour['Content-Type'])) {
+        if (isset($headersMeilleurArticleDuJour['Content-Type']) && is_string($headersMeilleurArticleDuJour['Content-Type'])) {
             if (strpos($headersMeilleurArticleDuJour['Content-Type'], 'image/jpeg') === 0
             && false !== ($imageMeilleurArticleDuJour = file_get_contents($url))) {
                 file_put_contents($imgCapturePath, $imageMeilleurArticleDuJour);

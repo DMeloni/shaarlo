@@ -132,6 +132,13 @@ input:focus{background:#EEE;color:#3465A4;border-color:#3465A4;}
     border-radius: 6px;
     margin-top: 6px;
 }
+.super-entete-avatar{
+    border: 1px solid;
+    border-radius: 6px;
+}
+.entete-avatar-mini{
+    margin-top: 6px;
+}
 .div-discussion {
     margin-bottom:1em;
 }
@@ -439,6 +446,27 @@ hr.mini {
     display: none;
     z-index:1;
 }
+.icon-poussin {
+    height:32px;
+    width:32px;
+    position: absolute;
+    right: 47px;
+    background:url('img/poussin_icon.png');
+    display: none;
+    z-index:1;
+}
+
+.icon-poussin-ok {
+    height:32px;
+    width:32px;
+    position: absolute;
+    right: 47px;
+    background:url('img/poussin_icon.png');
+    background-position:-32px 0px;
+    display: none;
+    z-index:1;
+}
+
 
 .icon-edition {
     height:32px;
@@ -450,6 +478,31 @@ hr.mini {
     z-index:2;
 }
 
+.icon-gear {
+    height:32px;
+    width:32px;
+    background:url('img/icon_gear.png');
+    display: inline-block;
+    opacity:0;
+}
+
+.shaarliste-selection:hover .icon-gear {
+    opacity: 1;
+    -webkit-transition: opacity 0.5s ease-in-out;
+    -moz-transition: opacity 0.5s ease-in-out;
+    -o-transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
+}
+
+@media screen and (max-width: 640px) {
+    .icon-gear {
+        opacity: 1;
+    }
+}
+
+
+
+.icon-poussin:hover,
 .icon-comment:hover,
 .icon-edition:hover {
     cursor:pointer;
@@ -458,9 +511,16 @@ hr.mini {
 .div-discussion-edit:hover {
     background: #F7F7F7;
 }
+
+.div-discussion-edit:hover .icon-poussin-ok,
+.div-discussion-edit:hover .icon-poussin,
 .div-discussion-edit:hover .icon-comment,
 .div-discussion-edit:hover .icon-edition {
     display: inline-block;
+}
+
+.div-discussion-border-left {
+    border-left: 1px solid #E0E0E0;
 }
 
 #div-container-articles .article-footer { display: flex ; }

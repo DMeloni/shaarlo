@@ -64,9 +64,9 @@ function insertEntites($mysqli, $table, $entites) {
     $requeteClefSQL = implode(', ', $clefsSQL);
     
     if($table == 'liens') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss), tags=VALUES(tags) ', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE id_commun=VALUES(id_commun), date_update=VALUES(date_update), url_simplifiee=VALUES(url_simplifiee), article_url=VALUES(article_url), article_description=VALUES(article_description), id_rss_origin=VALUES(id_rss_origin), id_rss=VALUES(id_rss), tags=VALUES(tags) ', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'rss') {
-        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update), rss_titre=VALUES(rss_titre)', $table, $requeteClefSQL, implode(',', $sql));
+        $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE date_update=VALUES(date_update)', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'shaarliste') {
         $requeteSQL = sprintf('INSERT IGNORE INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE pseudo=VALUES(pseudo),date_update=VALUES(date_update),url=VALUES(url)', $table, $requeteClefSQL, implode(',', $sql));
     }elseif($table == 'liens_clic') {
@@ -306,10 +306,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
             $matchSQL = " AND l.article_url != 'http://' AND (MATCH (l.article_titre,l.article_description) AGAINST ('$fullText') OR l.article_titre LIKE  '%%" . $fullText . "%%' OR l.article_uuid LIKE '%%" . $fullText . "%%') ";
         }
     }
-    
-    if(isset($_GET['simulate'])) {
-        echo $matchSQL;
-    }    
+
     $betweenDateSQL ='';
     if(!is_null($from) && !is_null($to)) {
         $betweenDateSQL = sprintf(" AND l.article_date BETWEEN '%s' AND '%s' ",$mysqli->real_escape_string($from),$mysqli->real_escape_string($to));
@@ -370,7 +367,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
     }
 
     if(!is_null($username)) {
-        $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin,  liens_clic.nb_clic  
+        $query = sprintf("SELECT liens.*, rss.rss_titre, mes_rss.alias, rss_origin.rss_titre AS rss_titre_origin, rss_origin.url AS rss_url_origin, mes_rss_origin.alias AS alias_origin,  liens_clic.nb_clic, shaarlieur.id as shaarlieur_pseudo, shaarlieur.pwd as shaarlieur_pwd
         FROM liens 
         INNER JOIN (
             SELECT liens.id_commun, count(*) as c from liens INNER JOIN (
@@ -414,7 +411,7 @@ function getAllArticlesDuJour($mysqli, $username=null, $fullText = null, $popula
 function getAllAbonnementsId($mysqli, $username) {
     $entites = array();
 
-    $query = sprintf("SELECT id_rss from mes_rss WHERE mes_rss.username='%s'", $mysqli->real_escape_string($username));
+    $query = sprintf("SELECT id_rss from mes_rss JOIN rss ON rss.id=mes_rss.id_rss WHERE mes_rss.username='%s' AND rss.active=1", $mysqli->real_escape_string($username));
 
     if ($result = $mysqli->query($query)) {
         while ($row = $result->fetch_assoc()) {
@@ -451,7 +448,7 @@ function getAllAbonnements($mysqli, $username) {
 function getAllRssActifs($mysqli) {
     $entites = array();
 
-    $query = sprintf("SELECT url FROM `rss` WHERE active=1");
+    $query = sprintf("SELECT url FROM `rss` WHERE active=1 AND erreur=0 AND `404`=0");
 
     if ($result = $mysqli->query($query)) {
         while ($row = $result->fetch_assoc()) {
@@ -461,6 +458,25 @@ function getAllRssActifs($mysqli) {
 
     return $entites;
 }
+
+/**
+* Retourne le nombre de minutes à attendre
+* entre chaque maj du flux
+*
+* @return int : delai en minutes indiqué par le shaarlieur
+*/
+function getDelaiBeforeCall($mysqli, $idRss) {
+    $query = sprintf("SELECT shaarli_delai FROM `shaarlieur` WHERE shaarli_url_id_ok='%s' LIMIT 1", $mysqli->real_escape_string($idRss));
+
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            return $row['shaarli_delai'];
+        }
+    }
+
+    return 1;
+}
+
 
 /**
  * Indique si un id existe ou pas
@@ -532,10 +548,14 @@ function selectAllShaarlistes($mysqli, $onlyActive = true){
     $query = sprintf("SELECT r.id, r.rss_titre as title, 
     r.url as link,
     r.`404` as is_dead,
+    r.erreur,
+    r.erreur_message,
     r.date_insert as createdateiso,
     r.date_update as pubdateiso,
     r.active,
-    count(*) AS nb_items 
+    count(*) AS nb_items,
+    sh.id as pseudo,
+    sh.pwd as pwd
     FROM `rss` as r
     LEFT JOIN liens as l ON l.id_rss = r.id 
     LEFT JOIN shaarlieur as sh ON l.id_rss = sh.shaarli_url_id_ok 
@@ -547,6 +567,9 @@ function selectAllShaarlistes($mysqli, $onlyActive = true){
     $results = array();
     if ($result = $mysqli->query($query)) {
         while ($row = $result->fetch_assoc()) {
+            if (!empty($row['pwd'])) {
+                $row['pwd'] = true;
+            }
             $results[$row['id']] =  $row;
         }
     }
@@ -634,6 +657,13 @@ function selectShaarlieursWithShaarliPublic($mysqli, $shaarliOk){
     return $results;
 }
 
+function updateRssErreur($mysqli, $rssId, $erreurMessage) {
+    $dateUpdate = date('YmdHis');
+    $query = sprintf("UPDATE rss SET erreur=1, erreur_message='%s', date_update='%s' WHERE id='%s'", $mysqli->real_escape_string($erreurMessage), $mysqli->real_escape_string($dateUpdate), $mysqli->real_escape_string($rssId));
+    $mysqli->query($query);
+}
+
+
 function creerShaarlieur($shaarlieurId, $pwd, $data) {
     
     $entite = array('id' => $shaarlieurId
@@ -645,6 +675,13 @@ function creerShaarlieur($shaarlieurId, $pwd, $data) {
     $entite['date_insert'] = $entite['date_update'];
     
     return $entite;
+}
+
+
+function updateRssTitre($mysqli, $idRss, $titre) {
+    $dateUpdate = date('YmdHis');
+    $query = sprintf("UPDATE rss SET rss_titre='%s', date_update='%s' WHERE id='%s'", $mysqli->real_escape_string($titre), $mysqli->real_escape_string($dateUpdate), $mysqli->real_escape_string($idRss));
+    $mysqli->query($query);
 }
 
 function updateShaarlieurData($mysqli, $shaarlieurId, $data) {
@@ -682,6 +719,16 @@ function updateShaarlieurShaarliUrl($mysqli, $shaarlieurId, $shaarliUrl) {
     $dateUpdate = date('YmdHis');
     $query = sprintf("UPDATE shaarlieur SET shaarli_url='%s', date_update='%s', shaarli_private='0', shaarli_ok='2' WHERE id='%s'", 
         $mysqli->real_escape_string($shaarliUrl), 
+        $mysqli->real_escape_string($dateUpdate), 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+    $mysqli->query($query);
+}
+
+function updateShaarlieurShaarliDelai($mysqli, $shaarlieurId, $shaarliDelai) {
+    $dateUpdate = date('YmdHis');
+    $query = sprintf("UPDATE shaarlieur SET shaarli_delai='%s', date_update='%s' WHERE id='%s'", 
+        $mysqli->real_escape_string($shaarliDelai), 
         $mysqli->real_escape_string($dateUpdate), 
         $mysqli->real_escape_string($shaarlieurId)
     );
@@ -1051,3 +1098,294 @@ function getTopCategorieFromTags($mysqli, $tags)
 
     return '';
 }
+
+
+/**
+ * Retourne le nombre de poussins qu'un utilisateur a utilisé dans la journée
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * @param string $dateJour
+ * 
+ * @return int $count
+ */
+function getNbPoussinsUtilisesByShaarlieurId($mysqli, $shaarlieurId, $dateJour)
+{
+
+    $query = sprintf("SELECT count(*) AS c FROM poussins_transactions WHERE pseudo_source='%s' AND date_jour ='%s'", 
+        $mysqli->real_escape_string($shaarlieurId),
+        $mysqli->real_escape_string($dateJour)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['c']) && $row['c'] > 0) {
+                return $row['c'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+/**
+ * Retourne le nombre d'abonné d'un id de flux
+ * 
+ * @param $mysqli
+ * @param string $idRss
+ * 
+ * @return int $count
+ */
+function getNbAbonnesByIdRss($mysqli, $idRss)
+{
+
+    $query = sprintf("SELECT count(*) AS c FROM mes_rss WHERE id_rss='%s'", 
+        $mysqli->real_escape_string($idRss)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['c']) && $row['c'] > 0) {
+                return $row['c'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Retourne le nombre de shaarlistes abonnés à un id de flux
+ * 
+ * @param $mysqli
+ * @param string $idRss
+ * 
+ * @return int $count
+ */
+function getNbShaarlistesAbonnesByIdRss($mysqli, $idRss)
+{
+
+    $query = sprintf("SELECT count(*) AS c FROM mes_rss JOIN shaarlieur ON mes_rss.username=shaarlieur.id WHERE id_rss='%s' AND shaarlieur.shaarli_ok='1'", 
+        $mysqli->real_escape_string($idRss)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['c']) && $row['c'] > 0) {
+                return $row['c'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+
+/**
+ * Retourne le nombre de poussins qu'un utilisateur PEUT utiliser dans la journée
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return int $count
+ */
+function getNbPoussinsLimiteByShaarlieurId($mysqli,  $shaarlieurId)
+{
+    $query = sprintf("SELECT poussins_limite FROM shaarlieur WHERE id='%s' LIMIT 1", 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['poussins_limite'])) {
+                return $row['poussins_limite'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Retourne l'id rss de l'utilisateur
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return string shaarli_url_id_ok
+ */
+function getIdOkRssByShaarlieurId($mysqli,  $shaarlieurId)
+{
+    $query = sprintf("SELECT shaarli_url_id_ok FROM shaarlieur WHERE id='%s' LIMIT 1", 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['shaarli_url_id_ok'])) {
+                return $row['shaarli_url_id_ok'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Retourne l'url du shaarli de l'utilisateur
+ * 
+ * @param $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return string shaarli_url_id_ok
+ */
+function getUrlOkByShaarlieurId($mysqli,  $shaarlieurId)
+{
+    $query = sprintf("SELECT shaarli_url_ok FROM shaarlieur WHERE id='%s' LIMIT 1", 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['shaarli_url_ok'])) {
+                return $row['shaarli_url_ok'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+
+/**
+ * Créer une transaction poussin
+ * 
+ * @param string $shaarlieurId
+ * @param string $shaarlieurCible
+ * @param string $dateJour
+ * @param string $idLien
+ * 
+ * @return int $count
+ */
+function creerTransactionPoussin($shaarlieurId, $shaarlieurCible, $dateJour, $idLien)
+{
+
+    $entite = array('pseudo_source' => $shaarlieurId
+                ,'pseudo_cible' => $shaarlieurCible
+                ,'date_jour' => $dateJour
+                ,'id_lien' => $idLien
+            );
+
+    $entite['date_update'] = date('YmdHis');
+    $entite['date_insert'] = $entite['date_update'];
+    
+    return $entite;
+}
+
+
+/**
+ * Supprime une transaction poussin
+ * 
+ * @param mysqli $mysqli
+ * @param string $shaarlieurId
+ * @param string $shaarlieurCible
+ * @param string $dateJour
+ * 
+ * @return bool
+ */
+function deleteTransactionPoussin($mysqli, $shaarlieurSource, $shaarlieurCible, $dateJour) {
+    $query = sprintf("DELETE FROM poussins_transactions WHERE shaarlieur_cible='%s' AND shaarlieur_source='%s' AND date_jour='%s'", 
+        $mysqli->real_escape_string($shaarlieurSource), 
+        $mysqli->real_escape_string($shaarlieurCible),
+        $mysqli->real_escape_string($dateJour)
+    );
+
+    return $mysqli->query($query);
+}
+
+
+/**
+ * Ajoute un poussin au solde du shaarlieur
+ * 
+ * @param mysqli $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return bool
+ */
+function addPoussinToShaarlieurByShaarlieurId($mysqli, $shaarlieurId) {
+    $dateUpdate = date('YmdHis');
+    
+    $query = sprintf("UPDATE shaarlieur SET poussins_solde=poussins_solde+1, date_update='%s' WHERE id='%s'", 
+        $mysqli->real_escape_string($dateUpdate),
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    return $mysqli->query($query);
+}
+
+
+/**
+ * Retourne le solde poussin du shaarlieur
+ * 
+ * @param mysqli $mysqli
+ * @param string $shaarlieurId
+ * 
+ * @return bool
+ */
+function getPoussinsSoldeByShaarlieurId($mysqli, $shaarlieurId) {
+    $query = sprintf("select poussins_solde from shaarlieur WHERE id='%s' LIMIT 1", 
+        $mysqli->real_escape_string($shaarlieurId)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['poussins_solde'])) {
+                return $row['poussins_solde'];
+            }
+        }
+    }
+    
+    return 0;
+}
+
+
+/**
+ * Retourne les pseudos poussinés par l'utilisateur
+ * 
+ * @param mysqli $mysqli
+ * @param string $shaarlieurId
+ * @param string $dateJour
+ * 
+ * @return bool
+ */
+function getShaarlieursPoussinesByShaarlieurId($mysqli, $shaarlieurId, $dateJour) {
+    $query = sprintf("select pseudo_cible, id_lien from poussins_transactions WHERE pseudo_source='%s' AND date_jour='%s'", 
+        $mysqli->real_escape_string($shaarlieurId),
+        $mysqli->real_escape_string($dateJour)
+    );
+
+    $results = array();
+    if ($result = $mysqli->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($row['pseudo_cible'])) {
+                if (!isset($results[$row['pseudo_cible']])) {
+                    $results[$row['pseudo_cible']] = array();
+                }
+                $results[$row['pseudo_cible']][$row['id_lien']] = true;
+            }
+        }
+    }
+
+    return $results;
+}
+

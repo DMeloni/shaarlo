@@ -59,16 +59,32 @@ define('XPATH_RSS_CATEGORY', '/rss/channel/item/category');
  
 
 /*
+ * Get a RSS by a proxy
+ *
+ * @param $url
+ *
+ * @return string
+ */
+function getRss($url){
+    $urlEncoded = urlencode($url);
+    // On rajoute un v aléatoire pour éviter le cache coté proxy
+    $result = file_get_contents(sprintf('http://ns3010509.ip-46-105-120.eu/pont.php?url=%s%%26v%%3D%s', $urlEncoded, rand(0,1000)));
+
+    return $result;
+}
+
+
+/*
  * Get a RSS
  *
  * @param $ur
  * @return atom
  *
  */
-function getRss($url, $sslVersion=null){
+function getRssByCurl($url, $sslVersion=null){
     $ch = curl_init();
     
-	$options = array(
+    $options = array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HEADER => false,
@@ -115,7 +131,6 @@ function getRss($url, $sslVersion=null){
 
     return $result;
 }
-
 
 /*
  * Conversion de xml à tableau associatif de php
@@ -421,10 +436,17 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
 
     $xmlContent = getSimpleXMLElement($content);
     if($xmlContent === false){
-        echo "flux foireux : " . $url;
-        return;
+        return false;
     }
 
+    // Maj du titre du shaarli
+    $list = $xmlContent->xpath(XPATH_RSS_TITLE);
+    if(isset($list[0])) {
+        $titre = (string)$list[0];
+        updateRssTitre($mysqli, $fluxName, $titre); 
+    }
+
+    
 
     //if (!isset($_GET['today_only'])) {
     //    $rssListArrayed = convertXmlToTableauAndStop($xmlContent, XPATH_RSS_ITEM);
@@ -443,6 +465,23 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
         //) {
         //    break;
         //}
+        $guid = $rssItem['guid'];
+        if (preg_match('#^https://deleurme.net/#', $link)) {
+            $link = str_replace('https://deleurme.net', 'http://deleurme.net', $link);
+        }
+        if (preg_match('#^https://www.mypersonnaldata.eu/#', $link)) {
+            $link = str_replace('https://www.mypersonnaldata.eu/', 'http://www.mypersonnaldata.eu/', $link);
+        }
+        if (preg_match('#^http://deleurme.net/liens/index.php5/?\?[_a-zA-Z0-9\-]{6}$#', $link)) {
+            $link = str_replace('index.php5/', '', $link);
+            $link = str_replace('index.php5', '', $link);
+        }
+        if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $guid)) {
+            $guid = str_replace('mode=links&', '', $guid);
+        }
+        if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $link)) {
+            $link = str_replace('mode=links&', '', $link);
+        }
         
         $guid = $rssItem['guid'];
         $title = $rssItem['title'];
@@ -500,4 +539,6 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
     insertArticles($mysqli, $articles);
 
     shaarliMyDisconnect($mysqli);
+    
+    return true;
 }

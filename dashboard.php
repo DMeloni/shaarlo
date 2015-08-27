@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 require_once('Controller.class.php');
 
@@ -8,8 +8,9 @@ ini_set("html_errors", 1);
 error_reporting(E_ALL);
 class Dashboard extends Controller
 {
-        public function run() 
+        public function run()
         {
+            
             // Accès invité
             if ('enregistrer_temporairement' ===  $this->post('action')) {
                 // Connexion invitée
@@ -22,16 +23,28 @@ class Dashboard extends Controller
                 header('Location: index.php');
                 return;
             }
-            
+
+
             $pasDeProfil = false;
             if (empty(getAbonnements())) {
                 $pasDeProfil = true;
             }
+            
+            $shaarliste = getUtilisateurId();
+            if ($this->get('shaarliste')) {
+                $shaarliste = $this->get('shaarliste');
+            }
+
+            $isMe = false;
+            if ($shaarliste === getUtilisateurId()) {
+                $isMe = true;
+            }
+            
             $params = array();
             $creation = false;
             // Nouveau message
             if ($this->post('action')) {
-                if (isSerieux() && 'report' ===  $this->post('action')) {
+                if (isSerieux() && 'report' ===  $this->post('action')  && $isMe) {
                     $mysqli = shaarliMyConnect();
                     $messageEntite = creerMessage(getUtilisateurId(), $this->post('message'));
                     $retourInsertion = insertEntite($mysqli, 'message', $messageEntite);
@@ -42,7 +55,7 @@ class Dashboard extends Controller
                     }
                 }
 
-                if ('mon_shaarli' ===  $this->post('action') && !isEnAttenteDeModeration()) {
+                if ('mon_shaarli' ===  $this->post('action') && !isEnAttenteDeModeration()  && $isMe) {
                     if ($this->post('shaarli_url')) {
                         if (!isShaarliste()) {
                             // Premiere soumission du shaarli, il passera par la modération
@@ -67,13 +80,22 @@ class Dashboard extends Controller
                             }
                         }
                     }
+
+                    // L'utilisateur souhaite limiter les appels à son flux
+                    if ($this->post('shaarli_delai')) {
+                        $shaarliDelai = (int)$this->post('shaarli_delai');
+                        if ($shaarliDelai >=1 ) {
+                            majShaarliDelai($shaarliDelai);
+                        }
+                    }
                 }
                 // Enregistrement d'un nouveau profil
-                if ('enregistrer' ===  $this->post('action')) {
+                if ('enregistrer' ===  $this->post('action') ) {
                     $password = '';
                     if ($this->post('password')) {
                         $password = $this->post('password');
                     }
+                    $shaarliste = $this->post('profil_id');
                     $session = getSession($this->post('profil_id'), false, $password, true);
                     if ($session !== 401) {
                         $abonnements = $this->post('shaarlistes');
@@ -89,7 +111,7 @@ class Dashboard extends Controller
                 }
 
                 // Enregistrement d'un password
-                if ('enregistrer_password' ===  $this->post('action')) {
+                if ('enregistrer_password' ===  $this->post('action')  && $isMe) {
                     $password = '';
                     $passwordVerif = '';
                     if ($this->post('password')) {
@@ -117,7 +139,7 @@ class Dashboard extends Controller
                 }
 
                 // Enregistrement d'un email
-                if ('enregistrer_email' ===  $this->post('action')) {
+                if ('enregistrer_email' ===  $this->post('action') && $isMe) {
                     $email = '';
                     if ($this->post('email')) {
                         $email = $this->post('email');
@@ -132,14 +154,14 @@ class Dashboard extends Controller
 
 
                 // Maj filtre des tags
-                if ('enregistrer_tags' ===  $this->post('action')) {
+                if ('enregistrer_tags' ===  $this->post('action') && $isMe) {
                     $session = getSession($this->post('profil_id'));
                     updateTags($this->post('tags'));
                     updateNotAllowedTags($this->post('not_allowed_tags'));
                     $params['message'] = "La liste des tags à ignorer a été mise à jour";
                 }
                 // Maj filtre des urls
-                if ('enregistrer_urls' ===  $this->post('action')) {
+                if ('enregistrer_urls' ===  $this->post('action') && $isMe) {
                     $session = getSession($this->post('profil_id'));
                     updateNotAllowedUrls($this->post('not_allowed_urls'));
                     $params['message'] = "La liste des sites web à ignorer a été mise à jour";
@@ -149,7 +171,7 @@ class Dashboard extends Controller
             if ($this->get('action')) {
                 // Connexion
                 if ('connexion' ===  $this->get('action')) {
-                        $password = null; 
+                        $password = null;
                         if ($this->post('password')) {
                             $password = $this->post('password');
                         }
@@ -172,9 +194,9 @@ class Dashboard extends Controller
                 if ($this->get('erreur') && $this->get('erreur') == 'profil_exists') {
                     $params['message'] = "Ce profil existe deja, merci de choisir un autre pseudo";
                 }
-                
+
                 // Annulation demande de modération
-                if ('cancel' === $this->get('action')) {
+                if ('cancel' === $this->get('action') && $isMe) {
                     cancelShaarliUrl();
                     header('Location:dashboard.php');
                     return;
@@ -207,21 +229,40 @@ class Dashboard extends Controller
             $infoAboutAllDecodedChunked = array_chunk($infoAboutAllDecoded['stat'],  4);
             $params['infoAboutAllDecodedChunked'] = $infoAboutAllDecodedChunked;
             $params['abonnements'] = array();
+
+            $idRssOk = getIdOkRss($shaarliste);
             
+            $params['id_rss_ok'] = $idRssOk;
             $params['id_rss'] = getIdRss();
             $params['shaarli_url'] = getShaarliUrl();
+            $params['shaarli_delai'] = getShaarliDelai();
             $params['pas_de_profil'] = $pasDeProfil;
             $params['creation'] = $creation;
-            
             $params['currentBadge'] = getCurrentBadge();
-            $params['script'] = '<script>alert("lol");</script>';
+            $params['poussins_solde'] = getPoussinsSolde();
+            $params['script'] = '';
 
+            $params['shaarli_url_ok'] = getShaarliUrlOk($shaarliste);
+            
+            $params['nb_abonnements'] = getNbAbonnements($shaarliste);
+            $params['shaarliste'] = $shaarliste;
+            
+            $abonnements = getAbonnements();
+            $params['nb_abonnes'] = getNbAbonnes($idRssOk);
+            if(in_array($idRssOk , $abonnements)) {
+                $params['est_abonne'] = true;
+            } else {
+                $params['est_abonne'] = false;
+            }
+    
+            $params['is_me'] = $isMe;
+            
             $this->render($params);
         }
 
         public function render($params=array())
         {
-            // Protection des paramètres 
+            // Protection des paramètres
             $params = $this->htmlspecialchars($params);
 
             ?><!doctype html>
@@ -248,7 +289,7 @@ class Dashboard extends Controller
                         </div>
                         <?php
                     }
-                    
+
                     if (isset($params['demande_password'])) {
                     ?>
                     <div class="row" data-equalizer>
@@ -263,7 +304,7 @@ class Dashboard extends Controller
                                             <input name="password" type="password" value=""/>
                                             <input class="button success" type="submit" value="Valider" />
                                         </form>
-                                        <?php 
+                                        <?php
                                         if (profilHasEmail($this->get('profil_id'))) {
                                             ?>
                                                 <a href="?action=send_pwd_mail&amp;profil_id=<?php eh($this->get('profil_id')); ?>">Mot de passe oublié ?</a>
@@ -347,22 +388,57 @@ class Dashboard extends Controller
                                          * Bloc image de profil
                                          */
                                         if (isShaarliste()) {
-                                            $imageProfilSrc = getImageProfilSrc();
+                                            $imageProfilSrc = getImageProfilSrc($params['shaarliste']);
                                             if (!is_null($imageProfilSrc)) {
                                             ?>
-                                                <div class="columns large-2 medium-3 small-4 text-right">
+                                                <div class="columns large-2 medium-3 small-3 text-right small-text-left">
                                                     <img class="profil-avatar" src="<?php echo $imageProfilSrc; ?>" alt="image de profil" />
                                                 </div>
                                             <?php
                                             }
                                         }
                                         ?>
-                                        <div class="column large-10 medium-9 small-8">
-                                            <h1><?php echo getUtilisateurId(); ?></h1>
+                                        <div class="column large-10 medium-9 small-9">
+                                            <div class="row">
+                                                <div class="columns large-12">
+                                                    <span>
+                                                        <?php eh($params['shaarliste']);?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <?php
+                                            if (displayPoussins() && $params['is_me']) {
+                                                ?>
+                                                <div class="row">
+                                                    <div class="columns large-12">
+                                                        <a href="#" class="opacity-test-3 tiny a-reveal-poussins" data-reveal-id="div-poussins"><?php echo getPoussinsSolde(); ?> poussin(s)</a>
+
+                                                        <div id="div-poussins" class="reveal-modal large" data-reveal aria-labelledby="Poussins" aria-hidden="true" role="dialog">
+                                                            <canvas data-nb-poussins="<?php eh(getPoussinsSolde()); ?>" id="canvasPoussins"  style="border:1px solid #c3c3c3;">
+                                                            Your browser does not support the HTML5 canvas tag.
+                                                            </canvas>
+                                                            <a class="close-reveal-modal" aria-label="Fermer">&#215;</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <?php
+                                                if (!isPassword()) {
+                                                    ?>
+                                                    <div>
+                                                        <span class="opacity-test-3 tiny">(Seuls les comptes protégés par un mot de passe et ayant un shaarli peuvent recevoir des poussins)</span>
+                                                    </div>
+                                                    <?php
+                                                }
+                                            }
+                                            ?>
                                         </div>
+
                                     </div>
-                                    
+
                                     <hr/>
+                                    <?php
+                                    if ($params['is_me']) {
+                                    ?>
                                     <div class="row text-center">
                                         <div class="columns large-12">
                                             <?php
@@ -383,7 +459,7 @@ class Dashboard extends Controller
                                             }
                                             ?>
                                         </div>
-                                        <?php 
+                                        <?php
                                         if (!empty($params['shaarlieurPositionTop']) && $params['shaarlieurPositionTop'] <= 1000) {
                                         ?>
                                         <div class="columns large-12">
@@ -405,6 +481,36 @@ class Dashboard extends Controller
                                         </div>
                                         <?php } ?>
                                     </div>
+                                    <?php
+                                    } else {
+                                    ?>
+                                        <div class="row">
+                                            <div class="columns large-12">
+                                                <a target="_blank" href="<?php eh($params['shaarli_url_ok']);?>">Shaarli</a>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="columns large-12">
+                                                <a href="abonnements.php?shaarliste=<?php eh($params['shaarliste']);?>"><span class="blue-ocean"><?php eh($params['nb_abonnements'])?></span> abonnements</a>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="columns large-12">
+                                                <span class="blue-ocean"><?php eh($params['nb_abonnes'])?></span> abonnés
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="columns large-12">
+                                                <?php if ($params['est_abonne']) { ?>
+                                                    <a href="#" onclick="javascript:lienAddAbo(this,'<?php eh($params['id_rss_ok'])?>', 'delete');return false;">Se désabonner</a>
+                                                <?php } else { ?>
+                                                    <a href="#" onclick="javascript:lienAddAbo(this,'<?php eh($params['id_rss_ok'])?>', 'add');return false;">Suivre</a>
+                                                <?php } ?>
+                                            </div>
+                                        </div>
+                                    <?php
+                                    }
+                                    ?>
                                 </div>
                             </div>
                         </div>
@@ -413,23 +519,23 @@ class Dashboard extends Controller
                     ?>
 
                     <?php
-                    if (!$params['pas_de_profil'] && !$params['creation']) {
+                    if (!$params['pas_de_profil'] && !$params['creation'] && $params['is_me']) {
                     ?>
                     <div class="row">
                         <div class="columns large-12 center">
                             <div class="panel">
                                 <div class="row">
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <a class="a-block" href="abonnements.php">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_people.png') no-repeat;background-position:center center;"></div>
                                             </div>
                                             <div class="row">
-                                                <span class="blue-ocean"><?php eh(getNbAbonnements())?></span> abonnements
+                                                <span class="blue-ocean"><?php eh($params['nb_abonnements'])?></span> abonnements
                                             </div>
                                         </a>
                                     </div>
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <?php if(!isEnAttenteDeModeration()) { ?>
                                         <a class="a-block link-show" href="<?php if (isShaarliste()) { ?>#modifier-shaarli<?php } else { ?>#mon-shaarli<?php } ?>">
                                             <div class="row">
@@ -462,7 +568,7 @@ class Dashboard extends Controller
                                         </div>
                                         <?php }  ?>
                                     </div>
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <a class="a-block link-show" href="#pwd">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_pwd.png') no-repeat;background-position:center center;"></div>
@@ -472,7 +578,7 @@ class Dashboard extends Controller
                                             </div>
                                         </a>
                                     </div>
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <a class="a-block link-show" href="#options">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_config.png') no-repeat;background-position:center center;"></div>
@@ -485,7 +591,7 @@ class Dashboard extends Controller
                                 </div>
                                 <div class="row">
                                     <?php if (!is_null($params['id_rss'])) { ?>
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <a class="a-block" href="index.php?q=shaarli:<?php echo $params['id_rss']; ?>">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_messagerie.png') no-repeat;background-position:center center;"></div>
@@ -497,7 +603,7 @@ class Dashboard extends Controller
                                     </div>
                                     <?php } ?>
                                     <?php if (isSerieux()) { ?>
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <a class="a-block link-show" href="#filtres">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_filtres.png') no-repeat;background-position:center center;"></div>
@@ -508,9 +614,18 @@ class Dashboard extends Controller
                                         </a>
                                     </div>
                                     <?php } ?>
-
+                                    <div class="large-3 medium-6 small-6 columns text-center">
+                                        <a class="a-block link-show" target="_blank" href="jappix-1.0.7/?r=shaarli@conference.dukgo.com">
+                                            <div class="row">
+                                                <div style="min-height:150px;background:url('css/img/icon_chat.png') no-repeat;background-position:center center;"></div>
+                                            </div>
+                                            <div class="row">
+                                                Tchat en ligne
+                                            </div>
+                                        </a>
+                                    </div>
                                     <?php if (isSerieux()) { ?>
-                                    <div class="large-3 medium-6 small-12 columns text-center">
+                                    <div class="large-3 medium-6 small-6 columns text-center">
                                         <a class="a-block link-show" href="#report">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_report.png') no-repeat;background-position:center center;"></div>
@@ -521,6 +636,8 @@ class Dashboard extends Controller
                                         </a>
                                     </div>
                                     <?php } ?>
+
+                                    
                                 </div>
                             </div>
                         </div>
@@ -641,7 +758,7 @@ class Dashboard extends Controller
                                 <hr class="no-margin"/>
                                 <div class="row">
                                     <div class="columns large-8">
-                                        <span>Afficher les discussions entre shaarlistes <span class="button microscopic alert">NEW</span></span>
+                                        <span>Afficher les discussions entre shaarlistes</span>
                                     </div>
                                     <div class="columns large-4">
                                         <input type="radio" <?php if(displayDiscussions()) {echo ' checked="checked" ';}?> name="checkbox-display_discussions"  data-option="display_discussions" class="no-margin" value="oui"/>oui
@@ -657,6 +774,16 @@ class Dashboard extends Controller
                                     <div class="columns large-4">
                                         <input type="radio" <?php if(isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto"  data-option="inscription_auto" class="no-margin" value="oui"/>oui
                                         <input type="radio" <?php if(!isInscriptionAuto()) {echo ' checked="checked" ';}?> name="checkbox-inscription_auto" data-option="inscription_auto" class="no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
+                                        <span>Activer les poussins <span class="button microscopic alert">NEW</span></span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayPoussins()) {echo ' checked="checked" ';}?> name="checkbox-display_poussins"  data-option="display_poussins" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayPoussins()) {echo ' checked="checked" ';}?> name="checkbox-display_poussins" data-option="display_poussins" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
@@ -728,6 +855,16 @@ class Dashboard extends Controller
                                 <hr class="no-margin"/>
                                 <div class="row">
                                     <div class="columns large-8">
+                                        <span>Afficher les avatars en mini</span>
+                                    </div>
+                                    <div class="columns large-4">
+                                        <input type="radio" <?php if(displayLittleImages()) {echo ' checked="checked" ';}?> name="checkbox-display_little_img"  data-option="display_little_img" class="no-margin" value="oui"/>oui
+                                        <input type="radio" <?php if(!displayLittleImages()) {echo ' checked="checked" ';}?> name="checkbox-display_little_img" data-option="display_little_img" class="no-margin" value="non"/>non
+                                    </div>
+                                </div>
+                                <hr class="no-margin"/>
+                                <div class="row">
+                                    <div class="columns large-8">
                                         <span>Afficher uniquement les liens non visités</span>
                                     </div>
                                     <div class="columns large-4">
@@ -736,7 +873,7 @@ class Dashboard extends Controller
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
-                                
+
                                 <br/>
                                 <div class="row">
                                     <div class="column large-12">
@@ -815,10 +952,10 @@ class Dashboard extends Controller
                                 <div class="row">
                                     <div class="columns large-12">
                                         <h3>Filtre sur les tags</h3>
-                                        
+
                                         <form method="POST">
                                             <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
-                                            <?php 
+                                            <?php
                                             if (!empty(getTags())) {
                                                 ?><textarea name="tags" rows="4" placeholder="végétarisme, fun..."><?php echo htmlentities(implode(' ', getTags()));?></textarea><?php
                                             } else {
@@ -828,7 +965,7 @@ class Dashboard extends Controller
                                             <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
                                             <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf..."><?php echo htmlentities(implode(' ', getNotAllowedTags()));?> </textarea>
                                             <input type="hidden" name="action" value="enregistrer_tags" />
-                                            
+
                                             <input class="button" type="submit" value="Sauvegarder" />
                                         </form>
                                     </div>
@@ -877,7 +1014,7 @@ class Dashboard extends Controller
                                             </div>
                                         </div>
                                     </form>
-                                    <p>La protection du compte permettra d'accéder à des fonctions avancées comme : 
+                                    <p>La protection du compte permettra d'accéder à des fonctions avancées comme :
                                         <ul>
                                             <li>Modification de l'url de son shaarli</li>
                                             <li>Suppression du shaarli de la page d'abonnement</li>
@@ -966,7 +1103,7 @@ class Dashboard extends Controller
                                         <input type="radio" <?php if(!isOnRiver()) {echo ' checked="checked" ';}?> name="checkbox-on_river" data-option="on_river" class="no-margin" value="non"/>non
                                     </div>
                                 </div>
-                                
+
                                 <br/>
                                 <div class="row">
                                     <div class="columns large-12">
@@ -975,13 +1112,13 @@ class Dashboard extends Controller
                                 </div>
                                 <div class="row">
                                     <div class="columns large-8">
-                                        <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"></p>
+                                        <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"><span id="msg-synchro-shaarli"></span></p>
                                         <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
                                     </div>
                                 </div>
-                                
+
                                 <br/>
-                                
+
                                 <div class="row">
                                     <div class="columns large-12">
                                         <h4>Modifier l'url de mon shaarli</h4>
@@ -991,17 +1128,15 @@ class Dashboard extends Controller
                                             <input name="shaarli_url" type="text" value="<?php echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
                                             <input type="hidden" name="action" value="mon_shaarli" />
                                             <input type="hidden" name="action" value="mon_shaarli" />
-                                            <?php
-                                            if (!$params['creation']) {
-                                            ?>
-                                             <div class="row">
+
+                                            <h5>Nombre de minutes minimal entre chaque mise à jour</h5>
+                                            <input name="shaarli_delai" type="number" value="<?php echo htmlentities($params['shaarli_delai']); ?>" placeholder="1"/>
+
+                                            <div class="row">
                                                 <div class="columns large-12">
                                                     <input class="button" type="submit" value="Sauvegarder" />
                                                 </div>
                                             </div>
-                                            <?php
-                                            }
-                                            ?>
                                         </form>
                                     </div>
                                 </div>
@@ -1009,7 +1144,24 @@ class Dashboard extends Controller
                         </div>
                     </div>
                 <?php } ?>
-                
+
+                <?php if (!$params['creation']) { ?>
+                    <div class="row">
+                        <div class="columns large-12 show-for-medium-up text-center">
+                            <div class="panel">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <img src="css/img/biere.jpg" alt="biere"/>
+                                        <a target="_blank" href="https://framadate.org/pr48dvawbdvw545j">Prochaine rencontre sur Paris (Shaarli AFK)</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <?php
+                }
+                ?>
                 
                 <?php if ($params['creation']) { ?>
                     <div class="row">
@@ -1045,7 +1197,7 @@ class Dashboard extends Controller
                     </form>
                 <?php } ?>
             <?php } ?>
-            
+
             <?php
             $this->renderScript($params);
             ?>
@@ -1064,9 +1216,9 @@ class Dashboard extends Controller
             });
 
             function addAbo(that, id, action) {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "do="+action+"&id=" + id;
-                r.open("POST", "add.php", true); 
+                r.open("POST", "add.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     that.attr('data-waiting', 'false');
@@ -1084,19 +1236,19 @@ class Dashboard extends Controller
                                 $(checkboxId).prop('checked', false);
                                 that.removeClass('selected');
                             }
-                            return; 
+                            return;
                         }
                         else {
                             that.text = '-Erreur-';
-                            return; 
+                            return;
                         }
                     }
-                }; 
+                };
                 r.send(params);
             }
             $('.shaarliste-selection').click(function() {
                 var checkboxId = '#' + $(this).attr('data-shaarliste-id');
-                
+
                 if ($(this).attr('data-waiting') != 'true') {
                     $(this).attr('data-waiting', 'true');
                     if ($(checkboxId).is(':checked')) {
@@ -1109,45 +1261,49 @@ class Dashboard extends Controller
 
 
             $('#button-synchro-favicon').click(function() {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "";
                 $('#img-synchro-favicon').show();
-                r.open("POST", "synchro_favicon.php", true); 
+                r.open("POST", "synchro_favicon.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     $('#img-synchro-favicon').hide();
                     if (r.readyState == 4) {
                         if(r.status == 200){
-                            return; 
+                            return;
                         }
                         else {
-                            return; 
+                            return;
                         }
                     }
-                }; 
+                };
                 r.send(params);
             });
 
             $('#button-synchro-shaarli').click(function() {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "";
                 $('#img-synchro-shaarli').show();
-                r.open("POST", "synchro_shaarli.php", true); 
+                r.open("POST", "synchro_shaarli.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     $('#img-synchro-shaarli').hide();
                     if (r.readyState == 4) {
                         if(r.status == 200){
-                            return; 
+                            $('#msg-synchro-shaarli').css('color', 'green');
+                            $('#msg-synchro-shaarli').text('OK');
+                            return;
                         }
                         else {
-                            return; 
+                            $('#msg-synchro-shaarli').css('color', 'red');
+                            $('#msg-synchro-shaarli').text('Flux en erreur...');
+                            return;
                         }
                     }
-                }; 
+                };
                 r.send(params);
             });
-            
+
             $('#button-tous').click(function() {
                 var checkbox = $('.checkbox-shaarliste');
                 $.each( checkbox, function( key, value ) {
@@ -1165,7 +1321,7 @@ class Dashboard extends Controller
                     /* On va directement en fin de page */
                     $("html, body").animate({ scrollTop: $(document).height()-$(window).height() });
                 <?php }?>
-                
+
                 $('#input-enregistrer-profil').prop('disabled', false);
             });
 
@@ -1181,7 +1337,6 @@ class Dashboard extends Controller
             $(document).foundation();
 
             function blocShow() {
-                console.log(location.hash);
                 if ('#pwd' == location.hash) {
                     $(".bloc-show").hide();
                     $("#pwd").show();
@@ -1207,22 +1362,84 @@ class Dashboard extends Controller
                     $("#mon-shaarli").show();
                 }
             }
-            
+
             $('.link-show').click(function(event) {
                 $(".bloc-show").hide();
                 $($(this).attr('href')).show();
                 event.preventDefault();
             });
-            
+
             $(".bloc-show").hide();
             blocShow();
 
         </script>
+        <?php
+        if (displayPoussins() && $params['is_me']) {
+        ?>
+        <script>
+        
+        var canvas = document.getElementById("canvasPoussins");
+        var ctx = canvas.getContext("2d");
+        var poussins = [];
+        function initScene() {
+            poussins = [];
+            var defaultColor = "#FFFF00";
+            for (i=0; i < $("#canvasPoussins").attr('data-nb-poussins') ; i++) {
+                creerPoussin(defaultColor);
+            }
+        }
+        
+        var x = setInterval(drawScene, 200);
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#FF0000";
+            var radius = 4;
+
+            for (i=0; i < poussins.length ; i++) {
+                if ((0.10 - Math.random()) > 0) {
+                    var deplacementX = Math.round((0.5 - Math.random()) * 10);
+                    var deplacementY = Math.round((0.5 - Math.random()) * 10);
+                    poussins[i].positionX += deplacementX;
+                    poussins[i].positionY += deplacementY;
+                } else {
+                    //Poussin se repose
+                    if (poussins[i].breath < 1) {
+                        poussins[i].breath++;
+                    } else {
+                        poussins[i].breath = 0;
+                    }
+                }
+
+                ctx.fillStyle = poussins[i].color;
+                ctx.beginPath();
+
+                ctx.arc(poussins[i].positionX, poussins[i].positionY, radius + poussins[i].breath, 0, 2 * Math.PI, false);
+                ctx.fill();
+                //ctx.fillRect(poussins[i].positionX, poussins[i].positionY, 5,5);
+            }
+
+        }
+
+
+        function creerPoussin(color) {
+            var positionX = Math.round(Math.random() * canvas.width);
+            var positionY = Math.round(Math.random() * canvas.height);
+            var poussin = {positionX:positionX, positionY:positionY, color:color, breath:Math.round(Math.random()*2)};
+            poussins.push(poussin);
+        }
+        $(document).on("click", '.a-reveal-poussins', function() {
+            var canvas = document.getElementById("canvasPoussins");
+            canvas.width = $(canvas).parent().width() - 10;
+            canvas.height = $(canvas).parent().height() - 10;
+            initScene();
+        });
+        </script>
+        <?php
+        }
+        ?>
         <?php
     }
 }
 
 $dashboard = new Dashboard();
 $dashboard->run();
-
-

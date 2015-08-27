@@ -62,7 +62,7 @@ if (!isset($arr[0]['href'])) {
 
 $faviconUrl = sprintf('%s/%s', $url, $arr[0]['href']);
 
-$favicon = getRss($faviconUrl);
+$favicon = getRssByCurl($faviconUrl);
 if ($favicon) {
     $faviconPath = sprintf('img/favicon/%s.ico', getIdOkRss());
     $putContents = file_put_contents($faviconPath, $favicon);

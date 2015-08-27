@@ -16,7 +16,7 @@ class Abonnements extends Controller
         $infoAboutAll = remove_utf8_bom($infoAboutAll);
         $infoAboutAllDecoded = json_decode($infoAboutAll, true);
 
-        $infoAboutAllDecodedChunked = array_chunk($infoAboutAllDecoded['stat'],  4);
+        
         if (!empty($_POST)) {
             if (isset($_POST['shaarlistes'])) {
                 $abonnements = $_POST['shaarlistes'];
@@ -25,13 +25,41 @@ class Abonnements extends Controller
             }
             majAbonnements($abonnements);
         }
-        $abonnements = getAbonnements();
-        $nbAbonnements = count($abonnements);
-        $params = array();
+        
+        $mesAbonnements = getAbonnements();
+        
+        if ($this->get('shaarliste')) {
+            $shaarliste = $this->get('shaarliste');
+            // Récupération en bdd
+            $abonnements = getAbonnementsByShaarlieurId($shaarliste);
+            
+            // On filtre les abonnements à afficher dans le cas des abonnements d'une personne
+            foreach ($infoAboutAllDecoded['stat'] as $s => $shaarli) {
+                if(!in_array($shaarli['id'], $abonnements)) {
+                    unset($infoAboutAllDecoded['stat'][$s]);
+                }
+            }
+        } else {
+            //Récupération dans la session
+            $abonnements = $mesAbonnements;
+            $shaarliste = getUtilisateurId();
+        }
+        $nbAbonnements = count($mesAbonnements);
+
+        $isMe = false;
+        if ($shaarliste === getUtilisateurId()) {
+            $isMe = true;
+        }
+        
+        $infoAboutAllDecodedChunked = array_chunk($infoAboutAllDecoded['stat'],  4);
+        
         $this->render(
             array('nbAbonnements' => $nbAbonnements,
                   'infoAboutAllDecodedChunked' => $infoAboutAllDecodedChunked,
                   'abonnements' => $abonnements,
+                  'mes_abonnements' => $mesAbonnements,
+                  'shaarliste' => $shaarliste,
+                  'is_me' => $isMe,
             )
         );
     }
@@ -48,11 +76,9 @@ class Abonnements extends Controller
                 <?php
                 $this->renderMenu();
                 ?>
-
-
                 <div class="row">
                     <div class="column large-12 text-center">
-                        <h1>Gestion des abonnements</h1>
+                        <h1>Abonnements de <?php eh($params['shaarliste']); ?></h1>
                     <p>
                     Sélectionnez les shaarlistes que vous souhaitez suivre.
                     </p>
@@ -61,7 +87,7 @@ class Abonnements extends Controller
                 </div>
                 <form id="form-abonnements" method="POST">
                 <?php
-                $this->renderListeShaarlistes($params);
+                $this->renderMegaListeShaarlistes($params);
                 ?>
                 </form>
                 <?php
@@ -77,19 +103,6 @@ class Abonnements extends Controller
         parent::renderScript();
         ?>
         <script>
-
-            $('.shaarliste-selection').click(function() {
-                var checkboxId = '#' + $(this).attr('data-shaarliste-id');
-                
-                if ($(this).attr('data-waiting') != 'true') {
-                    $(this).attr('data-waiting', 'true');
-                    if ($(checkboxId).is(':checked')) {
-                        addAbo($(this), $(this).attr('data-shaarliste-id'), 'delete');
-                    } else {
-                        addAbo($(this), $(this).attr('data-shaarliste-id'), 'add');
-                    }
-                }
-            });
             function addAbo(that, id, action) {
                 var r = new XMLHttpRequest(); 
                 var params = "do="+action+"&id=" + id;
@@ -119,6 +132,26 @@ class Abonnements extends Controller
                 }; 
                 r.send(params);
             }
+            $('.a-add-abonnement').click(function() {
+                var checkboxId = '#' + $(this).attr('data-shaarliste-id');
+                
+                if ($(this).attr('data-waiting') != 'true') {
+                    $(this).attr('data-waiting', 'true');
+                    if ($(checkboxId).is(':checked')) {
+                        // L'utilisateur se désabonne
+                        $(this).text("S'abonner");
+                        addAbo($(this), $(this).attr('data-shaarliste-id'), 'delete');
+                        $('#shaarliste-selection-' + $(this).attr('data-shaarliste-id')).addClass('not-selected');
+                    } else {
+                        $(this).text("Ne plus suivre");
+                        $('#shaarliste-selection-' + $(this).attr('data-shaarliste-id')).removeClass('not-selected');
+                        addAbo($(this), $(this).attr('data-shaarliste-id'), 'add');
+                    }
+                }
+                return false;
+            });
+
+            
             $('#button-tous').click(function() {
                 var checkbox = $('.checkbox-shaarliste');
                 $.each( checkbox, function( key, value ) {

@@ -6,15 +6,20 @@ class Dashboard extends Controller
 {
     public function run() 
     {
+        if (getUtilisateurId() === '') {
+            header('Location: index.php');
+            return;
+        }
+        
         $params = array();
         if (isset($_SESSION['username'])) {
-            header(sprintf('Location: https://my.shaarli.fr/%s/', $_SESSION['pseudo']));
+            header(sprintf('Location: https://www.shaarli.fr/my/%s/', $_SESSION['pseudo']));
             return;
         }
         if ($this->post('action') == 'new') {
             // Maj url de son shaarli
-            majShaarliUrl(sprintf('https://my.shaarli.fr/%s/', $this->post('pseudo')), true);
-            header(sprintf('Location: https://my.shaarli.fr/%s/?do=login', $this->post('pseudo')));
+            majShaarliUrl(sprintf('https://www.shaarli.fr/my/%s/', $this->post('pseudo')), true);
+            header(sprintf('Location: https://www.shaarli.fr/my/%s/?do=login', $this->post('pseudo')));
             return;
         }
 

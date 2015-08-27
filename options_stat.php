@@ -19,6 +19,8 @@ class OptionsStat extends Controller
                 'use_tipeee',
                 'display_img',
                 'display_only_unread',
+                'display_little_img',
+                'display_poussins',
             );
         
         
@@ -115,7 +117,7 @@ class OptionsStat extends Controller
             <?php
     }
 
-    public static function renderScript()
+    public static function renderScript($params = array())
     {
         ?>
         <?php
