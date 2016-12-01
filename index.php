@@ -44,8 +44,8 @@ class River extends Controller
             unset($_COOKIE['shaarlieur']);
             unset($_COOKIE['shaarlieur_hash']);
 
-            setcookie('shaarlieur', null, -1, '.'.$SHAARLO_DOMAIN);
-            setcookie('shaarlieur_hash', null, -1, '.'.$SHAARLO_DOMAIN);
+            setcookie('shaarlieur', null, -1, $SHAARLO_DOMAIN);
+            setcookie('shaarlieur_hash', null, -1, $SHAARLO_DOMAIN);
             session_start();
             // or this would remove all the variables in the session, but not the session itself
              session_unset();
@@ -290,7 +290,7 @@ class River extends Controller
 
             $rssTitreAffiche = htmlspecialchars($rssTitre);
 
-            if(strpos($article['article_uuid'], 'my.'.$SHAARLO_DOMAIN) > 0) {
+            if(strpos($article['article_uuid'], 'my.shaarlo.fr') > 0) {
                 $rssTitreAffiche = '@' . $rssTitreAffiche;
             }
 
