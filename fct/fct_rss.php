@@ -56,7 +56,7 @@ define('XPATH_RSS_COPYRIGHT', '/rss/channel/copyright');
 define('XPATH_RSS_PUBDATE', '/rss/channel/item/pubDate');
 
 define('XPATH_RSS_CATEGORY', '/rss/channel/item/category');
- 
+
 
 /*
  * Get a RSS by a proxy
@@ -65,7 +65,7 @@ define('XPATH_RSS_CATEGORY', '/rss/channel/item/category');
  *
  * @return string
  */
-function getRss($url){
+function getRssByPont($url){
     $urlEncoded = urlencode($url);
     // On rajoute un v aléatoire pour éviter le cache coté proxy
     $result = file_get_contents(sprintf('http://ns3010509.ip-46-105-120.eu/pont.php?url=%s%%26v%%3D%s', $urlEncoded, rand(0,1000)));
@@ -77,13 +77,14 @@ function getRss($url){
 /*
  * Get a RSS
  *
- * @param $ur
- * @return atom
+ * @param string $url
+ *
+ * @return string
  *
  */
 function getRssByCurl($url, $sslVersion=null){
     $ch = curl_init();
-    
+
     $options = array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
@@ -106,15 +107,71 @@ function getRssByCurl($url, $sslVersion=null){
         'Connection: keep-alive',
         ),
     );
-    
+
     if($sslVersion != null) {
         $options[CURLOPT_SSLVERSION] = $sslVersion;
     }
-        
+
     curl_setopt_array($ch, $options);
 
     $result = curl_exec($ch);
-    //var_dump(curl_error($ch));
+    curl_close($ch);
+
+    if($result== false && $sslVersion == null){
+        return getRss($url, 1);
+    }
+    if($result== false && $sslVersion == 1){
+        return getRss($url, 2);
+    }
+    if($result== false && $sslVersion == 2){
+        return getRss($url, 3);
+    }
+
+    $result = remove_utf8_bom($result);
+
+    return $result;
+}
+
+/*
+ * Get a RSS
+ *
+ * @param $ur
+ * @return atom
+ *
+ */
+function getRss($url, $sslVersion=null){
+    $ch = curl_init();
+
+    $options = array(
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => false,
+        CURLOPT_AUTOREFERER => false,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 5,
+        CURLOPT_CONNECTTIMEOUT => 1,
+        CURLOPT_TIMEOUT => 2,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        CURLOPT_ENCODING => 'gzip',
+        CURLOPT_HTTPHEADER => array(
+        'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0',
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language: fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3',
+        'Accept-Encoding: gzip, deflate',
+        'DNT: 1',
+        'Connection: keep-alive',
+        ),
+    );
+
+    if($sslVersion != null) {
+        $options[CURLOPT_SSLVERSION] = $sslVersion;
+    }
+
+    curl_setopt_array($ch, $options);
+
+    $result = curl_exec($ch);
     curl_close($ch);
 
     if($result== false && $sslVersion == null){
@@ -165,7 +222,7 @@ function convertXmlToTableau($xml,$xpath){
 function convertXmlToTableauAndStop($xml,$xpath){
     $list = $xml->xpath($xpath);
     $tableau = array();
-    
+
     foreach ($list as $elt){
         $classArray = array();
         foreach ($elt as $key => $el){
@@ -177,7 +234,7 @@ function convertXmlToTableauAndStop($xml,$xpath){
             }
         }
         $tableau[] = $classArray ;
-        
+
         // On sort si jamais l'item en cours n'est plus à la date du jour
         if (isset($classArray['pubDate'])) {
             if (date('Ymd') != date('Ymd', strtotime($classArray['pubDate']))) {
@@ -207,7 +264,7 @@ function urlExists($url, $sslVersion=null) {
             CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
             CURLOPT_ENCODING => 'gzip',
             //CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0,
-            //CURLOPT_SSL_CIPHER_LIST => 'RC4-SHA',            
+            //CURLOPT_SSL_CIPHER_LIST => 'RC4-SHA',
             CURLOPT_HTTPHEADER => array(
             'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0',
             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -221,16 +278,16 @@ function urlExists($url, $sslVersion=null) {
         if($sslVersion != null) {
             $options[CURLOPT_SSLVERSION] = $sslVersion;
         }
-        
+
         curl_setopt_array($ch, $options);
 
         //print_r(curl_errno($ch));
 
         $data = curl_exec($ch);
-        //print_r(curl_getinfo($ch)); 
-        //print_r(curl_error($ch)); 
+        //print_r(curl_getinfo($ch));
+        //print_r(curl_error($ch));
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        
+
         curl_close($ch);
         //var_export($httpcode);
         if($httpcode>=200 && $httpcode<300){
@@ -416,7 +473,7 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
     } else {
         $content = getRss($url . '?do=rss&nb=' . $nb);
     }
-    
+
     $adebut = microtime(true);
     $shaarlistes = array();
     $articles = array();
@@ -443,10 +500,10 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
     $list = $xmlContent->xpath(XPATH_RSS_TITLE);
     if(isset($list[0])) {
         $titre = (string)$list[0];
-        updateRssTitre($mysqli, $fluxName, $titre); 
+        updateRssTitre($mysqli, $fluxName, $titre);
     }
 
-    
+
 
     //if (!isset($_GET['today_only'])) {
     //    $rssListArrayed = convertXmlToTableauAndStop($xmlContent, XPATH_RSS_ITEM);
@@ -460,7 +517,7 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
         $link = $rssItem['link'];
         $rssTimestamp = strtotime($rssItem['pubDate']);
         $articleDateJour = date('Ymd', $rssTimestamp);
-        //if($articleDateJour !== date('Ymd') 
+        //if($articleDateJour !== date('Ymd')
         //&& $articleDateJour !== '20141106' && !isset($_GET['full'])
         //) {
         //    break;
@@ -482,7 +539,7 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
         if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $link)) {
             $link = str_replace('mode=links&', '', $link);
         }
-        
+
         $guid = $rssItem['guid'];
         $title = $rssItem['title'];
         $description = $rssItem['description'];
@@ -491,7 +548,7 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
         if (isset($rssItem['category'])) {
             $category = $rssItem['category'];
         }
-        
+
         $linkSansHttp  = str_replace('http://', '', $link);
         $linkSansHttps = str_replace('https://', '', $linkSansHttp);
         $urlSimplifie = $linkSansHttps;
@@ -503,9 +560,9 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
         $nbBoucles = 0;
         $lienSource = $link;
         $idRssOrigin = null;
-        
+
         //http://lehollandaisvolant.net/?id=20150408205630
-        
+
         while ( preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)
             || preg_match('#\id=[0-9]{14}$#', $lienSource)
         ) {
@@ -521,7 +578,7 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
                 break;
             }
         }
-        
+
         // Creation miniature
         if ($avecMiniature) {
             captureUrl($link, $idCommun, 200, 200, true);
@@ -539,6 +596,6 @@ function synchroShaarli($url, $full=false, $avecMiniature=true, $nb = null) {
     insertArticles($mysqli, $articles);
 
     shaarliMyDisconnect($mysqli);
-    
+
     return true;
 }
