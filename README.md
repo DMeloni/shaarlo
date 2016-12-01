@@ -1,10 +1,22 @@
 shaarlo
 =======
 
-IMPORTANT : 
-Actuellement le code de la branche master n'est pas utilisable ("shaarli.fr", "https://").
-Il n'est là qu'à titre indicatif (sources du site shaarli.fr minus la configuration).
+Notice : some bash scripts for data update have to be plannified.
+Notice : HTTPS is mandatory for API call (hard coded in the api PHP file).
 
-Merci d'être patient pour les quelques qui veulent avoir une instance de shaarlo à jour. (sinon l'ancien code fonctionnel est accessible : tag v0.0.1)
 
+Installation : 
+*Git clone project into a web directory (eg. /var/www/shaarlo).
+
+* Create database : Execute shaarlimy.sql content.
+
+* Edit config.php file and replace configurations.
+
+*Give write rights to data/, cache/, sessions/
+
+*Access https://../shaarlo/
+
+*Schedule these scripts (eg. crontab it)
+5 * * * *  /../bash/do_build_all_rss.sh
+6 * * * *  /../bash/update_table_liens.sh
 
