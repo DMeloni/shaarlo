@@ -2,7 +2,9 @@
 
 require_once('Controller.class.php');
 
-$infoAboutAll = file_get_contents('http://shaarli.fr/api.php?do=getInfoAboutAll');
+global $SHAARLO_DOMAIN;
+
+$infoAboutAll = file_get_contents('http://'.$SHAARLO_DOMAIN.'/api.php?do=getInfoAboutAll');
 $infoAboutAll = remove_utf8_bom($infoAboutAll);
 $infoAboutAllDecoded = json_decode($infoAboutAll, true);
 
