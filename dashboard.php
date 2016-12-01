@@ -1,16 +1,18 @@
 <?php
 
 require_once('Controller.class.php');
+require_once 'config.php';
 
+/*
 ini_set("display_errors", 1);
 ini_set("track_errors", 1);
 ini_set("html_errors", 1);
-error_reporting(E_ALL);
+error_reporting(E_ALL);*/
 class Dashboard extends Controller
 {
         public function run()
         {
-            
+            global $SHAARLO_DOMAIN;
             // Accès invité
             if ('enregistrer_temporairement' ===  $this->post('action')) {
                 // Connexion invitée
@@ -100,7 +102,7 @@ class Dashboard extends Controller
                     if ($session !== 401) {
                         $abonnements = $this->post('shaarlistes');
                         majAbonnements($abonnements);
-                        setcookie('shaarlieur', $this->post('profil_id'), time()+31536000, '.shaarli.fr');
+                        setcookie('shaarlieur', $this->post('profil_id'), time()+31536000, $SHAARLO_DOMAIN);
                         $params['message'] = "Votre profil vient d'être créé";
                         $pasDeProfil = false;
                     } else {
@@ -177,7 +179,7 @@ class Dashboard extends Controller
                         }
                         $session = getSession($this->get('profil_id'), true, $password);
                         if ($session !== 401) {
-                            setcookie('shaarlieur', $this->get('profil_id'), time()+31536000, '.shaarli.fr');
+                            setcookie('shaarlieur', $this->get('profil_id'), time()+31536000, $SHAARLO_DOMAIN);
                             header('Location: index.php');
                             return;
                         }
@@ -223,7 +225,7 @@ class Dashboard extends Controller
 
 
             $params['shaarlieurPositionTop'] = getShaarlieurPositionTop();
-            $infoAboutAll = file_get_contents('http://shaarli.fr/api.php?do=getInfoAboutAll');
+            $infoAboutAll = file_get_contents('https://'.$SHAARLO_DOMAIN.'/api.php?do=getInfoAboutAll');
             $infoAboutAll = remove_utf8_bom($infoAboutAll);
             $infoAboutAllDecoded = json_decode($infoAboutAll, true);
             $infoAboutAllDecodedChunked = array_chunk($infoAboutAllDecoded['stat'],  4);
@@ -262,6 +264,8 @@ class Dashboard extends Controller
 
         public function render($params=array())
         {
+            global $SHAARLO_DOMAIN;
+
             // Protection des paramètres
             $params = $this->htmlspecialchars($params);
 
@@ -324,7 +328,7 @@ class Dashboard extends Controller
                         ?>
                         <div class="row">
                             <div class="column large-12 text-center">
-                                <h1>Bienvenue sur shaarli.fr</h1>
+                                <h1>Bienvenue sur <?php echo $SHAARLO_DOMAIN; ?></h1>
                                 <p>Réseau social de partage de liens hypertextes</p>
                             </div>
                         </div>
@@ -615,7 +619,7 @@ class Dashboard extends Controller
                                     </div>
                                     <?php } ?>
                                     <div class="large-3 medium-6 small-6 columns text-center">
-                                        <a class="a-block link-show" target="_blank" href="jappix-1.0.7/?r=shaarli@conference.dukgo.com">
+                                        <a class="a-block link-show" target="_blank" href="https://www.shaarli.fr/jappix-1.0.7/?r=shaarli@conference.dukgo.com">
                                             <div class="row">
                                                 <div style="min-height:150px;background:url('css/img/icon_chat.png') no-repeat;background-position:center center;"></div>
                                             </div>
@@ -658,7 +662,7 @@ class Dashboard extends Controller
                                                 <input name="profil_id" type="text" value="<?php echo htmlentities(getUtilisateurId());?>"/>
                                                 <input class="button" type="submit" value="Charger profil" />
                                         </form>
-                                        <a href="https://www.shaarli.fr/dashboard.php?action=connexion&amp;profil_id=<?php echo htmlentities(getUtilisateurId());?>">Url de connexion</a>
+                                        <a href="https://<?php echo $SHAARLO_DOMAIN; ?>/dashboard.php?action=connexion&amp;profil_id=<?php echo htmlentities(getUtilisateurId());?>">Url de connexion</a>
                                         <p class="astuce">Astuce : remplacez la clef par quelque chose de simple à retenir</p>
                                     </div>
                                 </div>
@@ -1144,7 +1148,7 @@ class Dashboard extends Controller
                         </div>
                     </div>
                 <?php } ?>
-
+<!--
                 <?php if (!$params['creation']) { ?>
                     <div class="row">
                         <div class="columns large-12 show-for-medium-up text-center">
@@ -1162,7 +1166,7 @@ class Dashboard extends Controller
                     <?php
                 }
                 ?>
-                
+-->                
                 <?php if ($params['creation']) { ?>
                     <div class="row">
                         <div class="column large-12 text-center">
