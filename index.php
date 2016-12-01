@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 require_once('Controller.class.php');
 require_once 'config.php';
@@ -29,10 +29,10 @@ function triParDate($a,$b){
 
 class River extends Controller
 {
-    public function run() 
+    public function run()
     {
         $a = microtime(true);
-        global $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MIN_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
+        global $SHAARLO_DOMAIN, $SHAARLO_URL, $DATA_DIR, $CACHE_DIR_NAME, $ARCHIVE_DIR_NAME, $MAX_FOUND_ITEM, $MIN_FOUND_ITEM, $MOD, $ACTIVE_WOT, $ACTIVE_YOUTUBE, $MY_SHAARLI_FILE_NAME, $MY_RESPAWN_FILE_NAME, $ACTIVE_NEXT_PREVIOUS;
         $mysqli = shaarliMyConnect();
         // Chargement de la configuration du shaarliste
         if(!is_null(get('shaarli'))) {
@@ -40,23 +40,24 @@ class River extends Controller
         }
 
         if (!is_null(get('do')) && get('do') == 'logout') {
-            
+
             unset($_COOKIE['shaarlieur']);
             unset($_COOKIE['shaarlieur_hash']);
-            setcookie('shaarlieur', null, -1, '.shaarli.fr');
-            setcookie('shaarlieur_hash', null, -1, '.shaarli.fr');
-            
-            // or this would remove all the variables in the session, but not the session itself 
-             session_unset(); 
-             
-             // this would destroy the session variables 
-             session_destroy(); 
+
+            setcookie('shaarlieur', null, -1, '.'.$SHAARLO_DOMAIN);
+            setcookie('shaarlieur_hash', null, -1, '.'.$SHAARLO_DOMAIN);
+            session_start();
+            // or this would remove all the variables in the session, but not the session itself
+             session_unset();
+
+             // this would destroy the session variables
+             session_destroy();
         }
 
         $sessionId = getUtilisateurId();
         $username = null;
         $pseudo = null;
-        
+
 
         if (isset($_SESSION['username'])) {
             $username = $_SESSION['username'];
@@ -91,7 +92,7 @@ class River extends Controller
         $afficherMessagerie = false;
         if(!empty($_GET['q'])) {
             $q = $_GET['q'];
-            // Affichage de la messagerie du shaarliste 
+            // Affichage de la messagerie du shaarliste
             $matches = array();
             if (preg_match_all('#^shaarli:([0-9a-f]{32})$#', urldecode($q), $matches) === 1) {
                 $idRssMessagerie = $matches[1][0];
@@ -142,7 +143,7 @@ class River extends Controller
                 $fromDateTime = new DateTime($_GET['from']);
                 $from = $fromDateTime->format('Ymd000000');
             } catch (Exception $e) {
-                
+
             }
         }
 
@@ -151,7 +152,7 @@ class River extends Controller
                 $toDateTime = new DateTime($_GET['to']);
                 $to = $toDateTime->format('Ymd235959');
             } catch (Exception $e) {
-                
+
             }
         }
 
@@ -163,7 +164,6 @@ class River extends Controller
             $to = $tomorrow->format('Ymd235959');
         }
 
-        // http://www.shaarli.fr/shaarli/
         if (isset($_GET['do']) && $_GET['do'] === 'rss') {
             $usernameRecherche='';
             if(isset($_GET['u'])) {
@@ -184,7 +184,7 @@ class River extends Controller
         if (isset($_GET['do']) && $_GET['do'] === 'add_ignored_tag' && !empty($_GET['tag'])) {
             addNotAllowedTags($_GET['tag']);
         }
-        
+
         // Filtre sur les tags
         $tags = array();
         // Envoyé depuis l'appel ajax
@@ -200,10 +200,10 @@ class River extends Controller
             // Dans la session
             $tags = getTags();
         }
-        
+
         // N'affiche que le html d'un article
         $displayOnlyArticle = false;
-            
+
         // Affiche le dernier article d'un utilisateur
         if (isset($_GET['getLastArticleFromUserId']) && getIdRss()) {
             $lastIdCommun = getLastIdCommunFromIdRss($mysqli, getIdRss());
@@ -218,9 +218,14 @@ class River extends Controller
         if (!$afficherMessagerie && !preg_match('#^id:([0-9a-f]{32})$#', $q)) {
             $displayOnlyUnreadArticles = displayOnlyUnreadArticles();
         }
-                
-        $articles = getAllArticlesDuJour($mysqli, $usernameRecherche, $q, $filtreDePopularite, $sortBy, $sort, $from, $to, $limit, $tags, $displayOnlyUnreadArticles);
-
+        $cacheArticlesFilePath = sprintf('cache/articles-%s', md5($usernameRecherche.var_export($_GET, true).var_export($tags, true))) ;
+        $cacheExpireTime = time() - 120 ;
+        if(file_exists($cacheArticlesFilePath) && filemtime($cacheArticlesFilePath) > $cacheExpireTime) {
+            $articles = json_decode(file_get_contents($cacheArticlesFilePath), true);
+        } else {
+            $articles = getAllArticlesDuJour($mysqli, $usernameRecherche, $q, $filtreDePopularite, $sortBy, $sort, $from, $to, $limit, $tags, $displayOnlyUnreadArticles);
+            file_put_contents($cacheArticlesFilePath, json_encode($articles));
+        }
         $displayShaarlistesNonSuivis = displayShaarlistesNonSuivis();
         $isModeRiver = isModeRiver();
         $displayEmptyDescription = displayEmptyDescription();
@@ -231,11 +236,11 @@ class River extends Controller
         }
         // Regroupement des articles
         $found = array();
-        
+
         foreach($articles as $article) {
             // Filtre sur les articles sans description
             if (!$displayEmptyDescription
-              && ($article['article_description'] =='' || 
+              && ($article['article_description'] =='' ||
                 preg_match('#^\(<a href="[^"]+">Permalink</a>\)$#', $article['article_description']))
             ) {
                 continue;
@@ -251,7 +256,7 @@ class River extends Controller
             $rssTitre = $article['rss_titre'];
             $followUrl = '';
 
-            
+
             // Le shaarliste est aussi un shaarlieur
             $discussion['shaarlieur_pseudo'] = null;
             // Seul les comptes protégés par mdp peuvent se faire poussinés
@@ -259,8 +264,7 @@ class River extends Controller
                 $discussion['shaarlieur_pseudo'] = $article['shaarlieur_pseudo'];
                 //$followUrl .= ' (<a href="dashboard.php?shaarliste='.($discussion['shaarlieur_pseudo']).'" >Profil</a>)';
             }
-            
-            
+
             if (getUtilisateurId() !== '') {
                 if (empty($article['shaarlieur_pseudo'])) {
                     if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
@@ -268,7 +272,7 @@ class River extends Controller
                             $followUrl = ' (<a href="#" onclick="javascript:lienAddAbo(this,\'' . $article['id_rss'] . '\', \'add\');return false;">Suivre</a>)';
                         }else{
                             $followUrl = ' (<a href="#" onclick="javascript:lienAddAbo(this,\'' . $article['id_rss'] . '\', \'delete\');return false;">Se désabonner</a>)';
-                        }            
+                        }
                     }
                 } else {
                     $followUrl = ' (<a href="dashboard.php?shaarliste='.htmlentities($article['shaarlieur_pseudo']).'">Profil</a>)';
@@ -285,15 +289,15 @@ class River extends Controller
             }
 
             $rssTitreAffiche = htmlspecialchars($rssTitre);
-            
-            if(strpos($article['article_uuid'], 'my.shaarli.fr') > 0) {
+
+            if(strpos($article['article_uuid'], 'my.'.$SHAARLO_DOMAIN) > 0) {
                 $rssTitreAffiche = '@' . $rssTitreAffiche;
             }
-            
+
             $shaarliBaseUrl = explode('?', $article['article_uuid']);
             //ajout de l'icone de messagerie ssi non mode rss
             $iconeMessagerie = '';
-            
+
             //if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
             //    $iconeMessagerie = sprintf('<a href="?q=shaarli%%3A%s"><img class="display-inline-block-text-bottom  opacity-7" width="15" height="15" src="img/mail.gif"></a>', $article['id_rss']);
             //}
@@ -308,8 +312,8 @@ class River extends Controller
                 }
             }
             $faviconPath ='';
-            
-            
+
+
             $discussion['shaarliste_href'] = $shaarliBaseUrl;
             if($article['active'] !== '1') {
                 continue;
@@ -319,7 +323,7 @@ class River extends Controller
             //ajout de l'icone d'avatar ssi non mode rss
             if(!(isset($_GET['do']) && $_GET['do'] === 'rss')) {
                 $faviconPath = 'img/favicon/63a61a22845f07c89e415e5d98d5a0f5.ico';
-                
+
                 $faviconGifPath = sprintf('img/favicon/%s.gif', $article['id_rss']);
                 if(is_file($faviconGifPath)) {
                    $faviconPath = $faviconGifPath;
@@ -341,8 +345,8 @@ class River extends Controller
             $discussion['article_date_humaine'] = date('d/m/Y H:i', $articleDateTime->getTimestamp());
 
 
-            $description = sprintf('%s %s', 
-                str_replace('<br>', '<br/>', $article['article_description']),
+            $description = sprintf('%s %s',
+                str_replace('<br>', '<br/>', process_markdown($article['article_description'])),
                 $followUrl
             );
 
@@ -363,7 +367,7 @@ class River extends Controller
                 $articleTags .= $nouveauxTags;
             }
 
-            
+
 
             // C'est un de mes posts
             if (isShaarliste()) {
@@ -374,7 +378,7 @@ class River extends Controller
                     $discussion['comment_link'] = sprintf('%s?source=bookmarklet&post=%s', getShaarliUrl(), $article['article_uuid']);
                 }
             }
-            
+
 
             $discussion['article_uuid'] = $article['article_uuid'];
             $discussion['description'] = $description;
@@ -384,7 +388,7 @@ class River extends Controller
             $discussion['id_commun'] = $article['id_commun'];
             $discussion['id'] = $article['id'];
             $discussion['id_rss'] = $article['id_rss'];
-            
+
 
             $articleFirstDate = $article['article_date'];
             if(isset($found[$article['id_commun']])) {
@@ -405,7 +409,7 @@ class River extends Controller
             } else {
                 $discussions[$article['id_commun']] = array(md5($article['article_uuid']) => $discussion);
             }
-            
+
             $imgMiniCapturePath = captureUrl($article['article_url'], $article['id_commun'], 200, 200);
             $imgCapturePathMax = getImgPathFromId($article['id_commun']);
             if(isset($_SESSION['ireadit']['id'][$article['id_commun']])) {
@@ -414,8 +418,8 @@ class River extends Controller
                 $readClass = 'not-read';
             }
 
-            $found[$article['id_commun']] = array('description' => $description, 
-                                                      'title' =>  $article['article_titre'], 
+            $found[$article['id_commun']] = array('description' => $description,
+                                                      'title' =>  $article['article_titre'],
                                                       'link' => $article['article_url'],
                                                       'pubDate' => $articleDateTime->format(DateTime::RSS),
                                                       'date' => $articleDate,
@@ -435,9 +439,9 @@ class River extends Controller
                                                       'discussions' => $discussions[$article['id_commun']]
                                                       );
         }
-        
 
-        // Si on ne décide de ne pas afficher les articles 
+
+        // Si on ne décide de ne pas afficher les articles
         // qui pointent vers des sites bloqués par l'utilisateur
         $notAllowedUrls = getNotAllowedUrls();
         if (!empty($notAllowedUrls)) {
@@ -468,14 +472,14 @@ class River extends Controller
                     $fromFiltre = new DateTime($_GET['from']);
                     $fromFiltre = $fromFiltre->format('YmdHis');
                 }
-                
+
                 if ($article['first_date'] < $fromFiltre) {
                     unset($found[$k]);
                 }
             }
         }
-        
-        // Filtre sur les noms de tags 
+
+        // Filtre sur les noms de tags
         $notAllowedTags = getNotAllowedTags();
         if (!empty($notAllowedTags)) {
             foreach ($found as $k => $article) {
@@ -485,13 +489,13 @@ class River extends Controller
                 }
             }
         }
- 
-    
+
+
         function detectSublink(&$noeud, &$discussionsOrigine)
         {
-            
+
             $articleUrlSansHttps = str_replace('https://', 'http://', $discussionsOrigine['article_url']);
-            if (isset($noeud[md5($articleUrlSansHttps)])) {   
+            if (isset($noeud[md5($articleUrlSansHttps)])) {
                 $discussionsOrigine['article_url'] = $articleUrlSansHttps;
             }
 
@@ -505,7 +509,7 @@ class River extends Controller
 
                 return true;
             }
-            // Peut etre sur un de ces sublink ? 
+            // Peut etre sur un de ces sublink ?
             foreach ($noeud as $d => $disc) {
                 //  Si présence de commentaire, on teste
                 if (!empty($noeud[$d]['sublink'])) {
@@ -515,7 +519,7 @@ class River extends Controller
 
             return false;
         }
-        
+
         function sortNoeudSublink(&$noeud) {
             //  Si présence de commentaire, on tri sur eux avant
             if (!empty($noeud['sublink'])) {
@@ -527,12 +531,12 @@ class River extends Controller
         }
 
 
-        
+
         // A partir d'ici, pour chaque discussion, on réarrangent les liens dedans pour faire des groupes
         $foundGroupes = array();
         foreach ($found as $idCommun => $article) {
             $foundGroupes[$idCommun] = $article;
-                
+
             // On reset les discussions
             $foundGroupes[$idCommun]['discussions'] = array();
             $foundGroupes[$idCommun]['description'] = '';
@@ -552,17 +556,17 @@ class River extends Controller
                     break;
                 }
             }
-            
+
             // Pour chaque commentaires, on regarde ceux liés entre eux
             if (!$lienTypeShaarli) {
                 foreach ($article['discussions'] as $idOriginal => $discussion) {
-                    // Reshaare du lien d'origine uniquement 
+                    // Reshaare du lien d'origine uniquement
                     if (md5($article['link']) === md5($discussion['article_url'])) {
                         $foundGroupes[$idCommun]['discussions'][md5($discussion['article_uuid'])] = $discussion;
 
                         // Pour le flux rss, on construit la chaine ici
                         $foundGroupes[$idCommun]['description'] .= sprintf('<b>%s</b><br/>%s<br/>', $discussion['shaarliste_titre'], $discussion['description']);
-                        
+
                         // On l'enlève du found d'origine
                         unset($found[$idCommun]['discussions'][$idOriginal]);
                     }
@@ -620,8 +624,8 @@ class River extends Controller
                 }
             }
         }
-        
-        
+
+
         // Tri par date que maintenant car les clefs des tableaux se barrent via le usort
         foreach ($foundGroupes as $idCommun => $article) {
             foreach ($article['discussions'] as $d => $disc) {
@@ -631,12 +635,12 @@ class River extends Controller
 
         $found = $foundGroupes;
 
-        // Suppression des tags en doublon       
+        // Suppression des tags en doublon
         foreach ($found as $k => $article) {
             $tagsExploded = explode(',', trim($article['tags']));
             $tagsExploded = array_unique($tagsExploded);
             $found[$k]['tags_array'] = $tagsExploded;
-            
+
             // Evaluation de la catégorie de l'article
             //if (count($found[$k]['tags_array'])  > 0 && count($found[$k]['tags_array']) < 1024) {
             //    $found[$k]['categorie'] = getTopCategorieFromTags($mysqli, $found[$k]['tags_array']);
@@ -662,7 +666,7 @@ class River extends Controller
                     $dateDeLaVeille = new DateTime($_GET['veille']);
                     $isToday = false;
                 }
-                
+
                 // Selection de la date du meilleur article
                 if ($dateDeLaVeille->format('H') < 10 ) {
                     // Si l'heure actuelle est avant 10h, on récupère l'article de la veille de 21h à minuit
@@ -691,13 +695,13 @@ class River extends Controller
                     $dateTimeTo   = new DateTime($dateDeLaVeille->format('Ymd205959'));
                 }
             }
-            
+
             $meilleursArticlesDuJour =  getMeilleursArticlesDuJour($mysqli, $dateTimeFrom, $dateTimeTo, 1);
             $meilleursArticlesDuJourRss  = '';
             foreach ($meilleursArticlesDuJour as $k => $meilleurArticleDuJour) {
                     //Récupération d'une capture d'écran du site
                     $imgMiniCapturePath = captureUrl($meilleurArticleDuJour['article_url'], $meilleurArticleDuJour['id_commun'], 450, 450, true);
-                    
+
                     $faviconPath = 'img/favicon/63a61a22845f07c89e415e5d98d5a0f5.ico';
 
                     $faviconGifPath = sprintf('img/favicon/%s.gif', $meilleurArticleDuJour['id_rss']);
@@ -710,7 +714,7 @@ class River extends Controller
                         }
                     }
                     $avatar = sprintf('<a href="%s"><img class="entete-avatar" width="50" height="50" src="%s"/></a>', $meilleurArticleDuJour['url'], sprintf('%s', $faviconPath));
-                    
+
                     $meilleursArticlesDuJour[$k]['url_image'] = $imgMiniCapturePath;
                     $meilleursArticlesDuJour[$k]['avatar'] = $avatar;
                     $meilleursArticlesDuJourRss .= sprintf("<best>
@@ -775,10 +779,10 @@ class River extends Controller
             <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
               <channel>
                 <title>'.$titre.'</title>
-                <link>http://shaarli.fr/</link>
+                <link>http://'.$SHAARLO_DOMAIN.'/</link>
                 <description>Shaarli Aggregators</description>
                 <language>fr-fr</language>
-                <copyright>http://shaarli.fr/</copyright>';
+                <copyright>http://'.$SHAARLO_DOMAIN.'/</copyright>';
         foreach ($found as $idCommun => $item) {
             $count = substr_count($item['description'], "Permalink");
             if ($count < $filtreDePopularite) {
@@ -848,7 +852,7 @@ class River extends Controller
 
             $dateDemain = '';
             $dateHier = '';
-            
+
             if (substr($from, 0, 4) == substr($from, 0, 4)) {
                 $dateJMoins1 = new DateTime($from);
                 $dateJMoins1->modify('-1 day');
@@ -865,7 +869,7 @@ class River extends Controller
                 $isSecure = 'yes';
             }
 
-            
+
             $nodesc = null;
             if(isset($_GET['nodesc'])) {
                 $nodesc = $_GET['nodesc'];
@@ -881,12 +885,12 @@ class River extends Controller
             $logStat = json_decode(file_get_contents('log/stat'));
             $nbSessions = $logStat[0];
             */
-            
+
             $dateDuJour = new DateTime();
             $dateTopHier = new DateTime('-1 day');
             $dateMoinsUneSemaine = new DateTime('-7 days');
             $dateMoinsUnMois = new DateTime(date('Ym00'));
-            
+
             $hrefTopJour = sprintf('?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateDuJour->format('Ymd'), $dateDuJour->format('Ymd'));
             $hrefTopHier = sprintf('?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateTopHier->format('Ymd'), $dateTopHier->format('Ymd'));
             $hrefTopSemaine = sprintf('?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateMoinsUneSemaine->format('Ymd'), $dateDuJour->format('Ymd'));
@@ -927,7 +931,7 @@ class River extends Controller
                 , 'token' => getToken()
                 , 'isToday' => $isToday
                 , 'afficher_messagerie' => $afficherMessagerie
-                , 'extended' => $extended 
+                , 'extended' => $extended
                 , 'menu_locked' => $menuLocked
                 , 'found' => $found
                 , 'meilleurs_article_du_jour' => $meilleursArticlesDuJour
@@ -948,7 +952,9 @@ class River extends Controller
 
     public function render($params=array())
     {
-        // Protection des paramètres 
+        global $SHAARLO_DOMAIN;
+
+        // Protection des paramètres
         //$params = $this->htmlspecialchars($params, array('found'));
 
         if (!$params['displayOnlyArticle']) {
@@ -960,7 +966,7 @@ class River extends Controller
 
             <body>
                 <?php
-                $this->renderMenu('Shaarli.fr', $params['rss_url']);
+                $this->renderMenu($SHAARLO_DOMAIN, $params['rss_url']);
                 ?>
 
                 <?php if (!$params['afficher_messagerie']) { ?>
@@ -975,7 +981,7 @@ class River extends Controller
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="fake-panel show-for-medium-up">
                         <div class="columns large-12 text-right">
                             <a onclick="option_extend(this)">Avancé</a>
@@ -1000,7 +1006,7 @@ class River extends Controller
                                         <hr/>
                                         <div class="row">
                                             <div class="column large-12">
-                                                <h5>Recherche pas mots clefs</h5>    
+                                                <h5>Recherche pas mots clefs</h5>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -1014,7 +1020,7 @@ class River extends Controller
                                         <hr/>
                                         <div class="row">
                                             <div class="column large-12">
-                                                <h5>Filtre par popularité</h5>    
+                                                <h5>Filtre par popularité</h5>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -1028,7 +1034,7 @@ class River extends Controller
                                         <hr/>
                                         <div class="row">
                                             <div class="column large-12">
-                                                <h5>Limite</h5>    
+                                                <h5>Limite</h5>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -1042,7 +1048,7 @@ class River extends Controller
                                         <hr/>
                                         <div class="row">
                                             <div class="column large-12">
-                                                <h5>Période</h5>    
+                                                <h5>Période</h5>
                                             </div>
                                         </div>
                                         <div class="row" data-equalizer>
@@ -1062,7 +1068,7 @@ class River extends Controller
                                        <hr/>
                                         <div class="row">
                                             <div class="column large-12">
-                                                <h5>Options de tri</h5>    
+                                                <h5>Options de tri</h5>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -1097,7 +1103,7 @@ class River extends Controller
                     </div>
                 </div>
                 <div class="clear"></div>
-                
+
                 <br/>
                 <?php if (!$params['afficher_messagerie'] && $params['displayBlocConversation'] && !empty($params['my_shaarli'])
                        && getUtilisateurId() !== ''
@@ -1115,7 +1121,7 @@ class River extends Controller
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="div-last-user-article"></div>
                 <?php } ?>
 
@@ -1152,13 +1158,13 @@ class River extends Controller
                                     <h3>
                                         <a title="Go to original place" href="<?php eh($meilleurArticleDuJour['article_url']);?>">
                                         <?php eh($meilleurArticleDuJour['article_titre']);?>
-                                        </a> 
+                                        </a>
                                     </h3>
                                     <div class="mini hidden-on-smartphone visible-on-hover color-blue"><?php eh($meilleurArticleDuJour['url']);?></div>
                                     <h4><?php echo ($meilleurArticleDuJour['avatar']);?>
                                     <span class="entete-pseudo"><b><a href="<?php eh($meilleurArticleDuJour['url']);?>"><?php eh($meilleurArticleDuJour['rss_titre']);?></a></b></span>
                                     </h4>
-                                    
+
                                     <div class="article-content"><?php echo ($meilleurArticleDuJour['article_description']);?></div>
                                 </div>
                                 <div class="column large-4">
@@ -1175,7 +1181,7 @@ class River extends Controller
                     }
                 }
 
-                
+
                 if (count($params['found']) == 0) {
                     ?>
                     <div class="">
@@ -1199,7 +1205,7 @@ class River extends Controller
                         $this->renderArticle($params, $found);
                     }
                     ?></div>
-                    
+
                     <?php
                 } else {
                     ?>
@@ -1215,7 +1221,7 @@ class River extends Controller
                             <div class="truncate display-inline-block-middle no-margin no-padding max-width-60">
                                 <span class="add-margin-right-2"><?php eh($found['title']); ?></span>
                             </div>
-                            
+
                         </a>
                         <hr />
                     <?php
@@ -1246,8 +1252,8 @@ class River extends Controller
     {
         $class = '';
         $discussions = array_reverse($found['discussions'], true);
-        
-        if (count($discussions) > 1) { 
+
+        if (count($discussions) > 1) {
             $class = 'toptopic';
         }
 
@@ -1259,16 +1265,16 @@ class River extends Controller
                     <div class="columns large-11 small-12">
                         <h3 class="<?php echo $class; ?> no-margin-bottom">
                             <a title="Go to original place" href="<?php eh($found['link']); ?>" onmouseup="ireadit('<?php eh($found['id_commun']); ?>')"><?php eh($found['title']); ?>
-                            <?php 
-                            if (count($discussions) > 1) { 
+                            <?php
+                            if (count($discussions) > 1) {
                                 echo sprintf('[%s]', count($discussions));
                             }
                             ?>
                             </a>
                         </h3>
                     </div>
-                    
-                    
+
+
                     <?php if(!isInvite()) { ?>
                         <?php if(useRefreshButton()) { ?>
                         <div class="columns large-1 show-for-medium-up text-right">
@@ -1281,7 +1287,7 @@ class River extends Controller
                         </div>
                         <?php } ?>
                     <?php } ?>
-                    
+
                     <div class="columns large-12">
                         <div class="mini visible-on-hover hidden-on-smartphone color-blue"><?php eh($found['link']); ?></div>
                     </div>
@@ -1290,16 +1296,16 @@ class River extends Controller
                     <div class="columns <?php if (displayImages()) {?>large-10 small-10<?php } ?>">
                         <div class="">
                             <div id="div-description-<?php eh($found['id_commun']); ?>"  style="overflow:hidden;" class="columns large-10 <?php if($params['extended']) echo 'extended'; ?>">
-                                <?php 
+                                <?php
                                 $d = 0;
                                 foreach($discussions as $discussion) {
                                     $this->renderDiscussion($discussion, $params, $d);
                                 }
                                 ?>
 
-                                <?php 
+                                <?php
                                 // Bloc commenter
-                                if (!empty($params['my_shaarli']) && strpos($found['description'], $params['my_shaarli']) === false 
+                                if (!empty($params['my_shaarli']) && strpos($found['description'], $params['my_shaarli']) === false
                                   && getUtilisateurId() !== ''
                                 ) {
                                 ?>
@@ -1313,19 +1319,19 @@ class River extends Controller
                                         <input data-article-id="<?php eh($found['id_commun']); ?>" id="input-conversation-<?php eh($found['id_commun']); ?>" class="a-reshaarlier button tiny secondary right hidden" type="button" value="Commenter" />
                                     </form>
                                 </div>
-                                <?php 
+                                <?php
                                 }
                                 ?>
                             </div>
                         </div>
 
-                        
+
                         <div class="clear"></div>
                         <div <?php if(!($params['extended'] && $d > 1)) { ?>style="display:none"<?php } ?> class="row text-center" id="div-extend-<?php eh($found['id_commun']); ?>">
                             <a  class="no-margin-bottom button secondary tiny" onclick="extend(this, '#div-description-<?php eh($found['id_commun']); ?>')">Voir la discussion</a>
                         </div>
                     </div>
-                    
+
                     <?php if (displayImages()) { ?>
                     <div class="columns large-2 small-2">
                         <?php if (!empty($found['url_image'])) { ?>
@@ -1343,13 +1349,13 @@ class River extends Controller
                     </div>
                     <?php
                     }
-                    
+
                     ?>
                     <div class="clear"></div>
                     <hr class="mini"/>
                     <div class="article-footer">
                         <div class="columns large-10 text-left">
-                        <?php 
+                        <?php
                         foreach ($found['tags_array'] as $tag) {
                             if (!empty($tag)) {
                                 ?><a href="?tags=<?php eh($tag);?>" class="button microscopic secondary"><?php echo $tag; ?><?php if(!isInvite()) { ?><a href="?do=add_ignored_tag&tag=<?php eh($tag);?>" onclick="return(confirm('Les articles portant ce tag ne seront plus affichés, continuer ? '));" class="button microscopic secondary">X</a><?php } ?></a> <?php
@@ -1360,14 +1366,14 @@ class River extends Controller
                         if ($found['nb_clic'] > 0) {
                             $nbClics = $found['nb_clic'];
                         }
-                        
+
                         ?>
                         </div>
                         <div class="columns large-2 text-right">
                             <span title="<?php echo $found['categorie']; ?>" style="font-size:12px;" class="nb-clics"><?php echo $nbClics; ?></span>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
@@ -1380,7 +1386,7 @@ class River extends Controller
         if ($d == 0 && $params['extended']) {
             $discussionClass .= ' div-discussion-max-height';
         }
-        
+
         if ($d > 0 && $params['extended']) {
             $discussionClass .= ' div-discussion-hidden hidden div-discussion-border-left';
         }
@@ -1392,7 +1398,7 @@ class River extends Controller
         if ($profondeur > 0) {
             $columnsClass = "columns large-$largeurColonne right";
         }
-        
+
         ?>
         <div class="row">
             <div class="<?php echo $columnsClass; ?>">
@@ -1400,12 +1406,12 @@ class River extends Controller
                     <?php
                         if (isset($sublink['edit_link'])) {
                             ?><a data-article-id="<?php eh($sublink['id_commun']); ?>" class="icon-edition a-reshaarlier" href="<? eh($sublink['edit_link']); ?>" target="_blank"> </a><?php
-                        } 
+                        }
                         elseif (isset($sublink['comment_link'])) {
                             // Lien de réponse
                             ?><a data-article-id="<?php eh($sublink['id_commun']); ?>" class="icon-comment a-reshaarlier" href="<? eh($sublink['comment_link']); ?>" target="_blank"> </a><?php
                         }
-                        // Lien don de poussins                       
+                        // Lien don de poussins
                         if (isShaarliste() && displayPoussins() && !empty($sublink['shaarlieur_pseudo']) && $sublink['shaarlieur_pseudo'] !== getUtilisateurId()) {
                             // Pseudo déjà poussiné
                             if (isset($params['shaarlieurs_poussines'][$sublink['shaarlieur_pseudo']][$sublink['id']])) {
@@ -1442,11 +1448,11 @@ class River extends Controller
 
                     }
                     ?>
-                        <div class="column large-11 small-9 <?php if (displayLittleImages()) { ?>no-padding<?php } ?>"> 
+                        <div class="column large-11 small-9 <?php if (displayLittleImages()) { ?>no-padding<?php } ?>">
                             <span class="entete-pseudo">
                                 <b>
                                     <a <?php if ($sublink['shaarliste_class']) {?>class="<?php eh($sublink['shaarliste_class']);?>"<?php }?> href="<?php eh($sublink['shaarliste_href']);?>"><?php eh($sublink['shaarliste_titre']);?></a>
-                                    <?php 
+                                    <?php
                                     if (!empty($sublink['shaarliste_cible_titre'])) {
                                     ?>
                                         <a href="<?php eh($sublink['shaarliste_cible_href']);?>">&gt; <?php eh($sublink['shaarliste_cible_titre']); ?></a>
@@ -1454,13 +1460,13 @@ class River extends Controller
                                     }
                                     ?>
                                 </b>
-                                
+
                             </span>
                             <br/>
                             <span class="mini-on-smartphone opacity-test-3 tiny"><?php eh($sublink['article_date_humaine']);?></span>
                         </div>
                         <br/>
-                        <div class="column large-11 small-9 <?php if (displayImages()) { ?>right<?php } ?>"> 
+                        <div class="column large-11 small-9 <?php if (displayImages()) { ?>right<?php } ?>">
                             <?php
                             echo $sublink['description'];
                             ?>
@@ -1482,17 +1488,18 @@ class River extends Controller
             }
         }
     }
- 
+
 
     public static function renderScript($params = array())
     {
         parent::renderScript($params);
+        global $SHAARLO_DOMAIN;
         ?>
         <script>
             function getMy(){
-                document.forms["loginform"].action = "https://www.shaarli.fr/my/" + document.getElementById('pseudo').value + "/";
+                document.forms["loginform"].action = "https://<?php echo $SHAARLO_DOMAIN;?>/my/" + document.getElementById('pseudo').value + "/";
                 document.forms["loginform"].submit();
-            }       
+            }
             function showDashboard(){
                 document.getElementById('content').className = 'dashboarded';
                 addClass(document.getElementById('panel-best'), 'dashboarded');
@@ -1504,10 +1511,10 @@ class River extends Controller
                 removeClass(document.getElementById('panel-best'), 'dashboarded');
                 document.getElementById("dashboard_icon").style.display="block";
                 document.getElementById("dashboard").style.display="none";
-            }                    
-            
+            }
 
-            
+
+
             function extend(him, id) {
                 $(id).removeClass('extended');
                 $(id).find('.div-discussion-hidden').removeClass('hidden');
@@ -1557,28 +1564,28 @@ class River extends Controller
             /**
             * Fait un appel ajax pour ignorer un article
             */
-            function ignoreit(him, id) 
+            function ignoreit(him, id)
             {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "do=ignoreit&id=" + id;
-                r.open("POST", "add.php", true); 
+                r.open("POST", "add.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
                         if(r.status == 200){
                             $('#div-article-' + id).hide();
                         }
-                        return true; 
+                        return true;
                     }
                 };
                 r.send(params);
             }
-            
-            function ireadit(id) 
+
+            function ireadit(id)
             {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "do=ireadit&id=" + id;
-                r.open("POST", "add.php", true); 
+                r.open("POST", "add.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
@@ -1587,42 +1594,42 @@ class River extends Controller
                             blocArticle.removeClass('not-read');
                             blocArticle.addClass('read');
                         }
-                        return true; 
+                        return true;
                     }
                 };
                 r.send(params);
             }
 
-            function ipoussinhim(shaarlieurId, lienId) 
+            function ipoussinhim(shaarlieurId, lienId)
             {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "do=poussin&shaarlieur=" + shaarlieurId +"&id_lien=" + lienId;
-                r.open("POST", "add.php", true); 
+                r.open("POST", "add.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
                         if(r.status == 200){
                         }
-                        return true; 
+                        return true;
                     }
                 };
                 r.send(params);
             }
-            
-            function save_lock(state) 
+
+            function save_lock(state)
             {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "do=lock&state=" + state;
-                r.open("POST", "add.php", true); 
+                r.open("POST", "add.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
-                        return true; 
+                        return true;
                     }
                 };
                 r.send(params);
             }
-            
+
             function lock_menu(him, elementId)
             {
                 addClass(document.getElementById('header'), 'add-padding-top-8');
@@ -1643,8 +1650,8 @@ class River extends Controller
                 document.getElementById(elementId).onclick = function () {return true;};
                 him.onclick = function () {lock_menu(him, elementId);};
                 save_lock('open');
-            }   
-            
+            }
+
             document.onkeypress = function(event) {
                 var char = getChar(event);
                 if(char == '339') {
@@ -1656,11 +1663,11 @@ class River extends Controller
                 return true;
             }
 
-            
+
             function validerLien(that, id, action) {
-                var r = new XMLHttpRequest(); 
+                var r = new XMLHttpRequest();
                 var params = "do="+action+"&id=" + id;
-                r.open("POST", "valide.php", true); 
+                r.open("POST", "valide.php", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {
@@ -1674,18 +1681,18 @@ class River extends Controller
                                 that.innerHTML = 'Valider';
                                 that.onclick = function () { validerLien(that, id, 'validerLien'); return false; };
                             }
-                            return; 
+                            return;
                         }
                         else {
                             that.text = '-Erreur-';
-                            return; 
+                            return;
                         }
                     }
-                }; 
+                };
                 r.send(params);
             }
-        
-        /* 
+
+        /*
         Lorsque l'utilisateur reshaare un lien
         Un appel de synchro est fait pour récupérer sa réponse
         */
@@ -1694,9 +1701,9 @@ class River extends Controller
             $(this).closest("form").submit();
             $('#textarea-conversation-' + articleId).attr('readonly', 'readonly');
             $(this).attr('disabled', 'disabled');
-            
+
             var shaarliUrl = '<?php echo getShaarliUrl() . '?' ;?>';
-            
+
             $(window).focus(function(){
                 setTimeout(
                     function() {
@@ -1715,17 +1722,17 @@ class River extends Controller
             var articleId = $(this).attr('data-article-id');
             confirmIgnoreIt(articleId);
         });
-        
+
         function confirmIgnoreIt(articleId) {
             var r = confirm("Attention, cette conversation n'apparaitra plus jamais (pas de retour possible pour l'instant). Continuer ? ");
             if (r == true) {
                 ignoreit(this, articleId);
             }
         }
-        
-        
 
-        /* 
+
+
+        /*
         Lorsque l'utilisateur utilise le bouton Converser
         Un appel de synchro est fait pour récupérer sa réponse
         */
@@ -1757,7 +1764,7 @@ class River extends Controller
             }).done(function( msg ) {
                 if (typeof($($(msg)[2])) != 'undefined') {
                     var idAAjouter = $($(msg)[2]).attr('id');
-                    // On vérifie qu'il n'existe pas déjà dans la page courante ou 
+                    // On vérifie qu'il n'existe pas déjà dans la page courante ou
                     // dans le champ prévu pour
                     if ($('#' + idAAjouter).length ==0 && $('#div-last-user-article').find('#' + idAAjouter).length == 0) {
                         $('#div-last-user-article').append(msg);
@@ -1765,7 +1772,7 @@ class River extends Controller
                         $('.a-refresh-article').click(function() {
                             refreshArticle($(this).attr('data-article-id'));
                         });
-                        
+
                         // On purge la valeur de la conversation uniquement si le commentaire a été soumis
                         $('#form-conversation').find('textarea').val('');
                     }
@@ -1777,7 +1784,7 @@ class River extends Controller
                 }
             });
         }
-        
+
         $(function() {
             synchroShaarli();
         });
@@ -1789,7 +1796,7 @@ class River extends Controller
               url: "index.php",
               data: { q: "id:"+articleId, display_only_article: "true" }
             }).done(function( msg ) {
-                if (typeof(ssiTextePresent) == 'undefined' 
+                if (typeof(ssiTextePresent) == 'undefined'
                  || msg.indexOf(ssiTextePresent) != -1
                 ) {
                     $('#div-article-' + articleId).replaceWith(msg);
@@ -1814,9 +1821,9 @@ class River extends Controller
         var datePrecedenteTo   = $("#div-date-precedente").attr('data-date-precedente-to');
         var datePrecedenteFrom = $("#div-date-precedente").attr('data-date-precedente-from');
         var tagsJson = $("#div-tags-json").attr('data-tags-json');
-        
+
         var appelScrollEnCours = false;
-        
+
         function appelleAnciensArticles() {
             $.ajax({
               method: "GET",
@@ -1826,9 +1833,9 @@ class River extends Controller
                 datePrecedenteTo   = $($(msg)[0]).attr('data-date-precedente-to');
                 datePrecedenteFrom = $($(msg)[0]).attr('data-date-precedente-from');
                 var i =0;
-                
+
                 $(msg).each(function( index, element ) {
-                    
+
                     if (index==0) {
                         // On affiche directement le premier div qui n'est pas un article
                         $('#div-container-articles').append(element);
@@ -1841,7 +1848,7 @@ class River extends Controller
 
                     setTimeout(function(){
                         $(element).addClass('slider');
-                        
+
                         $('#div-container-articles').append(element);
                         // On active les evenements onclick sur les nouveaux articles
                         $(element).click(function() {
@@ -1852,12 +1859,12 @@ class River extends Controller
                             appelScrollEnCours = false;
                         }
                     }, i * 100);
-                    
+
                     i++;
                 });
             });
         }
-        
+
         /* Detection de l'arrivée en bas de page */
         $(window).scroll(function() {
             if (appelScrollEnCours == false) {
@@ -1871,12 +1878,12 @@ class River extends Controller
 
         $(document).on("click", '.thumbnail-modal-reveal', function() {
             var id = $(this).attr("data-reveal-id");
-            
+
             var imgElement = $("#"+id+"-src");
             imgElement.attr('src', imgElement.attr('data-src'));
             ireadit($(this).attr("data-article-id"));
         });
-        
+
         $(document).on("click", '.a-poussin', function() {
             var shaarlieurId = $(this).attr("data-shaarlieur-id");
             var lienId = $(this).attr("data-lien-id");
@@ -1886,8 +1893,8 @@ class River extends Controller
             $(this).removeClass('a-poussin');
         });
 
-        $(document).foundation(); 
-        
+        $(document).foundation();
+
         // On ready
         $(function() {
             <?php if($params['extended']) { ?>
