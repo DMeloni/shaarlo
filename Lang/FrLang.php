@@ -1,11 +1,9 @@
-<?php 
+<?php
 
+namespace Shaarlo\Lang;
 
-require_once('lang/LangInterface.php');
-
-class Fr extends LangInterface
+class FrLang extends \Shaarlo\Lang\AbstractLang
 {
-
     public $messages = array(
             'profil_mot_de_passe' => 'Mot de passe',
     );

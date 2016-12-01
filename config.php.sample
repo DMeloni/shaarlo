@@ -24,11 +24,13 @@ $GLOBALS['PWD_SALT']  = 'xxx';/* Clef de salaison pour les comptes */
 /*
  * Directorys
 */
+$GLOBALS['API_TRANSFER_PROTOCOL'] = 'http'; /* transfer protocol */
 $GLOBALS['SHAARLO_DOMAIN'] = 'shaarli.fr'; /* your shaarlo's domain */
-$GLOBALS['DATA_DIR'] = 'data'; /* Nom du répertoire contenant les données récupérées */
+$GLOBALS['DATA_DIR'] = 'data'; /* Data directory. */
+$GLOBALS['CACHE_DIRECTORY_PATH'] = $GLOBALS['DATA_DIR'].'/cache'; /* Chemin du répertoire de cache */
+$GLOBALS['FLUX_DIRECTORY_PATH'] = $GLOBALS['DATA_DIR'].'/flux'; /* Nom du répertoire de cache des flux */
 $GLOBALS['ARCHIVE_DIR_NAME'] = 'archive'; /* Nom du répertoire contenant les archives */
-$GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favisons */
-$GLOBALS['CACHE_DIR_NAME'] = 'cache'; /* Nom du répertoire de cache */
+$GLOBALS['FAVICON_DIR_NAME'] = 'favicon'; /* Nom du répertoire contenant les favicons */
 $GLOBALS['SESSION_DIR_NAME'] = 'sessions'; /* Nom du répertoire de sessions */
 $GLOBALS['SHAARLIS_FILE_NAME'] = 'shaarli.txt'; /* Nom du fichier listant les Shaarlis actifs */
 $GLOBALS['DISABLED_SHAARLIS_FILE_NAME'] = 'disabled_shaarli.txt'; /* Nom du fichier listant les Shaarlis désactivés */

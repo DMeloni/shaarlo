@@ -1,9 +1,8 @@
-<?php 
+<?php
 
+namespace Shaarlo\Lang;
 
-require_once('lang/LangInterface.php');
-
-class En extends LangInterface
+class EnLang extends \Shaarlo\Lang\AbstractLang
 {
 
     public $messages = array(

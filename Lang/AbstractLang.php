@@ -1,16 +1,17 @@
-<?php 
+<?php
 
-abstract class LangInterface
+namespace Shaarlo\Lang;
+
+abstract class AbstractLang implements LangInterface
 {
-
     public $messages = array();
-    
+
     /*
      * Retourne le message demandé
      *
      * @param string $code : le code du message
-     * 
-     * @return 
+     *
+     * @return
      */
     public function trans($code)
     {
@@ -18,7 +19,7 @@ abstract class LangInterface
         if (isset($messages[$code])) {
             return $messages[$code];
         }
-        
+
         return '';
     }
 }

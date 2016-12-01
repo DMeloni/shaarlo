@@ -3,7 +3,9 @@
 
 // Fonction qui redirige l'utilisateur sur la page de connection s'il doit etre connecté
 function getUrlHost() {
-    return "https://".$_SERVER['HTTP_HOST'];
+    global $API_TRANSFER_PROTOCOL;
+
+    return $API_TRANSFER_PROTOCOL."://".$_SERVER['HTTP_HOST'];
 }
 
 // Fonction qui redirige l'utilisateur sur la page de connection s'il doit etre connecté
@@ -18,7 +20,7 @@ function getRedirectUrl() {
 
 
 
-// Rend un nom plus beau 
+// Rend un nom plus beau
 function normalize($nom) {
     $nom = strtolower($nom);
     $nom = str_replace(array(' ', '_'), '-', $nom);
@@ -119,7 +121,7 @@ function ajouterParametresGET($url, $nomsvaleurs){
     foreach($nomsvaleurs as $nom => $valeur) {
         $url = ajouterParametreGET($url, $nom, $valeur);
     }
-    
+
     return $url;
 }
 
@@ -133,9 +135,9 @@ function eh($string) {
 
 /**
 * Affiche de manière protégée une url
-* 
+*
 * @param string $url : http://toto?coucou=toi&moi
-* 
+*
 * @return string : http://toto%3Fcoucou=toi%26moi
 */
 function ehu($string) {
