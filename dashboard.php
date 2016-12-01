@@ -829,16 +829,6 @@ class Dashboard extends Controller
                                 <hr class="no-margin"/>
                                 <div class="row">
                                     <div class="columns large-8">
-                                        <span>Afficher les trucs du style Tipeee</span>
-                                    </div>
-                                    <div class="columns large-4">
-                                        <input type="radio" <?php if(useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee"  data-option="use_tipeee" class="no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!useTipeee()) {echo ' checked="checked" ';}?> name="checkbox-use_tipeee" data-option="use_tipeee" class="no-margin" value="non"/>non
-                                    </div>
-                                </div>
-                                <hr class="no-margin"/>
-                                <div class="row">
-                                    <div class="columns large-8">
                                         <span>Afficher les images/avatars</span>
                                     </div>
                                     <div class="columns large-4">
