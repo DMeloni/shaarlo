@@ -1,0 +1,4 @@
+shaarlo:
+    resource: "@ShaarloBundle/Controller/"
+    type:     annotation
+    prefix:   /

@@ -1,0 +1,764 @@
+{% extends '@Shaarlo/base.html.twig' %}
+
+{% block body_content %}
+
+
+    {% if message|default %}
+    <div class="row">
+        <div class="columns large-12 center">
+            <div class="panel">
+                <span class="color-success"> eh($params['message']);?></span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if demande_password|default %}
+        <div class="row" data-equalizer>
+            <div class="columns large-6 large-centered small-centered text-center">
+                <div class="panel" data-equalizer-watch>
+                    <div class="row">
+                        <div class="columns large-12">
+                            <h3> $this->t('profil_mot_de_passe'); ?></h3>
+                            <form method="POST">
+                                <input type="hidden" name="action" value="connexion"/>
+                                <input type="hidden" name="profil_id" value=" eh($this->get('profil_id')); ?>"/>
+                                <input name="password" type="password" value=""/>
+                                <input class="button success" type="submit" value="Valider" />
+                            </form>
+                            if (profilHasEmail($this->get('profil_id'))) {
+                                <a href="?action=send_pwd_mail&amp;profil_id= eh($this->get('profil_id')); ?>">Mot de passe oublié ?</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {% if pas_de_profil|default and creation|default %}
+            <div class="row">
+                <div class="column large-12 text-center">
+                    <h1>Bienvenue sur  echo $SHAARLO_DOMAIN;</h1>
+                    <p>Réseau social de partage de liens hypertextes</p>
+                </div>
+            </div>
+
+            <div class="row" data-equalizer>
+                <div class="columns large-4 ">
+                    <div class="panel" data-equalizer-watch>
+                        <div class="row">
+                            <div class="columns large-12 text-center">
+                                <h2>Nous rejoindre</h2>
+                                <br/><br/>
+                                <a href="?action=creation" class="button secondary">Créer un profil</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="columns large-4 text-center">
+                    <div class="panel" data-equalizer-watch>
+                        <div class="row">
+                            <div class="columns large-12">
+                                <h2>Se connecter</h2>
+                                <form method="GET">
+                                    <input type="hidden" name="action" value="connexion"/>
+                                    <input name="profil_id" type="text" placeholder="pseudo" value=""/>
+                                    <input class="button" type="submit" value="Charger profil" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="columns large-4 ">
+                    <div class="panel" data-equalizer-watch>
+                        <div class="row">
+                            <div class="columns large-12 text-center">
+                                <h2>Essayer !</h2>
+                                <br/><br/>
+                                <form id="form-abonnements" method="POST">
+                                    <input type="hidden" name="action" value="enregistrer_temporairement"/>
+                                    <input type="hidden" name="profil_id" value=""/>
+                                    <input id="button-tous" type="submit" class="button secondary" value="Accès invité" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+
+        {% if pas_de_profil|default and creation|default %}
+            <div class="row">
+                <div class="columns large-12">
+                    <div class="panel">
+
+                        <div class="row">
+
+                            {% if profil_image|default %}
+                                <div class="columns large-2 medium-3 small-3 text-right small-text-left">
+                                    <img class="profil-avatar" src="{{ profil_image|default }}" alt="image de profil" />
+                                </div>
+                            {% endif %}
+                            <div class="column large-10 medium-9 small-9">
+                                <div class="row">
+                                    <div class="columns large-12">
+                                        <span>
+                                            {{ shaarliste|default }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr/>
+
+                        {% if is_me|default %}
+                        <div class="row text-center">
+                            <div class="columns large-12">
+                                {% if image_top_gif|default %}
+                                    ?><a href="badges.php"><img src="{{ image_top_gif }}" alt="top_gif"/></a>
+                                {% endif %}
+                            </div>
+
+                            {% if shaarlieurPositionTop|default and shaarlieurPositionTop|default <= 1000 %}
+                            <div class="columns large-12">
+                                {% if shaarlieurPositionTop|default == 1 %}
+                                    Vous êtes l'utilisateur <span title="Vous êtes le {{ shaarlieurPositionTop|default }}" class="top-orange">le plus fidèle</span> du site !!!
+                                {% elseif shaarlieurPositionTop|default <= 5 %}
+                                    Vous êtes l'un des cinq utilisateurs <span title="Vous êtes le  {{ shaarlieurPositionTop|default }} ?>°" class="top-orange">les plus fidèles</span> du site !
+                                {% elseif shaarlieurPositionTop|default <= 10 %}
+                                    Vous faites partie du <span title="Vous êtes le  {{ shaarlieurPositionTop|default }} ?>°" class="top-orange">top 10</span> des utilisateurs du site :-D
+                                {% elseif shaarlieurPositionTop|default <= 50 %}
+                                    Vous faites actuellement partie du <span title="Vous êtes le  {{ shaarlieurPositionTop|default }}°" class="top-orange">top 50</span> des utilisateurs du site :-)
+                                {% elseif shaarlieurPositionTop|default <= 100 %}
+                                    Vous faites actuellement partie du <span title="Vous êtes le  {{ shaarlieurPositionTop|default }}°" class="top-orange">top 100</span> des utilisateurs du site :-)
+                                {% else %}
+                                    Vous faites actuellement partie du <span title="Vous êtes le  {{ shaarlieurPositionTop|default }}°" class="top-orange">top 1000</span> des utilisateurs du site :-)
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <a target="_blank" href="{{ shaarli_url_ok|default }}">Shaarli</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <a href="abonnements.php?shaarliste={{ shaarliste|default }}"><span class="blue-ocean"> eh($params['nb_abonnements'])?></span> abonnements</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <span class="blue-ocean">{{ nb_abonnes|default }}</span> abonnés
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="columns large-12">
+                                     {% if est_abonne|default %}
+                                        <a href="#" onclick="javascript:lienAddAbo(this,'{{ id_rss_ok|default }}', 'delete');return false;">Se désabonner</a>
+                                     {% else %}
+                                        <a href="#" onclick="javascript:lienAddAbo(this,'{{ id_rss_ok|default }}', 'add');return false;">Suivre</a>
+                                     {% endif %}
+                                </div>
+                            </div>
+                         {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if pas_de_profil|default and creation|default and is_me|default %}
+            <div class="row">
+                <div class="columns large-12 center">
+                    <div class="panel">
+                        <div class="row">
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block" href="abonnements.php">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_people.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        <span class="blue-ocean"> eh($params['nb_abonnements'])?></span> abonnements
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                {% if non_en_attente_de_moderation|default %}
+                                <a class="a-block link-show" href="{% if is_shaarliste|default %}#modifier-shaarli{% else %}#mon-shaarli{% endif %}">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        {% if is_shaarliste|default %}
+                                            {% if non_en_attente_de_moderation|default %}
+                                                <p><a class="link-show" href="#modifier-shaarli">Liaison shaarli</a></p>
+                                            {% else %}
+                                                <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+                                            {% endif %}
+                                            {% if non_en_attente_de_moderation|default %}
+                                                <p><a class="link-show" href="#mon-shaarli">Liaison shaarli</a></p>
+                                            {% else %}
+                                                <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+                                            {% endif %}
+                                         {% endif %}
+                                    </div>
+                                </a>
+                                 {% else %}
+                                <div class="a-block" >
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
+                                    </div>
+                                </div>
+                                 {% endif %}
+                            </div>
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block link-show" href="#pwd">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_pwd.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        Sécurité
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block link-show" href="#options">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_config.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        Options d'affichage
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row">
+                            {% if id_rss|default %}
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block" href="index.php?q=shaarli:{{ id_rss }}">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_messagerie.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        Messagerie
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if is_serieux|default %}
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block link-show" href="#filtres">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_filtres.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        Filtres des articles
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block link-show" target="_blank" href="https://www.shaarli.fr/jappix-1.0.7/?r=shaarli@conference.dukgo.com">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_chat.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        Tchat en ligne
+                                    </div>
+                                </a>
+                            </div>
+                            {% if is_serieux|default %}
+                            <div class="large-3 medium-6 small-6 columns text-center">
+                                <a class="a-block link-show" href="#report">
+                                    <div class="row">
+                                        <div style="min-height:150px;background:url('css/img/icon_report.png') no-repeat;background-position:center center;"></div>
+                                    </div>
+                                    <div class="row">
+                                        Bug/commentaire/conseil
+                                    </div>
+                                </a>
+                            </div>
+                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    {% endif %}
+
+    {% if not(pas_de_profil|default) %}
+        <div class="row bloc-show" style="display:none;" id="options">
+            <div class="columns large-12 center">
+                <div class="panel">
+                    <div class="row">
+                        <div class="column large-12">
+                            <h3>Paramètres</h3>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                        <div class="column large-12">
+                            <h5>Options fonctionnelles</h5>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher les commentaires des shaarlistes non suivis</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio"  {% if displayShaarlistesNonSuivis %}checked="checked"{% endif %} name="checkbox-shaarlistes-suivis" data-option="display_shaarlistes_non_suivis" class="no-margin" value="oui"/>oui
+                            <input type="radio"  {% if not displayShaarlistesNonSuivis %}checked="checked"{% endif %}    name="checkbox-shaarlistes-suivis" data-option="display_shaarlistes_non_suivis" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher le bloc "En ce moment sur la shaarlisphère"</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayBestArticle %}checked="checked"{% endif %} name="checkbox-display-best-article"  data-option="display_best_article" class="no-margin" value="oui"/>oui
+                            <input type="radio"  {% if not displayBestArticle %}checked="checked"{% endif %} name="checkbox-display-best-article" data-option="display_best_article" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    {% if shaarli_url|default %} ?>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher le bloc de conversation</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayBlocConversation %}checked="checked"{% endif %} name="checkbox-display_bloc_conversation" data-option="display_bloc_conversation" class="no-margin" value="oui"/>oui
+                            <input type="radio"  {% if not displayBlocConversation %}checked="checked"{% endif %} name="checkbox-display_bloc_conversation" data-option="display_bloc_conversation" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    {% endif %}
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher les liens sans description</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayEmptyDescription %}checked="checked"{% endif %} name="checkbox-display-empty-description" data-option="display_empty_description" class="no-margin" value="oui"/>oui
+                            <input type="radio"  {% if not displayEmptyDescription %}checked="checked"{% endif %} name="checkbox-display-empty-description" data-option="display_empty_description" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher uniquement les nouveaux liens du jour</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayOnlyNewArticles %}checked="checked"{% endif %} name="checkbox-display_only_new_articles"  data-option="display_only_new_articles" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not displayOnlyNewArticles %}checked="checked"{% endif %} name="checkbox-display_only_new_articles" data-option="display_only_new_articles" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher les boutons "Top du jour/hier/semaine"</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if useTopButtons %}checked="checked"{% endif %} name="checkbox-use-top-buttons"  data-option="use_top_buttons" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not useTopButtons %}checked="checked"{% endif %} name="checkbox-use-top-buttons" data-option="use_top_buttons" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher un bouton de rafraichissement sur l'article</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if useRefreshButton %}checked="checked"{% endif %} name="checkbox-use-refresh-button"  data-option="use_refresh_button" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not useRefreshButton %}checked="checked"{% endif %} name="checkbox-use-refresh-button" data-option="use_refresh_button" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher les discussions entre shaarlistes</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayDiscussions %}checked="checked"{% endif %} name="checkbox-display_discussions"  data-option="display_discussions" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not displayDiscussions %}checked="checked"{% endif %} name="checkbox-display_discussions" data-option="display_discussions" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>S'inscrire automatiquement aux nouveaux shaarlistes</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if isInscriptionAuto %}checked="checked"{% endif %} name="checkbox-inscription_auto"  data-option="inscription_auto" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not isInscriptionAuto %}checked="checked"{% endif %} name="checkbox-inscription_auto" data-option="inscription_auto" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <br/>
+                    <div class="row">
+                        <div class="column large-12">
+                            <h5>Options graphiques</h5>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Rendre la barre de menu fixe (rafraichir la page)</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if isMenuLocked %}checked="checked"{% endif %}  name="checkbox-lock-menu" data-option="lock" class="no-margin" value="lock"/>oui
+                            <input type="radio" {% if not isMenuLocked %}checked="checked"{% endif %} name="checkbox-lock-menu" data-option="lock" class="no-margin" value="open"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher un lien vers le flux RSS sur la page des flux</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayRssButton %}checked="checked"{% endif %} name="checkbox-display_rss_button"  data-option="display_rss_button" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not displayRssButton %}checked="checked"{% endif %} name="checkbox-display_rss_button" data-option="display_rss_button" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Compacter les articles longs</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if isExtended %}checked="checked"{% endif %} name="checkbox-extend"  data-option="extend" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not isExtended %}checked="checked"{% endif %} name="checkbox-extend" data-option="extend" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Activer le scroll infini</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if useScrollInfini %}checked="checked"{% endif %} name="checkbox-use_scroll_infini"  data-option="use_scroll_infini" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not useScrollInfini %}checked="checked"{% endif %} name="checkbox-use_scroll_infini" data-option="use_scroll_infini" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher les images/avatars</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayImages %}checked="checked"{% endif %} name="checkbox-display_img"  data-option="display_img" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not displayImages %}checked="checked"{% endif %} name="checkbox-display_img" data-option="display_img" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher les avatars en mini</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayLittleImages %}checked="checked"{% endif %} name="checkbox-display_little_img"  data-option="display_little_img" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not displayLittleImages %}checked="checked"{% endif %} name="checkbox-display_little_img" data-option="display_little_img" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Afficher uniquement les liens non visités</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if displayOnlyUnreadArticles %}checked="checked"{% endif %} name="checkbox-display_only_unread"  data-option="display_only_unread" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not displayOnlyUnreadArticles %}checked="checked"{% endif %} name="checkbox-display_only_unread" data-option="display_only_unread" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+
+                    <br/>
+                    <div class="row">
+                        <div class="column large-12">
+                            <h5>Options mainstream</h5>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="columns large-8">
+                            <span>Utiliser <a href="https://github.com/tholman/elevator.js">elevator.js</a> dans la page des flux</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if useElevator %}checked="checked"{% endif %} name="checkbox-use-elevator"  data-option="use_elevator" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not useElevator %}checked="checked"{% endif %} name="checkbox-use-elevator" data-option="use_elevator" class="no-margin" value="non"/>non
+                        </div>
+                    </div>
+                    <hr class="no-margin"/>
+                    <div class="row">
+                        <div class="columns large-8">
+                            <p class="no-dotsies">Utiliser <a class="no-dotsies" href="http://dotsies.org/">dotsies</a> (Y'en a qui ont essayé !)</span>
+                        </div>
+                        <div class="columns large-4">
+                            <input type="radio" {% if useDotsies %}checked="checked"{% endif %} name="checkbox-use-dotsies"  data-option="use_dotsies" class="no-margin" value="oui"/>oui
+                            <input type="radio" {% if not useDotsies %}checked="checked"{% endif %} name="checkbox-use-dotsies" data-option="use_dotsies" class="no-margin" value="non"/><span class="no-dotsies">non</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="columns large-12 text-right">
+                            <span><form><input type="submit" class="button" value="Enregistrer"></form></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% if is_serieux|default and not creation %}
+    <div class="row bloc-show" id="report">
+        <div class="columns large-12 center">
+            <div class="panel">
+                <div class="row">
+                    <div class="columns large-12">
+                        <h3>Reporter un bug/commentaire/conseil</h3>
+                        <br/>
+                        <p>Utilisez ce champ si besoin pour toute remarque :</p>
+                        <form method="POST">
+                            <textarea name="message" rows="4"></textarea>
+                            <input type="hidden" name="action" value="report" />
+                            <input class="button" type="submit" value="Envoyer" />
+                        </form>
+                        <p>Merci à tous ceux qui ont déjà utilisé ce formulaire, votre aide est vraiment précieuse</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if is_serieux|default and not creation %}
+    <div id="filtres" class="bloc-show">
+        <div class="row">
+            <div class="columns large-12 center">
+                <div class="panel">
+                    <div class="row">
+                        <div class="columns large-12">
+                            <h3>Filtre sur les tags</h3>
+
+                            <form method="POST">
+                                <p>Vous pouvez afficher les articles qui contiennent UNIQUEMENT ces tags :</p>
+                                <textarea name="tags" rows="4" placeholder="végétarisme, fun...">{{ tags_list|default }}</textarea>
+                                <p>Vous pouvez filtrer les articles qui ne vous intéressent pas en fonction de leurs tags</p>
+                                <textarea name="not_allowed_tags" rows="4" placeholder="iphone, politique, science, html, css, video, wtf...">{{ not_tags_list }}</textarea>
+                                <input type="hidden" name="action" value="enregistrer_tags" />
+                                <input class="button" type="submit" value="Sauvegarder" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="columns large-12 center">
+                <div class="panel">
+                    <div class="row">
+                        <div class="columns large-12">
+                            <h3>Filtre sur les urls</h3>
+                            <form method="POST">
+                                <p>Ne jamais afficher de lien vers les sites web suivants :</p>
+                                <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."> echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
+                                <input type="hidden" name="action" value="enregistrer_urls" />
+                                <input class="button" type="submit" value="Sauvegarder" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row bloc-show" id="pwd" style="display:none;">
+        <div class="columns large-12 center">
+            <div class="panel">
+                <div class="row">
+                    <div class="columns large-12">
+                        <h3>Protection par mot de passe <span class="button tiny alert">NEW</span></h3>
+                        <form method="POST" action="?">
+                            <div class="row">
+
+                                <div class="columns large-12">
+                                     if (isPassword()) { ?>
+                                    <span>Ce compte est actuellement protégé par un mot de passe.</span>
+                                    <input autocomplete="off" placeholder="Ancien mot de passe" type="password" name="old_password" value="" />
+                                     } ?>
+                                    <input type="hidden" name="action" value="enregistrer_password"/>
+                                    <input autocomplete="off" placeholder="Nouveau mot de passe" type="password" name="password" value="" />
+                                    <input autocomplete="off" placeholder="Nouveau mot de passe Encore ! " type="password" name="password_verif" value="" />
+                                    <input class="button" type="submit" value="Enregistrer" />
+                                </div>
+                            </div>
+                        </form>
+                        <p>La protection du compte permettra d'accéder à des fonctions avancées comme :
+                            <ul>
+                                <li>Modification de l'url de son shaarli</li>
+                                <li>Suppression du shaarli de la page d'abonnement</li>
+                                <li>Modification de son avatar</li>
+                                <li>Messagerie non accessible de l'extérieur (même si c'est assez virtuel)</li>
+                                <li>Affichage d'une page de profil publique (désactivable, avec des statistiques sur le shaarli)</li>
+                            </ul>
+                        </p>
+                        <form method="POST" action="?">
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <span>Email de récupération du compte : </span>
+                                    <input type="hidden" name="action" value="enregistrer_email"/>
+                                    <input autocomplete="off" placeholder="moi@mondomaine.tld" type="text" name="email" value=" eh(getEmail()); ?>" />
+                                    <input class="button" type="submit" value="Enregistrer" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not pas_de_profil and not creation and not is_shaarliste %}
+    <div class="row bloc-show" id="mon-shaarli">
+        <div class="columns large-12 center">
+            <div class="panel">
+                <div class="row">
+                    <div class="columns large-12">
+                        <h3>Url de mon shaarli</h3>
+                        <p>Permet de reshaarlier les liens</p>
+                        <form method="POST">
+                            <input name="shaarli_url" type="text" value=" echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                            <input type="hidden" name="action" value="mon_shaarli" />
+                            <input type="hidden" name="action" value="mon_shaarli" />
+
+                            {% if not creation %}
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <input class="button" type="submit" value="Sauvegarder" />
+                                </div>
+                            </div>
+                            {% endif %}
+                        </form>
+                        <p class="astuce">Note : votre shaarli apparaitra dans la page des abonnements après modération.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if is_shaarliste and non_en_attente_de_moderation %}
+    <div class="row bloc-show" id="modifier-shaarli">
+        <div class="columns large-12 center">
+            <div class="panel">
+                <div class="row">
+                    <div class="columns large-12">
+                        <h3>Moi et mon shaarli</h3>
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="columns large-12">
+                        <h4>Mes choix de confidentialité</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="columns large-8">
+                        <span>Apparaitre dans la liste des abonnements</span>
+                    </div>
+                    <div class="columns large-4">
+                        <input type="radio" {% if isOnAbonnements %}checked="checked"{% endif %} name="checkbox-on_abonnements"  data-option="on_abonnements" class="no-margin" value="oui"/>oui
+                        <input type="radio" {% if not isOnAbonnements %}checked="checked"{% endif %} name="checkbox-on_abonnements" data-option="on_abonnements" class="no-margin" value="non"/>non
+                    </div>
+                </div>
+                <hr class="no-margin"/>
+                <div class="row">
+                    <div class="columns large-8">
+                        <span>Apparaitre dans la River</span>
+                    </div>
+                    <div class="columns large-4">
+                        <input type="radio" {% if isOnRiver %}checked="checked"{% endif %} name="checkbox-on_river"  data-option="on_river" class="no-margin" value="oui"/>oui
+                        <input type="radio" {% if not isOnRiver %}checked="checked"{% endif %} name="checkbox-on_river" data-option="on_river" class="no-margin" value="non"/>non
+                    </div>
+                </div>
+
+                <br/>
+                <div class="row">
+                    <div class="columns large-12">
+                        <h4>Mes actions possibles</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="columns large-8">
+                        <p><span class="fake-a" id="button-synchro-shaarli">Synchroniser mon shaarli</span> <img class="hidden" id="img-synchro-shaarli" src="img/spinner-24-24.gif"><span id="msg-synchro-shaarli"></span></p>
+                        <p><span class="fake-a" id="button-synchro-favicon">Synchroniser ma favicon</span> <img class="hidden" id="img-synchro-favicon" src="img/spinner-24-24.gif"></p>
+                    </div>
+                </div>
+
+                <br/>
+
+                <div class="row">
+                    <div class="columns large-12">
+                        <h4>Modifier l'url de mon shaarli</h4>
+                    </div>
+                    <div class="columns large-12">
+                        <form method="POST">
+                            <input name="shaarli_url" type="text" value=" echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                            <input type="hidden" name="action" value="mon_shaarli" />
+                            <input type="hidden" name="action" value="mon_shaarli" />
+
+                            <h5>Nombre de minutes minimal entre chaque mise à jour</h5>
+                            <input name="shaarli_delai" type="number" value=" echo htmlentities($params['shaarli_delai']); ?>" placeholder="1"/>
+
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <input class="button" type="submit" value="Sauvegarder" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if creation|default %} ?>
+        <div class="row">
+            <div class="column large-12 text-center">
+                <h1>Créer un profil</h1>
+            </div>
+        </div>
+        <hr/>
+        <form method="POST" action="?">
+            <div class="row">
+                <div class="column large-12 text-center">
+                    <h2>Sélectionnez les shaarlistes que vous souhaitez suivre</h2>
+                </div>
+            </div>
+
+                        $this->renderListeShaarlistes($params);
+            ?>
+            <div class="row">
+                <div class="columns large-6 large-centered">
+                    <div class="panel">
+                        <div class="row">
+                            <div class="columns large-12 text-center">
+                                <h3>C'est presque fini !</h3>
+                                <p>Choisissez un nom de profil</p>
+                                <input type="hidden" name="action" value="enregistrer"/>
+                                <input name="profil_id" type="text" value=" echo htmlentities(getUtilisateurId());?>"/>
+                                <input disabled="disabled" id="input-enregistrer-profil" class="button success" type="submit" value="Enregistrer mon profil" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

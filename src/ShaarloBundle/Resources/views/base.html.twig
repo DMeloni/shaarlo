@@ -1,0 +1,219 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="La communauté partage ses liens" />
+
+    <meta property="og:title" content="{{ domain|default }}" />
+    <meta property="og:description" content="shaarlo est un outil style réseau social où les gens partagent leurs liens web" />
+    <meta property="og:url" content="https://{{ domain|default }}" />
+    <meta property="og:image" content="css/img/logo_shaarlo_og.png" />
+    <meta property="keywords" content="Reseau social, shaarli, liens, url, partage, communauté, shaarlistes">
+    <title>Shaarlo.fr</title>
+
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ asset('bundles/shaarlo/css/foundation.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('bundles/shaarlo/css/foundation-overload.css') }}" />
+        <link rel="stylesheet" href="{{ asset('bundles/shaarlo/css/normalize.css') }}" />
+        <link rel="stylesheet" href="{{ asset('bundles/shaarlo/css/style-light.css') }}" />
+        <link rel="stylesheet" href="{{ asset('bundles/shaarlo/css/markdown.css') }}" />
+    {% endblock %}
+
+    <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="img/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="img/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="img/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="img/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="img/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="img/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="img/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-icon-180x180.png">
+    <meta name="msapplication-TileColor" content="#000000">
+    <meta name="msapplication-TileImage" content="img/ms-icon-144x144.png">
+    <meta name="theme-color" content="#000000">
+
+    {% if use_dotsies|default %}
+        <link rel="stylesheet" href="css/dotsies.css" type="text/css" media="screen"/>
+
+        <style>
+            *,h1, h2, h3, h4, h5, h6, input,button, .button {font-family: Dotsies;}
+        </style>
+    {% endif %}
+
+    {% if rss_url|default %}
+        <link rel="alternate" type="application/rss+xml" href="{{ rss_url }}" title="Shaarlo Feed" />
+    {% endif %}
+</head>
+<body>
+    <nav class="top-bar {% if menu_locked|default %}top-bar-fixed'{% endif %}" data-options="mobile_show_parent_link: false;back_text:Retour;" data-topbar role="navigation">
+        <!--<a href="/"><img class="logo hidden-on-smartphone" src="img/logo.png" height="40" width="36" /></a>-->
+        <ul class="title-area">
+            <li class="name">
+                <h1><a href="index.php">Shaarlo</a></h1>
+            </li>
+            <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
+            <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
+        </ul>
+
+        <section class="top-bar-section">
+            <!-- Right Nav Section -->
+            <ul class="right">
+                <li><a href="index.php">River</a></li>
+                {% if is_shaarliste|default %}
+                    <li><a href="{{ shaarli_url }}">Shaarli</a></li>
+                {% endif %}
+                {% if user_id|default %}?>
+                    <li><a href="dashboard.php">Profil</a></li>
+                {% endif %}
+
+                <li><a href="index.php?sortBy=rand&amp;from=2000-09-16">Aléatoire</a></li>
+
+                {% if use_top_buttons|default %}
+                <li class="has-dropdown">
+                    <a href="#">Voir les Tops</a>
+                    <ul class="dropdown">
+                        <li><a href="{{ top_day_href|default }}">Top du jour</a></li>
+                        <li><a href="{{ top_yesterday_href|default }}">Top d'hier</a></li>
+                        <li><a href="{{ top_week_href|default }}">Top des 7 derniers jours</a></li>
+                        <li><a href="{{ top_month_href|default }}">Top du mois</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+
+                <li class="has-dropdown">
+                    <a href="#">Plus</a>
+                    <ul class="dropdown">
+                        <li><a href="https://www.tipeee.com/shaarlo">Soutenir le projet</a></li>
+                        <li><a href="opml.php">Télécharger l'OPML</a></li>
+                        {% if rss_url|default %}
+                            <li><a href="{{ rss_url }}">Flux RSS</a></li>
+                        {% endif %}
+                        <li><a href="about.php">A propos</a></li>
+                    </ul>
+                </li>
+                <li><a href="./index.php?do=logout">Déconnexion</a></li>
+            </ul>
+            <!-- Left Nav Section -->
+            <ul class="left"></ul>
+        </section>
+    </nav>
+    {% if menu_locked|default %}
+        <br/><br/><br/>
+    {% endif %}
+    <script>
+
+        function synchroShaarli(articleId, ssiTextePresent) {
+            var r = new XMLHttpRequest();
+            var params = "";
+            r.open("POST", "synchro_shaarli.php", true);
+            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            r.onreadystatechange = function () {
+                if (r.readyState == 4) {
+                    if(r.status == 200){
+                        if (typeof(articleId) != "undefined") {
+                            refreshArticle(articleId, ssiTextePresent);
+                        }
+                        return ;
+                    }
+                    else {
+                        return;
+                    }
+                }
+            };
+            r.send(params);
+        }
+
+        function synchroShaarliLastArticle() {
+            var r = new XMLHttpRequest();
+            var params = "";
+            r.open("POST", "synchro_shaarli.php", true);
+            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            r.onreadystatechange = function () {
+                if (r.readyState == 4) {
+                    if(r.status == 200){
+                        refreshLastArticle();
+                        return ;
+                    }
+                    else {
+                        return;
+                    }
+                }
+            };
+            r.send(params);
+        }
+
+        function addOption(that, action, value) {
+            var r = new XMLHttpRequest();
+            var params = "do="+action + "&value="+value+ "&state="+value;
+            r.open("POST", "add.php", true);
+            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            r.onreadystatechange = function () {
+                if (r.readyState == 4) {
+                    if(r.status == 200){
+                        that.attr('data-waiting', '');
+                        return;
+                    }
+                    else {
+                        return;
+                    }
+                }
+            };
+            r.send(params);
+        }
+
+        function lienAddAbo(that, id, action) {
+            var r = new XMLHttpRequest();
+            var params = "do="+action+"&id=" + id;
+            r.open("POST", "add.php", true);
+            r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            r.onreadystatechange = function () {
+                if (r.readyState == 4) {
+                    if(r.status == 200){
+                        if(action == 'add') {
+                            that.text = 'Se désabonner';
+                            that.innerHTML = 'Se désabonner';
+                            that.onclick = function () { lienAddAbo(that, id, 'delete'); return false; };
+                        }else {
+                            that.text = 'Suivre';
+                            that.innerHTML = 'Suivre';
+                            that.onclicrenderMenuk = function () { lienAddAbo(that, id, 'add'); return false; };
+                        }
+                        return;
+                    }
+                    else {
+                        that.text = '-Erreur-';
+                        return;
+                    }
+                }
+            };
+            r.send(params);
+        }
+    </script>
+
+{% block body_content %}{% endblock %}
+
+    {% if display_elevator|default %}
+        <div class="row">
+            <div class="column text-center large-12">
+                <div class="elevator pointer">
+                    <svg class="sweet-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve" height="100px" width="100px">
+                                    <path d="M70,47.5H30c-1.4,0-2.5,1.1-2.5,2.5v40c0,1.4,1.1,2.5,2.5,2.5h40c1.4,0,2.5-1.1,2.5-2.5V50C72.5,48.6,71.4,47.5,70,47.5z   M47.5,87.5h-5v-25h5V87.5z M57.5,87.5h-5v-25h5V87.5z M67.5,87.5h-5V60c0-1.4-1.1-2.5-2.5-2.5H40c-1.4,0-2.5,1.1-2.5,2.5v27.5h-5  v-35h35V87.5z"/>
+                        <path d="M50,42.5c1.4,0,2.5-1.1,2.5-2.5V16l5.7,5.7c0.5,0.5,1.1,0.7,1.8,0.7s1.3-0.2,1.8-0.7c1-1,1-2.6,0-3.5l-10-10  c-1-1-2.6-1-3.5,0l-10,10c-1,1-1,2.6,0,3.5c1,1,2.6,1,3.5,0l5.7-5.7v24C47.5,41.4,48.6,42.5,50,42.5z"/>
+                                </svg>
+                </div>
+            </div>
+        </div>
+        <script src="js/vendor/elevator.min.js"></script>
+        <script>
+            // Simple elevator usage.
+            var elementButton = document.querySelector('.elevator');
+            var elevator = new Elevator({
+                element: elementButton,
+                mainAudio: './music/elevator-music.mp3', // Music from http://www.bensound.com/
+                endAudio:  './music/ding.mp3'
+            });
+        </script>
+    {% endif %}
+</body>
+</html>

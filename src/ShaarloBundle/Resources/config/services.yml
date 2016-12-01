@@ -1,0 +1,16 @@
+services:
+    shaarlo.mysql_utils:
+        class: ShaarloBundle\Utils\MysqlUtils
+        arguments: ["%database_host%", "%database_port%", "%database_name%", "%database_user%", "%database_password%"]
+    shaarlo.password_hashing_utils:
+        class: ShaarloBundle\Utils\PasswordHashingUtils
+        arguments: ["@shaarlo.mysql_utils"]
+    shaarlo.user_options_utils:
+        class: ShaarloBundle\Utils\UserOptionsUtils
+        arguments: ["@shaarlo.mysql_utils", "@shaarlo.password_hashing_utils"]
+    shaarlo.url_utils:
+        class: ShaarloBundle\Utils\UrlUtils
+        arguments: []
+    shaarlo.rss_utils:
+        class: ShaarloBundle\Utils\RssUtils
+        arguments: []

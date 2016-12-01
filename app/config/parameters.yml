@@ -1,0 +1,14 @@
+# This file is auto-generated during the composer install
+parameters:
+    database_host: 46.105.120.211
+    database_port: null
+    database_name: shaarlimy
+    database_user: root
+    database_password: Bm6HeY9HS3j9
+    mailer_transport: smtp
+    mailer_host: 127.0.0.1
+    mailer_user: null
+    mailer_password: null
+    secret: 462069dac3b80f128f2583207fb52f7c9bc04329
+    domain: 'shaarlo.fr'
+    api_url: 'https://www.shaarlo.fr/api.php'
