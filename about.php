@@ -42,8 +42,7 @@ class Dashboard extends Controller
                                     </p>
                                     <div class="row">
                                         <div class="column large-12">
-                                           Vous pouvez télécharger la version officielle chez son auteur sebsauvage <a target="_blank" href="http://sebsauvage.net/wiki/doku.php?id=php:shaarli">ici</a>
-                                           ou la version communautaire <a target="_blank" href="https://github.com/shaarli/shaarli">ici</a>.
+                                           Vous pouvez télécharger la dernière version de shaarli <a target="_blank" href="https://github.com/shaarli/shaarli">ici</a> ou la version d'origine chez son auteur sebsauvage <a target="_blank" href="http://sebsauvage.net/wiki/doku.php?id=php:shaarli">ici</a>
                                         </div>
                                     </div>
                                 </div>
