@@ -5,13 +5,20 @@ require_once 'fct/fct_session.php';
 //ini_set('display_startup_errors',1);
 //error_reporting(-1);
 
-if (!getIdOkRss() || !getShaarliUrl()) {
+$url = null;
+if (!empty($_GET['url'])) {
+    $url = $_GET['url'];
+} elseif (getShaarliUrl()) {
+    $url = getShaarliUrl();
+}
+
+
+if (!getIdOkRss() || null === $url) {
     header('HTTP/1.1 401 Unauthorized', true, 401);
     return;
 }
 
 //https://stackoverflow.com/questions/5701593/how-to-get-a-websites-favicon-with-php
-$url = getShaarliUrl();
 $doc = new DOMDocument();
 $doc->strictErrorChecking = FALSE;
 $content = getRss($url);
@@ -24,7 +31,7 @@ $arr = $xml->xpath('//link[@rel="shortcut icon"]');
 
 /**
  * Permet de trier des tableaux qui ont des attributs sizes
- * 
+ *
  * sizes : "64x64" est convertie en "64" par un simple (int)
  * et on regarde le plus grand des deux
  */
@@ -33,21 +40,21 @@ function usortByIconSize($a, $b)
     if ((int)$a['sizes'] == (int)$b['sizes']) {
         return 0;
     }
-    
+
     return ((int)$a['sizes'] < (int)$b['sizes']) ? -1 : 1;
 }
 
 // Si shortcut icon non trouvé, on essai via rel icon
 if (!isset($arr[0]['href'])) {
-    
+
     //<link rel="icon" type="image/png" sizes="64x64" href="images/favicon_64.png" />
     $arr = $xml->xpath('//link[@rel="icon"]');
-    
+
     // On trouve au moins une image d'icone \o/
     if (is_array($arr)) {
         // On commence à trier en fonction des sizes
         usort($arr, "usortByIconSize");
-        
+
         // Puis on prend le dernier
         $arr = array(end($arr));
     }
@@ -59,8 +66,11 @@ if (!isset($arr[0]['href'])) {
     return;
 }
 
-
-$faviconUrl = sprintf('%s/%s', $url, $arr[0]['href']);
+if (0 === strpos($arr[0]['href'], 'http://') || 0 === strpos($arr[0]['href'], 'https://')) { // Url absolue.
+    $faviconUrl = $arr[0]['href'];
+} else {
+    $faviconUrl = sprintf('%s/%s', $url, $arr[0]['href']);
+}
 
 $favicon = getRssByCurl($faviconUrl);
 if ($favicon) {
