@@ -781,16 +781,6 @@ class Dashboard extends Controller
                                     </div>
                                 </div>
                                 <hr class="no-margin"/>
-                                <div class="row">
-                                    <div class="columns large-8">
-                                        <span>Activer les poussins <span class="button microscopic alert">NEW</span></span>
-                                    </div>
-                                    <div class="columns large-4">
-                                        <input type="radio" <?php if(displayPoussins()) {echo ' checked="checked" ';}?> name="checkbox-display_poussins"  data-option="display_poussins" class="no-margin" value="oui"/>oui
-                                        <input type="radio" <?php if(!displayPoussins()) {echo ' checked="checked" ';}?> name="checkbox-display_poussins" data-option="display_poussins" class="no-margin" value="non"/>non
-                                    </div>
-                                </div>
-                                <hr class="no-margin"/>
                                 <br/>
                                 <div class="row">
                                     <div class="column large-12">
