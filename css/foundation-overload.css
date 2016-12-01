@@ -81,10 +81,10 @@ button.microscopic, .button.microscopic {
 
 .panel.read{background: #F1F1F1;opacity: 0.7;-webkit-transition: opacity 1s ease-in-out;-moz-transition: opacity 1s ease-in-out;-o-transition: opacity 1s ease-in-out;transition: opacity 1s ease-in-out;}
 .panel.read:hover{
-    opacity: 1; 
+    opacity: 1;
     background:#FFF;
     -webkit-animation: background-f1-ff 1s; /* Chrome, Safari, Opera */
-    animation: background-f1-ff 1s;    
+    animation: background-f1-ff 1s;
 }
 
 .valign-center {
@@ -127,4 +127,11 @@ textarea{
     width:100%;
     position:fixed;
     z-index:2;
+}
+
+
+/* Conflit avec Markdown */
+code {
+    background: none;
+    border: none;
 }
