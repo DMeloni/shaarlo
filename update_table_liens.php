@@ -40,7 +40,7 @@ if (is_file($pidFile) && is_null(get('force'))) {
     } else {
         @unlink($pidFile);
         file_put_contents($pidFile, date('YmdHis'));
-    }   
+    }
 } else {
     file_put_contents($pidFile, date('YmdHis'));
 }
@@ -51,7 +51,7 @@ $articles = array();
 $tags = array();
 foreach($allShaarlistes as $url) {
     $urlRssSimplifiee = simplifieUrl($url);
-    
+
     //echo $url ;
     $fluxName = md5(($urlRssSimplifiee));
     if (isset($_GET['id_rss']) && $_GET['id_rss'] != $fluxName) {
@@ -61,7 +61,7 @@ foreach($allShaarlistes as $url) {
 
     if (is_file($fluxFile)) {
         echo "Traitement  de : " . $fluxFile . "<br/>";
-        
+
         $content = file_get_contents($fluxFile);
 
         //Fri, 13 Mar 2015 16:09:22 +0400
@@ -69,9 +69,9 @@ foreach($allShaarlistes as $url) {
             echo "Rien de neuf" . "<br/>";
             continue;
         }
-        
+
         $content = str_replace('&eacute;', 'é', $content);
-        
+
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
             if (!is_null(get('force'))) {
@@ -79,36 +79,36 @@ foreach($allShaarlistes as $url) {
             }
             continue;
         }
-        
+
         $list = $xmlContent->xpath(XPATH_RSS_TITLE);
-        
+
         if(!isset($list[0])) {
             continue;
         }
 
         $titre = (string)$list[0];
-        
+
         $shaarlistes[] = creerRss($fluxName, $titre, $url, $urlRssSimplifiee, 1);
-        
+
         if (!isset($_GET['full'])) {
             $rssListArrayed = convertXmlToTableauAndStop($xmlContent, XPATH_RSS_ITEM);
         } else {
             $rssListArrayed = convertXmlToTableau($xmlContent, XPATH_RSS_ITEM);
         }
-        
+
         foreach($rssListArrayed as $rssItem) {
-            
+
             $link = $rssItem['link'];
-            
+
             $link = str_replace('my.shaarli.fr/', 'www.shaarli.fr/my/', $link);
-            
+
             $rssTimestamp = strtotime($rssItem['pubDate']);
             $articleDateJour = date('Ymd', $rssTimestamp);
-            if($articleDateJour !== date('Ymd') 
+            if($articleDateJour !== date('Ymd')
             && !isset($_GET['full'])) {
                 break;
             }
-            
+
             echo "Ajout  de : " . $link . "<br/>";
             $guid = $rssItem['guid'];
             if (preg_match('#^https://deleurme.net/#', $link)) {
@@ -124,11 +124,6 @@ foreach($allShaarlistes as $url) {
                 echo "Modification en : " . $link . "<br/>";
             }
 
-            if (preg_match('#^https://www.youtube.com/watch\?v=#', $link)) {
-                $link = str_replace('https://www.youtube.com/watch?v=', 'https://youtu.be/', $link);
-                echo "Modification en : " . $link . "<br/>";
-            }
-            
             // Remplacement des http://domaine:80/machin en http://domaine/machin
             if (strpos($link, ':80') > 0 ) {
                 $link = str_replace(':80', '', $link);
@@ -144,8 +139,8 @@ foreach($allShaarlistes as $url) {
                 $link = str_replace('http://mypersonnaldata.eu/shaarli', 'http://www.mypersonnaldata.eu/shaarli', $link);
                 echo "Modification en : " . $link . "<br/>";
             }
-            
-            
+
+
             if (preg_match('#^http://deleurme.net/liens/index.php5/?\?[_a-zA-Z0-9\-]{6}$#', $link)) {
                 $link = str_replace('index.php5/', '', $link);
                 $link = str_replace('index.php5', '', $link);
@@ -158,9 +153,9 @@ foreach($allShaarlistes as $url) {
             if (preg_match('#^http://lehollandaisvolant.net/\?mode=links&id=[0-9]{14}$#', $link)) {
                 $link = str_replace('mode=links&', '', $link);
             }
-            
-            
-            
+
+
+
             $title = $rssItem['title'];
             $description = $rssItem['description'];
             $id = md5(simplifieUrl($guid));
@@ -168,7 +163,7 @@ foreach($allShaarlistes as $url) {
             if (isset($rssItem['category'])) {
                 $category = $rssItem['category'];
             }
-            
+
             $linkSansHttp  = str_replace('http://', '', $link);
             $linkSansHttps = str_replace('https://', '', $linkSansHttp);
             $urlSimplifie = $linkSansHttps;
@@ -180,7 +175,7 @@ foreach($allShaarlistes as $url) {
             $nbBoucles = 0;
             $lienSource = $link;
             $idRssOrigin = null;
-            
+
             while ( preg_match('#\?[_a-zA-Z0-9\-]{6}$#', $lienSource)
                 || preg_match('#\?id=[0-9]{14}$#', $lienSource)
             ) {
@@ -196,7 +191,7 @@ foreach($allShaarlistes as $url) {
                     break;
                 }
             }
-            
+
             // Creation miniature
             if (!isset($_GET['skip-mini'])) {
                 captureUrl($link, $idCommun, 200, 200, true);
@@ -205,7 +200,7 @@ foreach($allShaarlistes as $url) {
             }
             $articleDate = date('YmdHis', $rssTimestamp);
             $articles[] = creerArticle($id, $idCommun, $link, $urlSimplifie, $title, $description, false, $articleDate, $guid, $fluxName, $idRssOrigin, $category);
-            
+
             $categories = explode(',', $category);
             foreach ($categories as $categoriesPart) {
                 if (empty($categoriesPart)) {
@@ -213,33 +208,33 @@ foreach($allShaarlistes as $url) {
                 }
                 $tags[] = creerTag($id, $categoriesPart);
             }
-            
+
             if (count($tags) > $maxArticlesParInsert) {
                 insertEntites($mysqli, 'tags', $tags);
                 $tags = array();
             }
-            
+
             if (count($articles) > $maxArticlesParInsert) {
                 insertArticles($mysqli, $articles);
                 $articles = array();
             }
         }
-    } 
+    }
     //else{
     //    echo ' -  pas de flux';
     //}
-    
+
     insertEntites($mysqli, 'tags', $tags);
     $tags = array();
     var_dump($articles);
     insertArticles($mysqli, $articles);
     $articles = array();
-    
+
     //echo '<br>';
 }
 
 insertEntites($mysqli, 'rss', $shaarlistes);
-    
+
 shaarliMyDisconnect($mysqli);
 @unlink($pidFile);
 
