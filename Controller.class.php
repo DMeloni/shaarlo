@@ -12,6 +12,7 @@ require_once('fct/fct_rss.php');
 require_once('fct/fct_session.php');
 require_once('fct/fct_url.php');
 require_once('fct/fct_mail.php');
+require_once('fct/Markdown/markdown.php');
 require_once('lang/Fr.php');
 require_once('lang/En.php');
 
@@ -21,22 +22,25 @@ class Controller
 
     public static function renderHead($rssUrl=null)
     {
+        global $SHAARLO_DOMAIN;
         ?>
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <meta name="description" content="La communauté partage ses liens" />
 
-                <meta property="og:title" content="Shaarli.fr" />
-                <meta property="og:description" content="shaarli.fr est un nouveau réseau social où les gens partagent leurs liens web" />
-                <meta property="og:url" content="https://www.shaarli.fr" />
+                <meta property="og:title" content="<?php echo $SHAARLO_DOMAIN; ?>" />
+                <meta property="og:description" content="shaarlo est un outil style réseau social où les gens partagent leurs liens web" />
+                <meta property="og:url" content="https://<?php echo $SHAARLO_DOMAIN; ?>" />
                 <meta property="og:image" content="css/img/logo_shaarlo_og.png" />
                 <meta property="keywords" content="Reseau social, shaarli, liens, url, partage, communauté, shaarlistes">
-                <title>Shaarli.fr</title>
+                <title>Shaarlo.fr</title>
                 <link rel="stylesheet" href="css/foundation.min.css?v=2" />
                 <link rel="stylesheet" href="css/foundation-overload.css?v=8" />
                 <link rel="stylesheet" href="css/style-light.css?v=27" />
-                
+                <link rel="stylesheet" href="css/style-light.css?v=27" />
+                <link rel="stylesheet" href="css/markdown.css?v=27" />
+
                 <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png">
                 <link rel="apple-touch-icon" sizes="60x60" href="img/apple-icon-60x60.png">
                 <link rel="apple-touch-icon" sizes="72x72" href="img/apple-icon-72x72.png">
@@ -46,11 +50,6 @@ class Controller
                 <link rel="apple-touch-icon" sizes="144x144" href="img/apple-icon-144x144.png">
                 <link rel="apple-touch-icon" sizes="152x152" href="img/apple-icon-152x152.png">
                 <link rel="apple-touch-icon" sizes="180x180" href="img/apple-icon-180x180.png">
-                <!--<link rel="icon" type="image/png" sizes="192x192"  href="img/android-icon-192x192.png">
-                <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-                <link rel="icon" type="image/png" sizes="96x96" href="img/favicon-96x96.png">
-                <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">-->
-                <link rel="manifest" href="/manifest.json">
                 <meta name="msapplication-TileColor" content="#000000">
                 <meta name="msapplication-TileImage" content="img/ms-icon-144x144.png">
                 <meta name="theme-color" content="#000000">
@@ -60,7 +59,7 @@ class Controller
         if (useDotsies()) {
             ?>
                 <link rel="stylesheet" href="css/dotsies.css" type="text/css" media="screen"/>
-                
+
                 <style>
                 *,h1, h2, h3, h4, h5, h6, input,button, .button {font-family: Dotsies;}
                 </style>
@@ -78,7 +77,7 @@ class Controller
         <?php
     }
 
-    public static function renderElevatorButton() 
+    public static function renderElevatorButton()
     {
         if (useElevator()) {
             ?>
@@ -106,17 +105,17 @@ class Controller
         }
     }
 
-    public function renderListeShaarlistes($params) 
+    public function renderListeShaarlistes($params)
     {
     ?>
-    
+
         <div class="row">
             <div class="column large-3">
                 <?php if (empty($params['creation'])) { ?>
                 <a href="index.php" id="a-voir-river" class="button success hidden">Voir la river</a>
                 <?php } ?>
             </div>
-            
+
             <div class="column large-9 text-right">
                 <input id="button-tous" type="button" class="button " value="Tout cocher" />
                 <?php if (!empty($params['abonnements'])) { ?>
@@ -135,7 +134,7 @@ class Controller
             foreach ($shaarlistes as $shaarliste) {
                 $faviconIcoPath = sprintf('img/favicon/%s.ico', $shaarliste['id']);
                 if(!is_file($faviconIcoPath)) {
-                   $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913'); 
+                   $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913');
                 }
                 ?>
             <div class="column large-3"  >
@@ -150,13 +149,13 @@ class Controller
                         <div class="column large-12 text-center">
                             <div class="row">
                                 <div class="column large-12">
-                                    <?php 
+                                    <?php
                                     if ($shaarliste['createdateiso'] > $dateLastWeek) {
                                         ?><span class="button alert tiny">NEW</span><?php
                                     }
-                                    ?> 
+                                    ?>
                                 </div>
-                            </div> 
+                            </div>
                             <p>
                             <?php
                                 if ('1' == $shaarliste['is_dead'] ) {
@@ -188,7 +187,7 @@ class Controller
         ?>
     <?php
     }
-    public function renderMegaListeShaarlistes($params) 
+    public function renderMegaListeShaarlistes($params)
     {
     ?>
         <div class="row">
@@ -218,7 +217,7 @@ class Controller
             foreach ($shaarlistes as $shaarliste) {
                 $faviconIcoPath = sprintf('img/favicon/%s.ico', $shaarliste['id']);
                 if(!is_file($faviconIcoPath) || filesize($faviconIcoPath) <= 1000) {
-                   $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913'); 
+                   $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913');
                 }
                 ?>
             <div class="column large-3"  >
@@ -228,7 +227,7 @@ class Controller
                             <div class="row">
                                 <?php if (displayImages()) { ?>
                                 <div class="column large-12 small-3 medium-text-center">
-                                    <img class="super-entete-avatar" width="64" height="64" src="<?php eh($faviconIcoPath); ?>" />
+                                    <a target="_blank" href="<?php eh($shaarliste['link']);?>"><img class="super-entete-avatar" width="64" height="64" src="<?php eh($faviconIcoPath); ?>" /></a>
                                 </div>
                                 <?php } ?>
                                 <div class="column large-12 small-9 medium-text-center">
@@ -281,7 +280,7 @@ class Controller
     <?php
     }
 
-    public function renderSuperListeShaarlistes($params) 
+    public function renderSuperListeShaarlistes($params)
     {
     ?>
         <div class="row">
@@ -290,7 +289,7 @@ class Controller
                 <a href="index.php" id="a-voir-river" class="button success hidden">Voir la river</a>
                 <?php } ?>
             </div>
-            
+
             <div class="column large-9 text-right">
                 <input id="button-tous" type="button" class="button " value="Tout cocher" />
                 <?php if (!empty($params['abonnements'])) { ?>
@@ -309,7 +308,7 @@ class Controller
             foreach ($shaarlistes as $shaarliste) {
                 $faviconIcoPath = sprintf('img/favicon/%s.ico', $shaarliste['id']);
                 if(!is_file($faviconIcoPath)) {
-                   $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913'); 
+                   $faviconIcoPath = sprintf('img/favicon/%s.ico', '7280d5cfd1c82734436f0e19cb14a913');
                 }
                 ?>
             <div class="column large-3"  >
@@ -354,10 +353,10 @@ class Controller
         ?>
     <?php
     }
-    
+
     /*
      * Méthode permettant d'htmlentiter tous les paramètres d'un render
-     * 
+     *
      * @param array $params
      * @param array $clefsIgnorees : les éléments à ignorer
      */
@@ -374,13 +373,13 @@ class Controller
                 $params[$k] = $this->htmlspecialchars($param);
             }
         }
-        
+
         return $params;
     }
-    
+
     /**
      * Indique quelle est la langue à utiliser
-     * 
+     *
      */
     public function setLocale($locale = 'fr')
     {
@@ -388,17 +387,17 @@ class Controller
             default:
                 $langInterface = new Fr();
             break;
-            case 'en': 
+            case 'en':
                 $langInterface = new En();
             break;
         }
-        
+
         $this->setLangInterface($langInterface);
     }
-    
+
     /**
      * Set l'interface de langue à utiliser pour l'affichage
-     * 
+     *
      * @param LangInterface $langInterface
      */
     protected function setLangInterface($langInterface)
@@ -408,7 +407,7 @@ class Controller
 
     /**
      * Retourne l'interface de langue à utiliser pour l'affichage
-     * 
+     *
      * @return LangInterface $langInterface
      */
     protected function getLangInterface()
@@ -423,9 +422,9 @@ class Controller
     /*
      * Récupère la variable $_POST
      * de manière saine
-     * 
+     *
      * @param string $nom : le nom du paramètre
-     * 
+     *
      * @return mixed : valeur du paramètre
      */
     public function post($nom)
@@ -433,16 +432,16 @@ class Controller
         if (isset($_POST[$nom])) {
             return $_POST[$nom];
         }
-        
+
         return null;
     }
 
     /*
      * Récupère la variable $_GET
      * de manière saine
-     * 
+     *
      * @param string $nom : le nom du paramètre
-     * 
+     *
      * @return mixed : valeur du paramètre
      */
     public function get($nom)
@@ -450,30 +449,30 @@ class Controller
         if (isset($_GET[$nom])) {
             return $_GET[$nom];
         }
-        
+
         return null;
     }
-    
+
     public static function renderScript($params = array())
     {
         ?>
         <script src="js/jquery-modernizr-foundation.min.js?v=4"></script>
         <?php
     }
-    
-    /** 
+
+    /**
      * Ajoute des br si menu fixe
      */
     public function addBr() {
         if (isMenuLocked()) {
             echo '<br/><br/><br/>';
-                
+
         }
     }
-    
+
     /**
      * Affiche le message demandé dans la bonne langue
-     * 
+     *
      * @param $code : 'profil_mot_de_passe'
      */
     public function t($code) {
@@ -483,20 +482,21 @@ class Controller
 
     /**
      * Render du super menu
-     * 
-     */ 
+     *
+     */
     public static function renderMenu($titre = 'Shaarlo', $rssUrl = '') {
         $class = '';
+        global $SHAARLO_DOMAIN;
         if (isMenuLocked()) {
                 $class = 'top-bar-fixed';
         }
         ?>
-        
+
         <nav class="top-bar <?php echo $class; ?>" data-options="mobile_show_parent_link: false;back_text:Retour;" data-topbar role="navigation">
             <!--<a href="/"><img class="logo hidden-on-smartphone" src="img/logo.png" height="40" width="36" /></a>-->
           <ul class="title-area">
             <li class="name">
-              <h1><a href="https://www.shaarli.fr"><?php echo $titre; ?></a></h1>
+              <h1><a href="https://<?php echo $SHAARLO_DOMAIN; ?>">Shaarlo</a></h1>
             </li>
              <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
             <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
@@ -506,7 +506,7 @@ class Controller
             <!-- Right Nav Section -->
             <ul class="right">
                 <li><a href="index.php">River</a></li>
-                <?php 
+                <?php
                 if (isShaarliste()) {
                     ?><li><a href="<?php eh(getShaarliUrlOk()); ?>">Shaarli</a></li><?php
                 } else {
@@ -519,19 +519,19 @@ class Controller
                 if (getUtilisateurId() !== '') {
                 ?>
                 <li><a href="dashboard.php">Profil</a></li>
-                
+
                 <?php
                 }
                 ?>
                 <li><a href="index.php?sortBy=rand&amp;from=2000-09-16">Aléatoire</a></li>
-                
-                <?php 
+
+                <?php
                 if (useTopButtons()) {
                     $dateDuJour = new DateTime();
                     $dateTopHier = new DateTime('-1 day');
                     $dateMoinsUneSemaine = new DateTime('-7 days');
                     $dateMoinsUnMois = new DateTime(date('Ym00'));
-                    
+
                     $hrefTopJour = sprintf('/?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateDuJour->format('Ymd'), $dateDuJour->format('Ymd'));
                     $hrefTopHier = sprintf('/?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateTopHier->format('Ymd'), $dateTopHier->format('Ymd'));
                     $hrefTopSemaine = sprintf('/?q=&pop=0&limit=50&from=%s&to=%s&sortBy=pop&sort=desc', $dateMoinsUneSemaine->format('Ymd'), $dateDuJour->format('Ymd'));
@@ -550,7 +550,7 @@ class Controller
                 <?php
                 }
                 ?>
-                
+
                 <li class="has-dropdown">
                     <a href="#">Plus</a>
                     <ul class="dropdown">
@@ -567,7 +567,7 @@ class Controller
 
             <!-- Left Nav Section -->
             <ul class="left">
-              
+
             </ul>
           </section>
         </nav>
@@ -581,9 +581,9 @@ class Controller
         <script>
 
         function synchroShaarli(articleId, ssiTextePresent) {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "";
-            r.open("POST", "synchro_shaarli.php", true); 
+            r.open("POST", "synchro_shaarli.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -594,17 +594,17 @@ class Controller
                         return ;
                     }
                     else {
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
 
         function synchroShaarliLastArticle() {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "";
-            r.open("POST", "synchro_shaarli.php", true); 
+            r.open("POST", "synchro_shaarli.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -613,36 +613,36 @@ class Controller
                         return ;
                     }
                     else {
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
-        
+
         function addOption(that, action, value) {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "do="+action + "&value="+value+ "&state="+value;
-            r.open("POST", "add.php", true); 
+            r.open("POST", "add.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
                     if(r.status == 200){
                         that.attr('data-waiting', '');
-                        return; 
+                        return;
                     }
                     else {
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
 
         function lienAddAbo(that, id, action) {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "do="+action+"&id=" + id;
-            r.open("POST", "add.php", true); 
+            r.open("POST", "add.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -656,21 +656,21 @@ class Controller
                             that.innerHTML = 'Suivre';
                             that.onclick = function () { lienAddAbo(that, id, 'add'); return false; };
                         }
-                        return; 
+                        return;
                     }
                     else {
                         that.text = '-Erreur-';
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
         </script>
         <?php
     }
-    
-    public static function renderOldMenu($titre = 'Shaarli.fr', $rssUrl = '')
+
+    public static function renderOldMenu($titre = 'Shaarlo.fr', $rssUrl = '')
     {
 
         $class = 'menu';
@@ -685,17 +685,17 @@ class Controller
             <h1 class="show-for-medium-up">
                 <a href="/"><img class="logo hidden-on-smartphone" src="img/logo.png" height="40" width="36" /></a>
                 <a href="./index.php"><?php echo $titre ?></a>
-                
+
                 <?php if (useTipeee()) {?>
                 <a style="display:inline-block" target="_blank" href="https://www.tipeee.com/shaarlo">
                     <img width="50" src="img/tipeee.png" />
-                </a> 
+                </a>
                 <span style="color: #BBB;font-size: 8px;cursor:help;" title="Wallet bitcoin">1EDwkGM6gCBnNyfvU3h7T98m6BwGjQsGfg</span>
                 <?php } ?>
             </h1>
             <ul class="show-for-medium-up" >
                 <li><a href="index.php">River</a></li>
-                <?php 
+                <?php
                 if (isShaarliste()) {
                     ?><li><a href="<?php eh(getShaarliUrlOk()); ?>">Shaarli</a></li><?php
                 } else {
@@ -727,7 +727,7 @@ class Controller
             </ul>
             <ul class="show-for-small-only" >
                 <li><a href="index.php">River</a></li>
-                <?php 
+                <?php
                 if (isShaarliste()) {
                     ?><li><a href="<?php eh(getShaarliUrlOk()); ?>">Shaarli</a></li><?php
                 } else {
@@ -765,9 +765,9 @@ class Controller
         <script>
 
         function synchroShaarli(articleId, ssiTextePresent) {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "";
-            r.open("POST", "synchro_shaarli.php", true); 
+            r.open("POST", "synchro_shaarli.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -778,17 +778,17 @@ class Controller
                         return ;
                     }
                     else {
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
 
         function synchroShaarliLastArticle() {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "";
-            r.open("POST", "synchro_shaarli.php", true); 
+            r.open("POST", "synchro_shaarli.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -797,34 +797,34 @@ class Controller
                         return ;
                     }
                     else {
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
-        
+
         function addOption(that, action, value) {
-            var r = new XMLHttpRequest(); 
+            var r = new XMLHttpRequest();
             var params = "do="+action + "&value="+value+ "&state="+value;
-            r.open("POST", "add.php", true); 
+            r.open("POST", "add.php", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
                     if(r.status == 200){
                         that.attr('data-waiting', '');
-                        return; 
+                        return;
                     }
                     else {
-                        return; 
+                        return;
                     }
                 }
-            }; 
+            };
             r.send(params);
         }
 
 
-        
+
         </script>
         <div class="clear"></div>
         <?php
