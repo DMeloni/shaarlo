@@ -11,7 +11,7 @@ function envoieMailRecuperation($to, $profilId, $key) {
 	$mail2->CharSet = 'UTF-8';
 	$mail2->IsHTML(true);
 	$mail2->SMTPAuth = true;
-	$mail2->Host='smtp.openkiss.me';
+	$mail2->Host='smtp.shaarli.fr';
 	$mail2->Port='587';
     //$mail2->Host='ssl0.ovh.net';
 	//$mail2->Port='465';
@@ -23,9 +23,10 @@ function envoieMailRecuperation($to, $profilId, $key) {
 	$mail2->AddAddress($to);
 	$mail2->AddReplyTo($ADMIN_EMAIL);
 	//$mail2->SMTPDebug = 2;
-
+        $ip = getClientIp();
 	$mail2->Subject = utf8_decode(sprintf('Récupération du profil %s', $profilId));
 	$message = "Voici le nouveau mot de passe de votre compte : " . $key;
+        $message .= "<p>Demande de l'adresse IP : $ip.</p>";
 	$message .= "<p>Note : Modifiez le dès que possible (votre prestataire de messagerie pourrait se connecter à votre compte !).</p>";
 
 	$enveloppe = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -51,7 +52,24 @@ function envoieMailRecuperation($to, $profilId, $key) {
 	return true;
 }
 
-
+function getClientIp() {
+    $ipaddress = '';
+    if (getenv('HTTP_CLIENT_IP'))
+        $ipaddress = getenv('HTTP_CLIENT_IP');
+    else if(getenv('HTTP_X_FORWARDED_FOR'))
+        $ipaddress = getenv('HTTP_X_FORWARDED_FOR');
+    else if(getenv('HTTP_X_FORWARDED'))
+        $ipaddress = getenv('HTTP_X_FORWARDED');
+    else if(getenv('HTTP_FORWARDED_FOR'))
+        $ipaddress = getenv('HTTP_FORWARDED_FOR');
+    else if(getenv('HTTP_FORWARDED'))
+       $ipaddress = getenv('HTTP_FORWARDED');
+    else if(getenv('REMOTE_ADDR'))
+        $ipaddress = getenv('REMOTE_ADDR');
+    else
+        $ipaddress = 'UNKNOWN';
+    return $ipaddress;
+}
 
 /**
 * Retourne une adresse email obfusquée
