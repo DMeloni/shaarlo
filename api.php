@@ -90,21 +90,19 @@ if ($_GET['do'] === 'buildAllRss') {
     $params = '?do=rss';
     $fluxDir = 'flux';
     $dataDir = 'data';
-
     $uneJourneeEnSeconde = 24 * 4 * 60;
     $mysqli = shaarliMyConnect();
 
-    $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("http://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
+    $allShaarlistes = json_decode(remove_utf8_bom(file_get_contents("https://$SHAARLO_DOMAIN/api.php?do=getAllShaarlistes"), true));
     if(isset($_GET['nbthreads']) && isset($_GET['thread'])) {
         $allShaarlistesChunked = array_chunk($allShaarlistes, ceil(count($allShaarlistes)/(int)$_GET['nbthreads']), true);
         $allShaarlistes = $allShaarlistesChunked[(int)$_GET['thread']-1];
     }
-    
+
     foreach($allShaarlistes as $shaarliste) {
         $urlSimplifiee = simplifieUrl($shaarliste);
         $fluxName = md5(($urlSimplifiee));
         $fluxFile = sprintf('%s/%s/%s.xml', $dataDir, $fluxDir, $fluxName);
-
         // Recuperation du delai à attendre entre chaque mise à jour
         $delai = getDelaiBeforeCall($mysqli, $fluxName);
         $delaiEnSeconde = $delai * 60 * 24;
