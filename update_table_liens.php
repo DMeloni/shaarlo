@@ -71,6 +71,9 @@ foreach($allShaarlistes as $url) {
         }
 
         $content = str_replace('&eacute;', 'é', $content);
+        
+        // FIX : parser error : PCDATA invalid Char value 31.
+        $content = preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $content);
 
         $xmlContent = getSimpleXMLElement($content);
         if($xmlContent === false){
