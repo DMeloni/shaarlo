@@ -7,7 +7,7 @@ class OptionStatisticController extends AbstractController
     /**
      * {@inheritdoc}
      */
-    public function run()
+    public function indexAction()
     {
         $mysqli = shaarliMyConnect();
 

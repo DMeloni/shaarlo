@@ -12,3 +12,4 @@ parameters:
     secret: 462069dac3b80f128f2583207fb52f7c9bc04329
     domain: 'shaarlo.fr'
     api_url: 'https://www.shaarlo.fr/api.php'
+    salt: 'fdsdfsdf'

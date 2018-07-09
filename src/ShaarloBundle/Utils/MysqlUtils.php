@@ -60,19 +60,22 @@ class MysqlUtils
         return $mysqli;
     }
 
-    function insertArticles($mysqli, $articles) {
+    function insertArticles($mysqli, $articles)
+    {
         if($mysqli === null) {
             return null;
         }
 
-        insertEntites($mysqli, 'liens', $articles);
+        $this->insertEntites($mysqli, 'liens', $articles);
     }
 
-    function insertEntite($mysqli, $table, $entite) {
-        return insertEntites($mysqli, $table, array($entite));
+    function insertEntite($mysqli, $table, $entite)
+    {
+        return $this->insertEntites($mysqli, $table, array($entite));
     }
 
-    function insertEntites($mysqli, $table, $entites) {
+    function insertEntites($mysqli, $table, $entites)
+    {
         if($mysqli === null) {
             return null;
         }

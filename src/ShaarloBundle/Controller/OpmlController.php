@@ -7,7 +7,7 @@ class OpmlController extends AbstractController
     /**
      * {@inheritdoc}
      */
-    public function run()
+    public function indexAction()
     {
         global $SHAARLO_DOMAIN, $CACHE_DIRECTORY_PATH;
 

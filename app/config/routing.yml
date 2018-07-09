@@ -1,4 +1,2 @@
 shaarlo:
-    resource: "@ShaarloBundle/Controller/"
-    type:     annotation
-    prefix:   /
+    resource: "@ShaarloBundle/Resources/config/routing.yml"

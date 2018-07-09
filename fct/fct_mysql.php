@@ -11,9 +11,11 @@ require_once('fct/fct_session.php');
 function shaarliMyConnect() {
     global $MYSQL_USER, $MYSQL_SERVER, $MYSQL_PASSWORD, $MYSQL_DB;
 
-    $mysqli = new mysqli($MYSQL_SERVER, $MYSQL_USER, $MYSQL_PASSWORD, $MYSQL_DB);
+    $mysqli = new @mysqli($MYSQL_SERVER, $MYSQL_USER, $MYSQL_PASSWORD, $MYSQL_DB);
     /* check connection */
     if ($mysqli->connect_errno) {
+        echo 'Site actuellement inaccessible';
+
         return null;
     }
 

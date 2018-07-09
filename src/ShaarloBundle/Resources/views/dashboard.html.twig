@@ -1,13 +1,11 @@
 {% extends '@Shaarlo/base.html.twig' %}
 
 {% block body_content %}
-
-
     {% if message|default %}
     <div class="row">
         <div class="columns large-12 center">
             <div class="panel">
-                <span class="color-success"> eh($params['message']);?></span>
+                <span class="color-success">{{ message }}</span>
             </div>
         </div>
     </div>
@@ -19,16 +17,16 @@
                 <div class="panel" data-equalizer-watch>
                     <div class="row">
                         <div class="columns large-12">
-                            <h3> $this->t('profil_mot_de_passe'); ?></h3>
+                            <h3>{{ 'profil_mot_de_passe'|trans }}</h3>
                             <form method="POST">
                                 <input type="hidden" name="action" value="connexion"/>
                                 <input type="hidden" name="profil_id" value=" eh($this->get('profil_id')); ?>"/>
                                 <input name="password" type="password" value=""/>
                                 <input class="button success" type="submit" value="Valider" />
                             </form>
-                            if (profilHasEmail($this->get('profil_id'))) {
-                                <a href="?action=send_pwd_mail&amp;profil_id= eh($this->get('profil_id')); ?>">Mot de passe oublié ?</a>
-                            }
+                            {% if profil_id|default %}
+                                <a href="?action=send_pwd_mail&profil_id={{ profil_id|default }}">Mot de passe oublié ?</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -87,14 +85,11 @@
             </div>
         {% endif %}
 
-
-        {% if pas_de_profil|default and creation|default %}
+        {% if not(pas_de_profil|default) and not(creation|default) %}
             <div class="row">
                 <div class="columns large-12">
                     <div class="panel">
-
                         <div class="row">
-
                             {% if profil_image|default %}
                                 <div class="columns large-2 medium-3 small-3 text-right small-text-left">
                                     <img class="profil-avatar" src="{{ profil_image|default }}" alt="image de profil" />
@@ -170,18 +165,18 @@
         {% endif %}
     {% endif %}
 
-    {% if pas_de_profil|default and creation|default and is_me|default %}
+    {% if not(pas_de_profil|default) and not(creation|default) and is_me|default  %}
             <div class="row">
                 <div class="columns large-12 center">
                     <div class="panel">
                         <div class="row">
                             <div class="large-3 medium-6 small-6 columns text-center">
-                                <a class="a-block" href="abonnements.php">
+                                <a class="a-block" href="abonnements">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_people.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_people.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
-                                        <span class="blue-ocean"> eh($params['nb_abonnements'])?></span> abonnements
+                                        <span class="blue-ocean">{{ nb_abonnements|default }}</span> abonnements
                                     </div>
                                 </a>
                             </div>
@@ -189,7 +184,7 @@
                                 {% if non_en_attente_de_moderation|default %}
                                 <a class="a-block link-show" href="{% if is_shaarliste|default %}#modifier-shaarli{% else %}#mon-shaarli{% endif %}">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_shaarli.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         {% if is_shaarliste|default %}
@@ -198,6 +193,7 @@
                                             {% else %}
                                                 <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
                                             {% endif %}
+                                        {% else %}
                                             {% if non_en_attente_de_moderation|default %}
                                                 <p><a class="link-show" href="#mon-shaarli">Liaison shaarli</a></p>
                                             {% else %}
@@ -209,7 +205,7 @@
                                  {% else %}
                                 <div class="a-block" >
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_shaarli.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_shaarli.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         <p><em>Shaarli en attente de modération <a href="?action=cancel" class="tiny">Annuler la demande</a></em></p>
@@ -220,7 +216,7 @@
                             <div class="large-3 medium-6 small-6 columns text-center">
                                 <a class="a-block link-show" href="#pwd">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_pwd.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_pwd.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         Sécurité
@@ -230,7 +226,7 @@
                             <div class="large-3 medium-6 small-6 columns text-center">
                                 <a class="a-block link-show" href="#options">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_config.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_config.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         Options d'affichage
@@ -243,7 +239,7 @@
                             <div class="large-3 medium-6 small-6 columns text-center">
                                 <a class="a-block" href="index.php?q=shaarli:{{ id_rss }}">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_messagerie.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_messagerie.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         Messagerie
@@ -255,7 +251,7 @@
                             <div class="large-3 medium-6 small-6 columns text-center">
                                 <a class="a-block link-show" href="#filtres">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_filtres.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_filtres.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         Filtres des articles
@@ -266,7 +262,7 @@
                             <div class="large-3 medium-6 small-6 columns text-center">
                                 <a class="a-block link-show" target="_blank" href="https://www.shaarli.fr/jappix-1.0.7/?r=shaarli@conference.dukgo.com">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_chat.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_chat.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         Tchat en ligne
@@ -277,7 +273,7 @@
                             <div class="large-3 medium-6 small-6 columns text-center">
                                 <a class="a-block link-show" href="#report">
                                     <div class="row">
-                                        <div style="min-height:150px;background:url('css/img/icon_report.png') no-repeat;background-position:center center;"></div>
+                                        <div style="min-height:150px;background:url({{ asset('bundles/shaarlo/img/icon_report.png') }}) no-repeat;background-position:center center;"></div>
                                     </div>
                                     <div class="row">
                                         Bug/commentaire/conseil
@@ -565,7 +561,7 @@
                             <h3>Filtre sur les urls</h3>
                             <form method="POST">
                                 <p>Ne jamais afficher de lien vers les sites web suivants :</p>
-                                <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com..."> echo htmlentities(implode(' ', getNotAllowedUrls()));?> </textarea>
+                                <textarea name="not_allowed_urls" rows="4" placeholder="youtube.com...">{{ not_urls_list|default }}</textarea>
                                 <input type="hidden" name="action" value="enregistrer_urls" />
                                 <input class="button" type="submit" value="Sauvegarder" />
                             </form>
@@ -587,10 +583,10 @@
                             <div class="row">
 
                                 <div class="columns large-12">
-                                     if (isPassword()) { ?>
-                                    <span>Ce compte est actuellement protégé par un mot de passe.</span>
-                                    <input autocomplete="off" placeholder="Ancien mot de passe" type="password" name="old_password" value="" />
-                                     } ?>
+                                    {% if isPassword|default  %}
+                                        <span>Ce compte est actuellement protégé par un mot de passe.</span>
+                                        <input autocomplete="off" placeholder="Ancien mot de passe" type="password" name="old_password" value="" />
+                                    {% endif %}
                                     <input type="hidden" name="action" value="enregistrer_password"/>
                                     <input autocomplete="off" placeholder="Nouveau mot de passe" type="password" name="password" value="" />
                                     <input autocomplete="off" placeholder="Nouveau mot de passe Encore ! " type="password" name="password_verif" value="" />
@@ -632,7 +628,7 @@
                         <h3>Url de mon shaarli</h3>
                         <p>Permet de reshaarlier les liens</p>
                         <form method="POST">
-                            <input name="shaarli_url" type="text" value=" echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                            <input name="shaarli_url" type="text" value="{{ shaarli_url|default }}" placeholder="http://example.com/shaarli/"/>
                             <input type="hidden" name="action" value="mon_shaarli" />
                             <input type="hidden" name="action" value="mon_shaarli" />
 
@@ -708,12 +704,12 @@
                     </div>
                     <div class="columns large-12">
                         <form method="POST">
-                            <input name="shaarli_url" type="text" value=" echo htmlentities($params['shaarli_url']); ?>" placeholder="http://example.com/shaarli/"/>
+                            <input name="shaarli_url" type="text" value="{{ shaarli_url|default }}" placeholder="http://example.com/shaarli/"/>
                             <input type="hidden" name="action" value="mon_shaarli" />
                             <input type="hidden" name="action" value="mon_shaarli" />
 
                             <h5>Nombre de minutes minimal entre chaque mise à jour</h5>
-                            <input name="shaarli_delai" type="number" value=" echo htmlentities($params['shaarli_delai']); ?>" placeholder="1"/>
+                            <input name="shaarli_delai" type="number" value="{{ shaarli_delai|default }}" placeholder="1"/>
 
                             <div class="row">
                                 <div class="columns large-12">
@@ -761,4 +757,166 @@
             </div>
         </form>
     {% endif %}
+{% endblock %}
+
+{% block script %}
+    <script>
+        $('input[data-option]').click(function() {
+            addOption($(this), $(this).attr('data-option'), $(this).val());
+        });
+
+        function addAbo(that, id, action) {
+        var r = new XMLHttpRequest();
+        var params = "do="+action+"&id=" + id;
+        r.open("POST", "add", true);
+        r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        r.onreadystatechange = function () {
+        that.attr('data-waiting', 'false');
+        if (r.readyState == 4) {
+        if(r.status == 200){
+        var checkboxId = '#' + that.attr('data-shaarliste-id');
+        if(action == 'add') {
+        $('#a-voir-river').removeClass('hidden');
+        $('#input-enregistrer-profil').prop('disabled', false);
+        that.addClass('selected');
+        $(checkboxId).prop('checked', true);
+        $('#span-nbabonnements').text(parseInt($('#span-nbabonnements').text()) + 1);
+        }else {
+        $('#span-nbabonnements').text(parseInt($('#span-nbabonnements').text()) - 1);
+        $(checkboxId).prop('checked', false);
+        that.removeClass('selected');
+        }
+        return;
+        }
+        else {
+        that.text = '-Erreur-';
+        return;
+        }
+        }
+        };
+        r.send(params);
+        }
+        $('.shaarliste-selection').click(function() {
+        var checkboxId = '#' + $(this).attr('data-shaarliste-id');
+
+        if ($(this).attr('data-waiting') != 'true') {
+        $(this).attr('data-waiting', 'true');
+        if ($(checkboxId).is(':checked')) {
+        addAbo($(this), $(this).attr('data-shaarliste-id'), 'delete');
+        } else {
+        addAbo($(this), $(this).attr('data-shaarliste-id'), 'add');
+        }
+        }
+        });
+
+
+        $('#button-synchro-favicon').click(function() {
+        var r = new XMLHttpRequest();
+        var params = "";
+        $('#img-synchro-favicon').show();
+        r.open("POST", "synchro_favicon.php", true);
+        r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        r.onreadystatechange = function () {
+        $('#img-synchro-favicon').hide();
+        if (r.readyState == 4) {
+        if(r.status == 200){
+        return;
+        }
+        else {
+        return;
+        }
+        }
+        };
+        r.send(params);
+        });
+
+        $('#button-synchro-shaarli').click(function() {
+        var r = new XMLHttpRequest();
+        var params = "";
+        $('#img-synchro-shaarli').show();
+        r.open("POST", "synchro_shaarli.php", true);
+        r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        r.onreadystatechange = function () {
+        $('#img-synchro-shaarli').hide();
+        if (r.readyState == 4) {
+        if(r.status == 200){
+        $('#msg-synchro-shaarli').css('color', 'green');
+        $('#msg-synchro-shaarli').text('OK');
+        return;
+        }
+        else {
+        $('#msg-synchro-shaarli').css('color', 'red');
+        $('#msg-synchro-shaarli').text('Flux en erreur...');
+        return;
+        }
+        }
+        };
+        r.send(params);
+        });
+
+        $('#button-tous').click(function() {
+        var checkbox = $('.checkbox-shaarliste');
+        $.each( checkbox, function( key, value ) {
+        $(value).prop('checked', true);
+        var shaarlisteSelection = '#shaarliste-selection-' + $(value).attr('id');
+        $(shaarlisteSelection).addClass('selected');
+        });
+
+        {% if not(creation|default) %}
+            $('#form-abonnements').submit();
+        {% else %}
+            /* On va directement en fin de page */
+            $("html, body").animate({ scrollTop: $(document).height()-$(window).height() });
+        {% endif %}
+
+        $('#input-enregistrer-profil').prop('disabled', false);
+        });
+
+        $('#button-personne').click(function() {
+        var checkbox = $('.checkbox-shaarliste');
+        $.each( checkbox, function( key, value ) {
+        $(value).prop('checked', false);
+        var shaarlisteSelection = '#shaarliste-selection-' + $(value).attr('id');
+        $(shaarlisteSelection).removeClass('selected');
+        });
+        $('#form-abonnements').submit();
+        });
+        $(document).foundation();
+
+        function blocShow() {
+        if ('#pwd' == location.hash) {
+        $(".bloc-show").hide();
+        $("#pwd").show();
+        }
+        if ('#options' == location.hash) {
+        $(".bloc-show").hide();
+        $("#options").show();
+        }
+        if ('#report' == location.hash) {
+        $(".bloc-show").hide();
+        $("#report").show();
+        }
+        if ('#filtres' == location.hash) {
+        $(".bloc-show").hide();
+        $("#filtres").show();
+        }
+        if ('#modifier-shaarli' == location.hash) {
+        $(".bloc-show").hide();
+        $("#modifier-shaarli").show();
+        }
+        if ('#mon-shaarli' == location.hash) {
+            $(".bloc-show").hide();
+            $("#mon-shaarli").show();
+        }
+        }
+
+        $('.link-show').click(function(event) {
+            $(".bloc-show").hide();
+            $($(this).attr('href')).show();
+            event.preventDefault();
+        });
+
+        $(".bloc-show").hide();
+        blocShow();
+    </script>
 {% endblock %}

@@ -17,7 +17,7 @@ class UrlUtils
 
 // Fonction qui redirige l'utilisateur sur la page de connection s'il doit etre connecté
     function getUrlCourante() {
-        return getUrlHost().$_SERVER['REQUEST_URI'];
+        return $this->getUrlHost().$_SERVER['REQUEST_URI'];
     }
 // Fonction qui redirige l'utilisateur sur la page de connection s'il doit etre connecté
     function getRedirectUrl() {
@@ -126,7 +126,7 @@ class UrlUtils
     // Ajoute un tableau de paramètres
     function ajouterParametresGET($url, $nomsvaleurs){
         foreach($nomsvaleurs as $nom => $valeur) {
-            $url = ajouterParametreGET($url, $nom, $valeur);
+            $url = $this->ajouterParametreGET($url, $nom, $valeur);
         }
 
         return $url;

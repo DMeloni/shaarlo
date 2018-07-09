@@ -62,6 +62,8 @@ class UserOptionsUtils
     // Du shaarliste et le connecte
     function loadConfiguration($url)
     {
+        $mysqlUtils = $this->mysqlUtils;
+
         $clefProfil = 'Mon Profil';
         $clefAbonnement = 'Mes abonnements';
         $clefsAutorises = array($clefProfil, $clefAbonnement);
@@ -115,11 +117,11 @@ class UserOptionsUtils
 
         // Création en base du shaarliste
         $shaarliste = creerShaarliste($username, $pseudo, $url);
-        insertEntite($mysqli, 'shaarliste', $shaarliste);
+        $mysqlUtils->insertEntite($mysqli, 'shaarliste', $shaarliste);
 
         // Maj sql
         if(!empty($configuration[$clefAbonnement])) {
-            deleteMesRss($mysqli, $username);
+            $mysqlUtils->deleteMesRss($mysqli, $username);
             $configuration[$clefAbonnement][] = array('key' => $pseudo, 'value' => $urlShaarlisteSimplifiee);
             foreach($configuration[$clefAbonnement] as $param) {
                 $urlSimplifiee = str_replace('https://', '', $param['value']);
@@ -155,17 +157,15 @@ class UserOptionsUtils
 
                     }
 
-                    $rss = creerRss($idRss, 'sans titre', $param['value'], $urlSimplifiee, 1);
+                    $rss = $mysqlUtils->creerRss($idRss, 'sans titre', $param['value'], $urlSimplifiee, 1);
 
-                    insertEntite($mysqli, 'rss', $rss);
+                    $mysqlUtils->insertEntite($mysqli, 'rss', $rss);
                 }
 
                 // Création de l'abonnement
-                $monRss = creerMonRss($username, $idRss, $pseudo, $param['key']);
-                insertEntite($mysqli, 'mes_rss', $monRss);
+                $monRss = $mysqlUtils->creerMonRss($username, $idRss, $pseudo, $param['key']);
+                $mysqlUtils->insertEntite($mysqli, 'mes_rss', $monRss);
             }
-
-            shaarliMyDisconnect($mysqli);
         }
 
         if (!empty($pseudo)) {
@@ -263,7 +263,7 @@ class UserOptionsUtils
                 $passwordHash = createShaarlieurHash(null, $password);
             }
             $shaarlieurEntite = creerShaarlieur($sessionId, $passwordHash, json_encode($data));
-            insertEntite($mysqli, 'shaarlieur', $shaarlieurEntite);
+            $mysqlUtils->insertEntite($mysqli, 'shaarlieur', $shaarlieurEntite);
 
             $shaarlieurSqlData = $this->mysqlUtils->selectShaarlieur($mysqli, $sessionId);
 
@@ -438,16 +438,16 @@ class UserOptionsUtils
         $session = $this->getSession();
         $session['shaarlieur_email'] = $email;
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
-        updateShaarlieurEmail($mysqli, $this->getUtilisateurId(), $email);
-        setSession($session);
-
+        $mysqlUtils->updateShaarlieurEmail($mysqli, $this->getUtilisateurId(), $email);
+        $this->setSession($session);
     }
 
 
     function setSession($session) {
+        $mysqlUtils = $this->mysqlUtils;
         $_SESSION = $session;
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
-        updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
+        $mysqlUtils->updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
 
     }
 
@@ -460,20 +460,18 @@ class UserOptionsUtils
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
 
         // Suppression des anciens abonnements
-        deleteMesRss($mysqli, $session['shaarlieur_id']);
+        $mysqlUtils->deleteMesRss($mysqli, $session['shaarlieur_id']);
 
         // Création de l'abonnement
         foreach ($abonnements as $shaarlisteId) {
-            $monRss = creerMonRss($session['shaarlieur_id'], $shaarlisteId, '', '');
-            insertEntite($mysqli, 'mes_rss', $monRss);
+            $monRss = $mysqlUtils->creerMonRss($session['shaarlieur_id'], $shaarlisteId, '', '');
+            $mysqlUtils->insertEntite($mysqli, 'mes_rss', $monRss);
         }
 
 
-        $session['shaarlieur_data']['abonnements'] = getAllAbonnementsId($mysqli, $session['shaarlieur_id']);
-        setSession($session);
-        updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
-
-
+        $session['shaarlieur_data']['abonnements'] = $mysqlUtils->getAllAbonnementsId($mysqli, $session['shaarlieur_id']);
+        $this->setSession($session);
+        $mysqlUtils->updateShaarlieurData($mysqli, $session['shaarlieur_id'], json_encode($session['shaarlieur_data']));
     }
 
 // Met à jour la liste d'abonnement d'un shaarlieur
@@ -482,19 +480,22 @@ class UserOptionsUtils
         $session = $this->getSession();
         $session['shaarlieur_inscription_auto'] = $inscriptionAuto;
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
-        updateShaarlieurInscriptionAuto($mysqli, $session['shaarlieur_id'], $inscriptionAuto);
-        setSession($session);
-
+        $mysqlUtils->updateShaarlieurInscriptionAuto($mysqli, $session['shaarlieur_id'], $inscriptionAuto);
+        $this->setSession($session);
     }
 
 
-// Met à jour le hash du pwd
+    /**
+     * Met à jour le hash du pwd.
+     *
+     * @param $pwdHash
+     */
     function majPasswordHash($pwdHash) {
         $mysqlUtils = $this->mysqlUtils;
         $session = $this->getSession();
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
         updateShaarlieurPassword($mysqli, $session['shaarlieur_id'], $pwdHash);
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -506,7 +507,7 @@ class UserOptionsUtils
         $session['shaarlieur_shaarli_ok'] = '2';
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
         updateShaarlieurShaarliUrl($mysqli, $session['shaarlieur_id'], $shaarliUrl);
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -517,7 +518,7 @@ class UserOptionsUtils
         $session['shaarlieur_shaarli_delai'] = $shaarliDelai;
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
         updateShaarlieurShaarliDelai($mysqli, $session['shaarlieur_id'], $shaarliDelai);
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -529,7 +530,7 @@ class UserOptionsUtils
         $session['shaarlieur_shaarli_url_ok'] = '';
         $session['shaarlieur_shaarli_ok'] = '0';
         supprimeShaarlieurShaarliUrl($mysqli, $this->getUtilisateurId());
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -541,7 +542,7 @@ class UserOptionsUtils
         $session['shaarlieur_shaarli_url'] = $session['shaarlieur_shaarli_url_ok'];
         $session['shaarlieur_shaarli_ok'] = '0';
         cancelShaarlieurShaarliUrl($mysqli, $this->getUtilisateurId());
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -685,7 +686,7 @@ class UserOptionsUtils
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
         updateShaarlieurShaarliOnAbonnements($mysqli, $session['shaarlieur_id'], $isOnAbonnements);
 
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -698,7 +699,7 @@ class UserOptionsUtils
         $session['shaarlieur_shaarli_on_river'] = $isOnRiver;
         $mysqli = $this->mysqlUtils->shaarliMyConnect();
         updateShaarlieurShaarliOnRiver($mysqli, $session['shaarlieur_id'], $isOnRiver);
-        setSession($session);
+        $this->setSession($session);
 
     }
 
@@ -1096,7 +1097,7 @@ class UserOptionsUtils
             $tags = array();
         }
         $session['shaarlieur_data']['tags'] = $tags;
-        setSession($session);
+        $this->setSession($session);
     }
 
     /**
@@ -1127,7 +1128,7 @@ class UserOptionsUtils
         }
         $session['shaarlieur_data']['not_allowed_tags'] = $tags;
 
-        setSession($session);
+        $this->setSession($session);
     }
 
     function updateNotAllowedUrls($urls) {
@@ -1136,14 +1137,14 @@ class UserOptionsUtils
         $urls = str_replace(',', ' ', $urls);
         $urls = explode(' ', trim($urls));
         $session['shaarlieur_data']['not_allowed_urls'] = $urls;
-        setSession($session);
+        $this->setSession($session);
     }
 
 
     function updateCurrentBadge($badge) {
         $session = $this->getSession();
         $session['shaarlieur_data']['badge'] = $badge;
-        setSession($session);
+        $this->setSession($session);
     }
 
     function getCurrentBadge() {
@@ -1169,7 +1170,7 @@ class UserOptionsUtils
     function setShaarlieurHash($shaarlieurId, $password) {
         $session = $this->getSession();
         $session['shaarlieur_hash'] = createShaarlieurHash($shaarlieurId, $password);
-        setSession($session);
+        $this->setSession($session);
     }
 
     function getShaarlieurHash($shaarlieurId, $password) {

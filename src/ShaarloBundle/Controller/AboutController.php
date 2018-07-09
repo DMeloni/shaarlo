@@ -9,7 +9,7 @@ class AboutController extends AbstractController
     /**
      * @Route("/about")
      */
-    public function run()
+    public function indexAction()
     {
         return $this->render(
             '@Shaarlo/about.html.twig',

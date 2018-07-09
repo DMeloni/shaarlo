@@ -7,13 +7,13 @@ use ShaarloBundle\Lang\FrLang;
 use ShaarloBundle\Lang\LangInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
-abstract class AbstractController extends Controller implements ControllerInterface
+abstract class AbstractController extends Controller
 {
     private $langInterface = null;
 
     public function getGlobalTemplateParameters()
     {
-        $userOptionsUtils = $this->container->get('shaarlo.user_options_utils');
+        $userOptionsUtils = $this->get('shaarlo.user_options_utils');
 
 
         $hrefTopJour = null;
@@ -247,27 +247,11 @@ abstract class AbstractController extends Controller implements ControllerInterf
         return null;
     }
 
-    /*
-     * Récupère la variable $_GET
-     * de manière saine
-     *
-     * @param string $nom : le nom du paramètre
-     *
-     * @return mixed : valeur du paramètre
-     */
-    public function get($nom)
-    {
-        if (isset($_GET[$nom])) {
-            return $_GET[$nom];
-        }
-
-        return null;
-    }
 
     public static function renderScript($params = array())
     {
         ?>
-        <script src="js/jquery-modernizr-foundation.min.js?v=4"></script>
+
         <?php
     }
 
@@ -436,7 +420,7 @@ abstract class AbstractController extends Controller implements ControllerInterf
         function addOption(that, action, value) {
             var r = new XMLHttpRequest();
             var params = "do="+action + "&value="+value+ "&state="+value;
-            r.open("POST", "add.php", true);
+            r.open("POST", "add", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -455,7 +439,7 @@ abstract class AbstractController extends Controller implements ControllerInterf
         function lienAddAbo(that, id, action) {
             var r = new XMLHttpRequest();
             var params = "do="+action+"&id=" + id;
-            r.open("POST", "add.php", true);
+            r.open("POST", "add", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {
@@ -622,7 +606,7 @@ abstract class AbstractController extends Controller implements ControllerInterf
         function addOption(that, action, value) {
             var r = new XMLHttpRequest();
             var params = "do="+action + "&value="+value+ "&state="+value;
-            r.open("POST", "add.php", true);
+            r.open("POST", "add", true);
             r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             r.onreadystatechange = function () {
                 if (r.readyState == 4) {

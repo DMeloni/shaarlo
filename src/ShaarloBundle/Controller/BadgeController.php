@@ -10,7 +10,7 @@ class BadgeController extends AbstractController
     /**
      * {@inheritdoc}
      */
-    public function run()
+    public function indexAction()
     {
         // Access not allowed for anon.
         if (getUtilisateurId() === '') {
@@ -242,7 +242,7 @@ class BadgeController extends AbstractController
             function changeBadge(that, action, value) {
                 var r = new XMLHttpRequest();
                 var params = "do="+action + "&value="+value+ "&state="+value;
-                r.open("POST", "add.php", true);
+                r.open("POST", "add", true);
                 r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 r.onreadystatechange = function () {
                     if (r.readyState == 4) {

@@ -2,30 +2,26 @@
 
 namespace ShaarloBundle\Controller;
 
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
 
 class DashboardController extends AbstractController
 {
-    /**
-     * @Route("/dashboard")
-     */
-    public function run()
+    public function indexAction(Request $request)
     {
-        $userOptionsUtils = $this->container->get('shaarlo.user_options_utils');
-        $shaarloRssUtils = $this->container->get('shaarlo.rss_utils');
+        $userOptionsUtils = $this->get('shaarlo.user_options_utils');
+        $shaarloRssUtils = $this->get('shaarlo.rss_utils');
 
-        global $SHAARLO_DOMAIN, $API_TRANSFER_PROTOCOL;
+        global $SHAARLO_DOMAIN;
         // Accès invité
         if ('enregistrer_temporairement' ===  $this->post('action')) {
             // Connexion invitée
             getSession('', true);
-            header('Location: index.php');
-            return;
+
+            return $this->redirectToRoute('shaarlo_river');
         }
 
         if ($userOptionsUtils->getUtilisateurId() === '') {
-            header('Location: index.php');
-            return;
+            return $this->redirectToRoute('shaarlo_river');
         }
 
 
@@ -35,8 +31,8 @@ class DashboardController extends AbstractController
         }
 
         $shaarliste = $userOptionsUtils->getUtilisateurId();
-        if ($this->get('shaarliste')) {
-            $shaarliste = $this->get('shaarliste');
+        if ($request->get('shaarliste')) {
+            $shaarliste = $request->get('shaarliste');
         }
 
         $isMe = false;
@@ -172,16 +168,20 @@ class DashboardController extends AbstractController
             }
         }
 
-        if ($this->get('action')) {
+        if (true === $pasDeProfil) {
+            return $this->redirectToRoute('shaarlo_subscription');
+        }
+
+        if ($request->get('action')) {
             // Connexion
-            if ('connexion' ===  $this->get('action')) {
+            if ('connexion' ===  $request->get('action')) {
                 $password = null;
                 if ($this->post('password')) {
                     $password = $this->post('password');
                 }
-                $session = getSession($this->get('profil_id'), true, $password);
+                $session = getSession($request->get('profil_id'), true, $password);
                 if ($session !== 401) {
-                    setcookie('shaarlieur', $this->get('profil_id'), time()+31536000, $SHAARLO_DOMAIN);
+                    setcookie('shaarlieur', $request->get('profil_id'), time()+31536000, $SHAARLO_DOMAIN);
                     header('Location: index.php');
                     return;
                 }
@@ -191,31 +191,31 @@ class DashboardController extends AbstractController
             }
 
             // Création d'un nouveau profil
-            if ('creation' ===  $this->get('action')) {
+            if ('creation' ===  $request->get('action')) {
                 $creation = true;
             }
             // Message d'erreur apres redirection
-            if ($this->get('erreur') && $this->get('erreur') == 'profil_exists') {
+            if ($request->get('erreur') && $request->get('erreur') == 'profil_exists') {
                 $params['message'] = "Ce profil existe deja, merci de choisir un autre pseudo";
             }
 
             // Annulation demande de modération
-            if ('cancel' === $this->get('action') && $isMe) {
+            if ('cancel' === $request->get('action') && $isMe) {
                 $userOptionsUtils->cancelShaarliUrl();
-                header('Location:dashboard.php');
-                return;
+
+                return $this->redirectToRoute('shaarlo_dashboard');
             }
 
             // Envoie du mail à l'utilisateur
-            if ($pasDeProfil && 'send_pwd_mail' === $this->get('action') && !empty($this->get('profil_id'))) {
-                if ($userOptionsUtils->profilHasEmail($this->get('profil_id'))) {
+            if ($pasDeProfil && 'send_pwd_mail' === $request->get('action') && !empty($request->get('profil_id'))) {
+                if ($userOptionsUtils->profilHasEmail($request->get('profil_id'))) {
                     // Envoie du mail
-                    $email = $userOptionsUtils->profilGetEmail($this->get('profil_id'));
+                    $email = $userOptionsUtils->profilGetEmail($request->get('profil_id'));
                     $nouveauPassword = uniqid();
-                    $retourEnvoi = envoieMailRecuperation($email, $this->get('profil_id'), $nouveauPassword);
+                    $retourEnvoi = envoieMailRecuperation($email, $request->get('profil_id'), $nouveauPassword);
                     if ($retourEnvoi === true) {
                         $emailObfusque = obfusqueEmail($email);
-                        updateNewPassword($this->get('profil_id'), $nouveauPassword);
+                        updateNewPassword($request->get('profil_id'), $nouveauPassword);
                         $params['message'] = "Un email vient d'être envoyé à votre adresse : $emailObfusque";
 
                     } else {
@@ -291,6 +291,8 @@ class DashboardController extends AbstractController
         $params['displayDiscussions'] = $userOptionsUtils->displayDiscussions();
         $params['isInscriptionAuto'] = $userOptionsUtils->isInscriptionAuto();
         $params['isMenuLocked'] = $userOptionsUtils->isMenuLocked();
+        $params['isPassword'] = $userOptionsUtils->isPassword();
+
         $params['displayRssButton'] = $userOptionsUtils->displayRssButton();
         $params['isExtended'] = $userOptionsUtils->isExtended();
         $params['useScrollInfini'] = $userOptionsUtils->useScrollInfini();
@@ -304,8 +306,8 @@ class DashboardController extends AbstractController
         $params['isOnAbonnements'] = $userOptionsUtils->isOnAbonnements();
         $params['tags_list'] = implode(' ', $userOptionsUtils->getTags());
         $params['not_tags_list'] = implode(' ', $userOptionsUtils->getNotAllowedTags());
-
-
+        $params['not_urls_list'] = implode(' ', $userOptionsUtils->getNotAllowedUrls());
+        dump($params);
         return $this->render(
                 '@Shaarlo/dashboard.html.twig',
                 array_merge($this->getGlobalTemplateParameters(),
@@ -322,166 +324,7 @@ class DashboardController extends AbstractController
         parent::renderScript();
         ?>
         <script>
-            $('input[data-option]').click(function() {
-                addOption($(this), $(this).attr('data-option'), $(this).val());
-            });
 
-            function addAbo(that, id, action) {
-                var r = new XMLHttpRequest();
-                var params = "do="+action+"&id=" + id;
-                r.open("POST", "add.php", true);
-                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                r.onreadystatechange = function () {
-                    that.attr('data-waiting', 'false');
-                    if (r.readyState == 4) {
-                        if(r.status == 200){
-                            var checkboxId = '#' + that.attr('data-shaarliste-id');
-                            if(action == 'add') {
-                                $('#a-voir-river').removeClass('hidden');
-                                $('#input-enregistrer-profil').prop('disabled', false);
-                                that.addClass('selected');
-                                $(checkboxId).prop('checked', true);
-                                $('#span-nbabonnements').text(parseInt($('#span-nbabonnements').text()) + 1);
-                            }else {
-                                $('#span-nbabonnements').text(parseInt($('#span-nbabonnements').text()) - 1);
-                                $(checkboxId).prop('checked', false);
-                                that.removeClass('selected');
-                            }
-                            return;
-                        }
-                        else {
-                            that.text = '-Erreur-';
-                            return;
-                        }
-                    }
-                };
-                r.send(params);
-            }
-            $('.shaarliste-selection').click(function() {
-                var checkboxId = '#' + $(this).attr('data-shaarliste-id');
-
-                if ($(this).attr('data-waiting') != 'true') {
-                    $(this).attr('data-waiting', 'true');
-                    if ($(checkboxId).is(':checked')) {
-                        addAbo($(this), $(this).attr('data-shaarliste-id'), 'delete');
-                    } else {
-                        addAbo($(this), $(this).attr('data-shaarliste-id'), 'add');
-                    }
-                }
-            });
-
-
-            $('#button-synchro-favicon').click(function() {
-                var r = new XMLHttpRequest();
-                var params = "";
-                $('#img-synchro-favicon').show();
-                r.open("POST", "synchro_favicon.php", true);
-                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                r.onreadystatechange = function () {
-                    $('#img-synchro-favicon').hide();
-                    if (r.readyState == 4) {
-                        if(r.status == 200){
-                            return;
-                        }
-                        else {
-                            return;
-                        }
-                    }
-                };
-                r.send(params);
-            });
-
-            $('#button-synchro-shaarli').click(function() {
-                var r = new XMLHttpRequest();
-                var params = "";
-                $('#img-synchro-shaarli').show();
-                r.open("POST", "synchro_shaarli.php", true);
-                r.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                r.onreadystatechange = function () {
-                    $('#img-synchro-shaarli').hide();
-                    if (r.readyState == 4) {
-                        if(r.status == 200){
-                            $('#msg-synchro-shaarli').css('color', 'green');
-                            $('#msg-synchro-shaarli').text('OK');
-                            return;
-                        }
-                        else {
-                            $('#msg-synchro-shaarli').css('color', 'red');
-                            $('#msg-synchro-shaarli').text('Flux en erreur...');
-                            return;
-                        }
-                    }
-                };
-                r.send(params);
-            });
-
-            $('#button-tous').click(function() {
-                var checkbox = $('.checkbox-shaarliste');
-                $.each( checkbox, function( key, value ) {
-                    $(value).prop('checked', true);
-                    var shaarlisteSelection = '#shaarliste-selection-' + $(value).attr('id');
-                    $(shaarlisteSelection).addClass('selected');
-                });
-                <?php
-                if (!$params['creation']) {
-                ?>
-                $('#form-abonnements').submit();
-                <?php
-                } else {
-                ?>
-                /* On va directement en fin de page */
-                $("html, body").animate({ scrollTop: $(document).height()-$(window).height() });
-                <?php }?>
-
-                $('#input-enregistrer-profil').prop('disabled', false);
-            });
-
-            $('#button-personne').click(function() {
-                var checkbox = $('.checkbox-shaarliste');
-                $.each( checkbox, function( key, value ) {
-                    $(value).prop('checked', false);
-                    var shaarlisteSelection = '#shaarliste-selection-' + $(value).attr('id');
-                    $(shaarlisteSelection).removeClass('selected');
-                });
-                $('#form-abonnements').submit();
-            });
-            $(document).foundation();
-
-            function blocShow() {
-                if ('#pwd' == location.hash) {
-                    $(".bloc-show").hide();
-                    $("#pwd").show();
-                }
-                if ('#options' == location.hash) {
-                    $(".bloc-show").hide();
-                    $("#options").show();
-                }
-                if ('#report' == location.hash) {
-                    $(".bloc-show").hide();
-                    $("#report").show();
-                }
-                if ('#filtres' == location.hash) {
-                    $(".bloc-show").hide();
-                    $("#filtres").show();
-                }
-                if ('#modifier-shaarli' == location.hash) {
-                    $(".bloc-show").hide();
-                    $("#modifier-shaarli").show();
-                }
-                if ('#mon-shaarli' == location.hash) {
-                    $(".bloc-show").hide();
-                    $("#mon-shaarli").show();
-                }
-            }
-
-            $('.link-show').click(function(event) {
-                $(".bloc-show").hide();
-                $($(this).attr('href')).show();
-                event.preventDefault();
-            });
-
-            $(".bloc-show").hide();
-            blocShow();
 
         </script>
         <?php
